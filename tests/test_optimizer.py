@@ -274,3 +274,65 @@ async def test_picks_lowest_among_ties_by_condition():
     optimizer = DecklistOptimizer(agg)
     result = await optimizer.optimize("1 Lightning Bolt\n")
     assert result.picks[0].chosen.shop == "najada"
+
+
+@pytest.mark.asyncio
+async def test_empty_decklist_returns_empty_optimization():
+    agg = Aggregator([_StubAdapter("tolarie", {})])
+    optimizer = DecklistOptimizer(agg)
+    result = await optimizer.optimize("")
+    assert result.total_cards == 0
+    assert result.unique_cards == 0
+    assert result.picks == []
+    assert result.cheapest_split_total_czk == 0
+    assert result.cheapest_split_missing == []
+    assert result.shopping_plan == []
+
+
+@pytest.mark.asyncio
+async def test_all_cards_missing_when_no_shop_has_any():
+    agg = Aggregator([_StubAdapter("tolarie", {})])
+    optimizer = DecklistOptimizer(agg)
+    result = await optimizer.optimize("4 Lightning Bolt\n2 Sol Ring\n")
+    assert result.cheapest_split_total_czk == 0
+    assert sorted(result.cheapest_split_missing) == ["Lightning Bolt", "Sol Ring"]
+    assert result.shopping_plan == []
+    # Per-shop bundles still report (with 0% coverage).
+    assert all(b.covered_cards == 0 for b in result.per_shop_bundles)
+
+
+@pytest.mark.asyncio
+async def test_single_card_flow():
+    agg = Aggregator([_StubAdapter("tolarie", {"Sol Ring": [_o("tolarie", "Sol Ring", 25)]})])
+    optimizer = DecklistOptimizer(agg)
+    result = await optimizer.optimize("1 Sol Ring\n")
+    assert result.unique_cards == 1
+    assert result.picks[0].chosen.price_czk == 25
+    assert result.cheapest_split_total_czk == 25
+    assert len(result.shopping_plan) == 1
+
+
+@pytest.mark.asyncio
+async def test_shopping_plan_subtotals_match_grand_total():
+    """Invariant: sum of per-shop subtotals must equal cheapest_split_total_czk."""
+    agg = Aggregator(
+        [
+            _StubAdapter("tolarie", {
+                "A": [_o("tolarie", "A", 10)],
+                "B": [_o("tolarie", "B", 20)],
+                "C": [_o("tolarie", "C", 30)],
+            }),
+            _StubAdapter("najada", {
+                "A": [_o("najada", "A", 5)],   # cheaper
+                "C": [_o("najada", "C", 25)],  # cheaper
+            }),
+        ]
+    )
+    optimizer = DecklistOptimizer(agg)
+    result = await optimizer.optimize("3 A\n2 B\n1 C\n")
+    plan_sum = sum(g.subtotal_czk for g in result.shopping_plan)
+    assert plan_sum == result.cheapest_split_total_czk
+    # Cards count across plan == cards count of resolved picks
+    plan_cards = sum(g.cards_count for g in result.shopping_plan)
+    resolved_cards = sum(p.quantity for p in result.picks if p.chosen)
+    assert plan_cards == resolved_cards

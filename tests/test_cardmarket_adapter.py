@@ -140,3 +140,53 @@ def test_parse_find_payload_skips_when_no_price(adapter: CardmarketAdapter):
     payload = {"product": [{"name": "Lightning Bolt", "priceGuide": {}}]}
     offers = adapter._parse_find_payload(payload, SearchQuery(name="Lightning Bolt"))  # noqa: SLF001
     assert offers == []
+
+
+def test_parse_find_payload_handles_missing_product_key(adapter: CardmarketAdapter):
+    offers = adapter._parse_find_payload({}, SearchQuery(name="Lightning Bolt"))  # noqa: SLF001
+    assert offers == []
+
+
+def test_parse_find_payload_falls_back_to_low_when_trend_missing(adapter: CardmarketAdapter):
+    payload = {
+        "product": [
+            {
+                "name": "Lightning Bolt",
+                "priceGuide": {"LOW": 0.20},  # no TREND, no AVG
+                "expansionName": "M10",
+            }
+        ]
+    }
+    offers = adapter._parse_find_payload(payload, SearchQuery(name="Lightning Bolt"))  # noqa: SLF001
+    assert len(offers) == 1
+    # 0.20 EUR * 25 = 5 CZK
+    assert offers[0].price_czk == 5
+
+
+def test_parse_find_payload_truncates_to_max_results(fake_creds: MkmCredentials):
+    adapter = CardmarketAdapter(credentials=fake_creds, eur_to_czk=25.0, max_results=2)
+    payload = {
+        "product": [
+            {"name": f"Lightning Bolt {i}", "priceGuide": {"TREND": 0.5}, "expansionName": "M10"}
+            for i in range(10)
+        ]
+    }
+    offers = adapter._parse_find_payload(payload, SearchQuery(name="Lightning Bolt"))  # noqa: SLF001
+    # Only 2 products considered; non-foil only (no foil price), so up to 2 offers.
+    assert len(offers) == 2
+
+
+def test_parse_find_payload_filters_by_set_code(adapter: CardmarketAdapter):
+    payload = {
+        "product": [
+            {"name": "Lightning Bolt", "priceGuide": {"TREND": 0.3},
+             "expansionName": "Magic 2010", "expansion": {"abbreviation": "M10"}},
+            {"name": "Lightning Bolt", "priceGuide": {"TREND": 0.5},
+             "expansionName": "Beta", "expansion": {"abbreviation": "LEB"}},
+        ]
+    }
+    offers = adapter._parse_find_payload(
+        payload, SearchQuery(name="Lightning Bolt", edition="LEB")
+    )  # noqa: SLF001
+    assert len(offers) == 1
+    assert offers[0].set_code == "LEB"

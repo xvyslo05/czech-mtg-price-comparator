@@ -100,3 +100,57 @@ def test_at_limit_is_allowed():
     body = "\n".join(f"1 Card{i}" for i in range(MAX_TOTAL_CARDS))
     result = parse_decklist(body)
     assert result.total_cards == MAX_TOTAL_CARDS
+
+
+def test_handles_crlf_line_endings():
+    result = parse_decklist("4 Lightning Bolt\r\n2 Sol Ring\r\n")
+    assert result.total_cards == 6
+    assert {e.name for e in result.entries} == {"Lightning Bolt", "Sol Ring"}
+
+
+def test_empty_input_yields_empty_result():
+    result = parse_decklist("")
+    assert result.total_cards == 0
+    assert result.entries == []
+    assert result.errors == []
+
+
+def test_only_blank_and_comment_lines_yields_empty_result():
+    result = parse_decklist("\n\n// header\n# also a comment\n   \n")
+    assert result.total_cards == 0
+    assert result.entries == []
+
+
+def test_quantity_zero_is_recorded_as_error_not_silently_dropped():
+    result = parse_decklist("0 Lightning Bolt\n4 Counterspell\n")
+    assert result.total_cards == 4  # only Counterspell counts
+    assert result.errors  # qty=0 should be flagged
+    assert any("Lightning Bolt" in e for e in result.errors)
+
+
+def test_handles_real_commander_deck_fixture(fixtures_dir):
+    text = (fixtures_dir / "krenko_commander_100.txt").read_text()
+    result = parse_decklist(text)
+    assert result.total_cards == 100
+    assert result.errors == []
+    # Names with apostrophes, commas, hyphens, '//' must all parse cleanly.
+    names = {e.name for e in result.entries}
+    for tricky in [
+        "Krenko, Mob Boss",
+        "Inventors' Fair",
+        "Siege-Gang Commander",
+        "Sting, the Glinting Dagger",
+        "Muxus, Goblin Grandee",
+    ]:
+        assert tricky in names, f"failed to parse {tricky!r}"
+
+
+def test_section_headers_with_and_without_colons():
+    result = parse_decklist(
+        "Deck\n4 Lightning Bolt\n"
+        "Sideboard:\n1 Negate\n"
+    )
+    by_name = {e.name: e for e in result.entries}
+    from cz_mtg_compare.decklist import DeckSection
+    assert by_name["Lightning Bolt"].section == DeckSection.MAIN
+    assert by_name["Negate"].section == DeckSection.SIDEBOARD

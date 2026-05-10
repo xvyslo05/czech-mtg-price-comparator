@@ -58,3 +58,21 @@ def test_filter_playable_drops_non_playable():
     result = filter_playable(offers)
     names = {o.card_name for o in result}
     assert names == {"Lightning Bolt", "Lightning Bolt (Borderless)"}
+
+
+def test_filter_is_case_insensitive():
+    assert is_non_playable(_o("art series: lightning bolt")) is True
+    assert is_non_playable(_o("ART SERIES: LIGHTNING BOLT")) is True
+    assert is_non_playable(_o("Lightning Bolt", edition="ART SERIES MM3")) is True
+
+
+@pytest.mark.parametrize("name", [
+    "Spinerock Knoll",   # contains "spin" — must NOT match "spindown"
+    "Helper",            # bare word, not "helper card"
+    "Goblin Helper",     # bare word, not "helper card"
+    "Card Sleeves",      # bare "card", not "art card" / "tip card"
+    "Art of Magic",      # bare "art", not "art series" / "art card"
+    "Tipping Point",     # bare "tip", not "tip card"
+])
+def test_filter_does_not_false_positive_on_legitimate_names(name):
+    assert is_non_playable(_o(name)) is False
