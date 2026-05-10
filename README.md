@@ -21,7 +21,7 @@ Claude: (calls search_card)
 - [What this is](#what-this-is)
 - [Supported shops](#supported-shops)
 - [What you can ask Claude](#what-you-can-ask-claude)
-- [Setup (5 minutes)](#setup-5-minutes)
+- [Setup](#setup) — three install options: `uvx`, `pipx`, plain `pip`
 - [Verify it's working](#verify-its-working)
 - [Optional: enable Cardmarket](#optional-enable-cardmarket)
 - [Configuration reference](#configuration-reference)
@@ -76,54 +76,150 @@ Claude picks the right tool, calls it, and summarises the result.
 
 ---
 
-## Setup (5 minutes)
+## Setup
+
+You don't need to clone the repo. Pick one of the install methods below, paste the matching JSON into Claude Desktop's config, restart Claude — done.
 
 ### Prerequisites
 
 | Requirement       | How to check                          |
 |-------------------|---------------------------------------|
-| Python 3.11+      | `python3 --version`                   |
-| Git               | `git --version`                       |
 | Claude Desktop    | https://claude.ai/download            |
+| Python 3.11+      | `python3 --version`                   |
+| One of: `uvx`, `pipx`, or plain `pip` | see below |
 
-If `python3` says you have 3.10 or older, install a newer one (e.g. `brew install python@3.12` on macOS, or [python.org](https://www.python.org/downloads/) on any platform).
+If your `python3` is 3.10 or older, install a newer one: `brew install python@3.12` on macOS, or [python.org](https://www.python.org/downloads/) on any platform.
 
-### 1. Clone the repo
+### Install method A — `uvx` (recommended)
 
-```bash
-git clone https://github.com/xvyslo05/czech-mtg-price-comparator.git
-cd czech-mtg-price-comparator
-```
+`uv` is a fast Python package manager. `uvx` runs Python apps in isolated environments and caches them. **No clone, no venv, no manual install** — uvx fetches the package from GitHub on first run and caches it.
 
-### 2. Create a virtual environment and install
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate          # macOS / Linux
-# .venv\Scripts\activate           # Windows PowerShell
-pip install -e .
-```
-
-That installs the project plus its runtime dependencies (`mcp`, `httpx`, `selectolax`, `pydantic`, `tenacity`).
-
-### 3. Find the absolute path of the Python interpreter
-
-You need this path for the Claude Desktop config — it must be the **absolute** path to `python` inside the `.venv` you just created.
+**1. Install uv** (one-liner):
 
 ```bash
 # macOS / Linux
-realpath .venv/bin/python
-# → /Users/you/projects/czech-mtg-price-comparator/.venv/bin/python
+curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # Windows PowerShell
-Resolve-Path .venv\Scripts\python.exe
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 ```
 
-Copy that full path — you'll paste it into the config in the next step.
+**2. Find uvx's absolute path** — Claude Desktop doesn't always inherit your shell's `PATH`, so you must give it the full path:
 
-### 4. Configure Claude Desktop
+```bash
+# macOS / Linux
+which uvx
+# → /Users/you/.local/bin/uvx   (or /opt/homebrew/bin/uvx)
 
-Open Claude Desktop's config file. The location depends on your OS:
+# Windows PowerShell
+(Get-Command uvx).Source
+```
+
+**3. Add this to Claude Desktop's config** (see the [config-file location table](#step-add-to-claude-desktops-config-file) below):
+
+```json
+{
+  "mcpServers": {
+    "cz-mtg-compare": {
+      "command": "/ABSOLUTE/PATH/TO/uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/xvyslo05/czech-mtg-price-comparator.git",
+        "cz-mtg-compare-mcp"
+      ]
+    }
+  }
+}
+```
+
+The first time Claude Desktop starts the server, uvx fetches and installs the package (~10–20 seconds). Subsequent starts are instant.
+
+To **upgrade** later, run `uvx --refresh-package cz-mtg-compare-mcp --from git+https://github.com/xvyslo05/czech-mtg-price-comparator.git cz-mtg-compare-mcp` once.
+
+### Install method B — `pipx`
+
+`pipx` installs Python apps in isolated venvs and exposes their console scripts on your `PATH`.
+
+**1. Install pipx** (https://pipx.pypa.io/stable/installation/):
+
+```bash
+# macOS
+brew install pipx && pipx ensurepath
+
+# Linux
+python3 -m pip install --user pipx && python3 -m pipx ensurepath
+
+# Windows
+python -m pip install --user pipx
+python -m pipx ensurepath
+```
+
+Reopen your terminal so `PATH` updates take effect.
+
+**2. Install the server**:
+
+```bash
+pipx install git+https://github.com/xvyslo05/czech-mtg-price-comparator.git
+```
+
+**3. Find the absolute path of the installed binary**:
+
+```bash
+# macOS / Linux
+which cz-mtg-compare-mcp
+# → /Users/you/.local/bin/cz-mtg-compare-mcp
+
+# Windows PowerShell
+(Get-Command cz-mtg-compare-mcp).Source
+```
+
+**4. Add this to Claude Desktop's config**:
+
+```json
+{
+  "mcpServers": {
+    "cz-mtg-compare": {
+      "command": "/ABSOLUTE/PATH/TO/cz-mtg-compare-mcp",
+      "args": []
+    }
+  }
+}
+```
+
+To **upgrade** later: `pipx upgrade cz-mtg-compare-mcp`.
+
+### Install method C — plain `pip`
+
+If you don't want extra tooling, install with system pip and point Claude at the script directly.
+
+```bash
+python3 -m pip install --user git+https://github.com/xvyslo05/czech-mtg-price-comparator.git
+
+# Find the script
+python3 -c "import sysconfig; print(sysconfig.get_path('scripts'))"
+# → /Users/you/Library/Python/3.12/bin     (macOS)
+# → /home/you/.local/bin                   (Linux)
+# → C:\Users\you\AppData\Roaming\Python\Python312\Scripts   (Windows)
+```
+
+The full path to the script is `<that-directory>/cz-mtg-compare-mcp`. Then add to Claude Desktop's config:
+
+```json
+{
+  "mcpServers": {
+    "cz-mtg-compare": {
+      "command": "/ABSOLUTE/PATH/TO/cz-mtg-compare-mcp",
+      "args": []
+    }
+  }
+}
+```
+
+To **upgrade** later: `python3 -m pip install --user --upgrade git+https://github.com/xvyslo05/czech-mtg-price-comparator.git`.
+
+### Step: add to Claude Desktop's config file
+
+The config file lives at:
 
 | OS       | Path                                                          |
 |----------|---------------------------------------------------------------|
@@ -131,37 +227,28 @@ Open Claude Desktop's config file. The location depends on your OS:
 | Windows  | `%APPDATA%\Claude\claude_desktop_config.json`                 |
 | Linux    | `~/.config/Claude/claude_desktop_config.json`                 |
 
-If the file doesn't exist yet, create it. Paste this and replace `<ABSOLUTE_PATH>` with the path you copied:
+If the file doesn't exist yet, create it. If you already have other MCP servers configured, **don't replace the whole file** — add the `"cz-mtg-compare"` entry alongside the existing ones inside the same `"mcpServers"` object.
+
+A complete macOS example using uvx:
 
 ```json
 {
   "mcpServers": {
     "cz-mtg-compare": {
-      "command": "<ABSOLUTE_PATH>",
-      "args": ["-m", "cz_mtg_compare"]
+      "command": "/Users/robin/.local/bin/uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/xvyslo05/czech-mtg-price-comparator.git",
+        "cz-mtg-compare-mcp"
+      ]
     }
   }
 }
 ```
 
-If you already have other MCP servers configured, just add the `"cz-mtg-compare"` entry alongside them inside the existing `"mcpServers"` object — don't replace the whole file.
+### Step: restart Claude Desktop
 
-A complete macOS example:
-
-```json
-{
-  "mcpServers": {
-    "cz-mtg-compare": {
-      "command": "/Users/robin/projects/czech-mtg-price-comparator/.venv/bin/python",
-      "args": ["-m", "cz_mtg_compare"]
-    }
-  }
-}
-```
-
-### 5. Restart Claude Desktop
-
-Fully quit Claude Desktop (don't just close the window — use **Cmd+Q** on macOS or right-click the tray icon → Quit on Windows) and reopen it.
+Fully quit Claude Desktop (don't just close the window — use **Cmd+Q** on macOS, or right-click the tray icon → Quit on Windows) and reopen it.
 
 ---
 
@@ -200,14 +287,18 @@ Cardmarket gives you EU-wide pricing as a fallback for cards Czech shops don't c
 
 ### 2. Add them to your Claude Desktop config
 
-Update the server entry to pass them as environment variables:
+Add an `"env"` block alongside `"command"` and `"args"` in your existing entry. With uvx, that looks like:
 
 ```json
 {
   "mcpServers": {
     "cz-mtg-compare": {
-      "command": "/absolute/path/to/.venv/bin/python",
-      "args": ["-m", "cz_mtg_compare"],
+      "command": "/Users/you/.local/bin/uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/xvyslo05/czech-mtg-price-comparator.git",
+        "cz-mtg-compare-mcp"
+      ],
       "env": {
         "MKM_APP_TOKEN": "...",
         "MKM_APP_SECRET": "...",
@@ -254,12 +345,19 @@ Two ways:
 ## Troubleshooting
 
 **Tools don't appear in Claude Desktop after restart.**
-- Make sure the path in `command` is **absolute** and points at the `python` *inside* `.venv`. A common mistake is using just `python` or a system-wide path.
+- Make sure the path in `command` is **absolute**. Claude Desktop usually doesn't inherit your shell's `PATH`, so a bare `uvx` or `cz-mtg-compare-mcp` will fail to launch.
 - Open Claude Desktop's developer tools (macOS: `Cmd+Option+I` while focused on the chat) and check the console for MCP server errors.
-- Try running the server manually: `path/to/.venv/bin/python -m cz_mtg_compare`. It should hang waiting for stdin input — that's correct behaviour. Press `Ctrl+C` to exit.
+- Try running the server manually:
+  - uvx: `uvx --from git+https://github.com/xvyslo05/czech-mtg-price-comparator.git cz-mtg-compare-mcp`
+  - pipx / pip: `cz-mtg-compare-mcp`
+
+  It should hang waiting for stdin input — that's correct behaviour. Press `Ctrl+C` to exit.
 
 **`ModuleNotFoundError: No module named 'cz_mtg_compare'`.**
-- The venv is missing the install. Re-run `pip install -e .` from inside the project directory with the venv activated.
+- The install didn't complete. Re-run your install command (`pipx install ...` or `python3 -m pip install --user ...`) and confirm it finishes without errors.
+
+**uvx hangs or times out the first time Claude Desktop starts the server.**
+- First-time installs through git can take 10–30 seconds while uvx fetches dependencies. Subsequent starts are instant. If it consistently fails, run the manual command above from a terminal to see the underlying error.
 
 **`Event loop is closed` errors during testing.**
 - Already handled by `tests/conftest.py`. If you see it elsewhere, the shared `httpx.AsyncClient` was bound to a now-closed loop — call `cz_mtg_compare.http_client.close_client()` between event-loop boundaries.
@@ -323,8 +421,13 @@ Each `Offer` includes a `url` you can click through to the shop.
 
 ## Development
 
+If you want to hack on the server or run the test suite, do a clone-and-editable-install:
+
 ```bash
-# Install dev dependencies (pytest etc.)
+git clone https://github.com/xvyslo05/czech-mtg-price-comparator.git
+cd czech-mtg-price-comparator
+python3 -m venv .venv
+source .venv/bin/activate           # macOS/Linux; .venv\Scripts\activate on Windows
 pip install -e ".[dev]"
 
 # Fast deterministic tests (~0.2s)
@@ -338,6 +441,19 @@ python -m cz_mtg_compare
 ```
 
 The shop adapters are tested against checked-in HTML/JSON fixtures in `tests/fixtures/`, so the bulk of the test suite is offline and deterministic. Live smoke tests under `tests/test_live_smoke.py` are opt-in via `-m live`.
+
+To point Claude Desktop at your local working copy instead of the published GitHub version, use the `.venv/bin/python -m cz_mtg_compare` command form:
+
+```json
+{
+  "mcpServers": {
+    "cz-mtg-compare": {
+      "command": "/absolute/path/to/repo/.venv/bin/python",
+      "args": ["-m", "cz_mtg_compare"]
+    }
+  }
+}
+```
 
 ---
 
