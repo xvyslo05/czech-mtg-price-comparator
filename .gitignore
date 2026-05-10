@@ -10,4 +10,5 @@ build/
 dist/
 .DS_Store
 .env
-.claude/
+.claude/*
+!.claude/skills/
