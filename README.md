@@ -1,6 +1,6 @@
 # cz-mtg-compare-mcp
 
-A **Model Context Protocol** server that lets Claude (or any other MCP client) compare **Magic: The Gathering** single-card prices across the four major Czech online card shops, optionally falling back to Cardmarket. Ask Claude what something costs — it queries every shop in parallel and returns one normalized, price-sorted list.
+A **Model Context Protocol** server that lets Claude (or any other MCP client) compare **Magic: The Gathering** single-card prices across six major Czech online card shops, optionally falling back to Cardmarket. Ask Claude what something costs — it queries every shop in parallel and returns one normalized, price-sorted list.
 
 ```
 You:    Find me the cheapest in-stock Lightning Bolt across the Czech shops.
@@ -37,7 +37,7 @@ Claude: (calls search_card)
 
 This is an MCP server. MCP is the protocol Claude Desktop (and other clients) use to call external tools. Once configured, Claude can:
 
-- **Search a single card** across all four Czech shops at once.
+- **Search a single card** across all six Czech shops at once.
 - **Optimize a Commander/Standard/Modern decklist** — paste the list in chat, get back the cheapest combination of shops to buy from, plus each shop's solo total.
 - **Resolve card names** through Scryfall (canonical name, set/collector#, oracle text, multilingual printed names).
 - **Fall back to Cardmarket** for European pricing when CZ shops don't carry a card (optional, requires API credentials).
@@ -54,6 +54,8 @@ It does **not**: place orders, log in to shops, manage carts, send notifications
 | `najada.cz` / `najada.games` | JSON API (`wizardshop.cz`)     | name, edition, set code, condition, language, foil, stock count, price |
 | `blacklotus.cz`      | HTML scrape (Shoptet) + detail-page enrichment | name, edition, condition, foil, stock, price |
 | `cernyrytir.cz`      | HTML scrape (windows-1250, POST search) | name, edition, set code, condition, foil, stock, price |
+| `rishada.cz`         | HTML scrape (custom-PHP, tabular)      | name, edition, condition, foil (incl. judge / etched), stock, price |
+| `untap.cz`           | HTML scrape (Prestashop)               | name, edition, set code, condition + foil from product reference, stock, price |
 | `cardmarket.com`     | OAuth1 API (opt-in, **untested live**) | aggregate priceGuide (TREND/AVG/LOW + foil), EUR→CZK — see [Cardmarket section](#optional-enable-cardmarket) |
 
 ---
@@ -289,7 +291,7 @@ Then try a real query:
 
 > "Find Lightning Bolt across all Czech card shops, show me the five cheapest in-stock copies."
 
-Claude will call `search_card`, the server will fan out to all four shops in parallel (typically responding in 2–4 seconds), and Claude will summarise the results.
+Claude will call `search_card`, the server will fan out to all six shops in parallel (typically responding in 2–4 seconds), and Claude will summarise the results.
 
 If something doesn't work, jump to [Troubleshooting](#troubleshooting).
 
@@ -407,15 +409,16 @@ Two ways:
                           │  cz_mtg_compare    │
                           └─────────┬──────────┘
                                     │  fans out in parallel
-              ┌─────────────────────┼──────────────────────┐
-              ▼          ▼          ▼          ▼           ▼
-         tolarie.cz  najada API  blacklotus  cernyrytir   cardmarket
-         (HTML)      (JSON)      (HTML+detail) (HTML/cp1250)  (OAuth1)
-              │          │          │          │           │
-              └──────────┴──────────┴──────────┴───────────┘
-                                    │
-                                    ▼
-                         normalized Offer[] sorted by price_czk
+       ┌────────────┬────────────┬──┴──────────┬────────────┬────────────┬────────────┐
+       ▼            ▼            ▼             ▼            ▼            ▼            ▼
+   tolarie.cz  najada API   blacklotus    cernyrytir    rishada       untap       cardmarket
+   (HTML)      (JSON)       (Shoptet      (HTML/cp1250  (custom PHP   (Presta-    (OAuth1,
+                            +detail)       POST search)  table)        shop)        opt-in)
+       │            │            │             │            │            │            │
+       └────────────┴────────────┴─────────────┴────────────┴────────────┴────────────┘
+                                              │
+                                              ▼
+                                   normalized Offer[] sorted by price_czk
 ```
 
 - A single `search_card` call dispatches to every adapter concurrently, with per-host concurrency capped at 3 and a 10-second timeout per shop.
@@ -444,7 +447,7 @@ Claude will pass the flag through automatically.
 
 ## Limitations
 
-- **No shipping cost optimization.** The multi-shop split picks the cheapest *card* prices, ignoring that buying from four shops means four shipping fees. Per-shop totals let you see the trade-off, but the optimizer doesn't pick for you.
+- **No shipping cost optimization.** The multi-shop split picks the cheapest *card* prices, ignoring that buying from six shops means six shipping fees. Per-shop totals let you see the trade-off, but the optimizer doesn't pick for you.
 - **blacklotus condition can occasionally still be `?`** if the product page lacks the gtag variant marker — best-effort only.
 - **Cardmarket per-seller offers** require a paid Trader-tier API key, not yet wired up. Free tier surfaces priceGuide aggregates only.
 - **Decklist size capped at 100 cards.** Commander format is the largest legal format.
@@ -460,10 +463,10 @@ The local-clone setup is documented as [Install method D](#install-method-d--fro
 # from inside the cloned repo with the venv activated
 pip install -e ".[dev]"
 
-# Fast deterministic tests (~0.2s, 134 tests)
+# Fast deterministic tests (~0.5s, 151+ tests)
 pytest
 
-# Live smoke tests against real shops + Scryfall (~30s, 8 tests)
+# Live smoke tests against real shops + Scryfall (~40s, 10 tests)
 pytest -m live --override-ini="addopts="
 
 # Manual MCP smoke test (server speaks stdio; Ctrl+C to exit)
@@ -530,6 +533,8 @@ src/cz_mtg_compare/
     najada.py          (JSON API on wizardshop.cz)
     blacklotus.py      (Shoptet HTML + detail-page enrichment)
     cernyrytir.py      (windows-1250 HTML)
+    rishada.py         (custom-PHP tabular HTML)
+    untap.py           (Prestashop HTML; condition+foil in product reference)
     cardmarket.py      (OAuth1 API; opt-in)
 tests/
   fixtures/            saved real-world responses

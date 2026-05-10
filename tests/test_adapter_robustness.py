@@ -8,13 +8,16 @@ import pytest
 from cz_mtg_compare.adapters.blacklotus import BlackLotusAdapter
 from cz_mtg_compare.adapters.cernyrytir import CernyRytirAdapter
 from cz_mtg_compare.adapters.najada import NajadaAdapter
+from cz_mtg_compare.adapters.rishada import RishadaAdapter
 from cz_mtg_compare.adapters.tolarie import TolarieAdapter
+from cz_mtg_compare.adapters.untap import UntapAdapter
 from cz_mtg_compare.models import SearchQuery
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "adapter_cls", [TolarieAdapter, BlackLotusAdapter, CernyRytirAdapter]
+    "adapter_cls",
+    [TolarieAdapter, BlackLotusAdapter, CernyRytirAdapter, RishadaAdapter, UntapAdapter],
 )
 async def test_html_adapter_returns_empty_for_empty_html(adapter_cls):
     adapter = adapter_cls()
@@ -24,7 +27,8 @@ async def test_html_adapter_returns_empty_for_empty_html(adapter_cls):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "adapter_cls", [TolarieAdapter, BlackLotusAdapter, CernyRytirAdapter]
+    "adapter_cls",
+    [TolarieAdapter, BlackLotusAdapter, CernyRytirAdapter, RishadaAdapter, UntapAdapter],
 )
 async def test_html_adapter_handles_garbage_input(adapter_cls):
     adapter = adapter_cls()

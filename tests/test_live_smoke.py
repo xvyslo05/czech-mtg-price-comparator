@@ -6,7 +6,9 @@ import pytest
 from cz_mtg_compare.adapters.blacklotus import BlackLotusAdapter
 from cz_mtg_compare.adapters.cernyrytir import CernyRytirAdapter
 from cz_mtg_compare.adapters.najada import NajadaAdapter
+from cz_mtg_compare.adapters.rishada import RishadaAdapter
 from cz_mtg_compare.adapters.tolarie import TolarieAdapter
+from cz_mtg_compare.adapters.untap import UntapAdapter
 from cz_mtg_compare.aggregator import Aggregator
 from cz_mtg_compare.http_client import close_client
 from cz_mtg_compare.models import SearchQuery
@@ -21,6 +23,8 @@ from cz_mtg_compare.models import SearchQuery
         (NajadaAdapter, "najada"),
         (BlackLotusAdapter, "blacklotus"),
         (CernyRytirAdapter, "cernyrytir"),
+        (RishadaAdapter, "rishada"),
+        (UntapAdapter, "untap"),
     ],
 )
 async def test_adapter_live_lightning_bolt(adapter_cls, shop):

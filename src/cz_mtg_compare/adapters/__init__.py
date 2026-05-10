@@ -3,7 +3,9 @@ from .blacklotus import BlackLotusAdapter
 from .cardmarket import CardmarketAdapter, MkmCredentials
 from .cernyrytir import CernyRytirAdapter
 from .najada import NajadaAdapter
+from .rishada import RishadaAdapter
 from .tolarie import TolarieAdapter
+from .untap import UntapAdapter
 
 __all__ = [
     "ShopAdapter",
@@ -12,7 +14,9 @@ __all__ = [
     "CernyRytirAdapter",
     "MkmCredentials",
     "NajadaAdapter",
+    "RishadaAdapter",
     "TolarieAdapter",
+    "UntapAdapter",
     "build_default_adapters",
 ]
 
@@ -28,6 +32,8 @@ def build_default_adapters() -> list[ShopAdapter]:
         NajadaAdapter(),
         BlackLotusAdapter(),
         CernyRytirAdapter(),
+        RishadaAdapter(),
+        UntapAdapter(),
     ]
     creds = MkmCredentials.from_env()
     if creds is not None:
