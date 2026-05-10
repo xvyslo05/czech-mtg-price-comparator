@@ -54,7 +54,7 @@ It does **not**: place orders, log in to shops, manage carts, send notifications
 | `najada.cz` / `najada.games` | JSON API (`wizardshop.cz`)     | name, edition, set code, condition, language, foil, stock count, price |
 | `blacklotus.cz`      | HTML scrape (Shoptet) + detail-page enrichment | name, edition, condition, foil, stock, price |
 | `cernyrytir.cz`      | HTML scrape (windows-1250, POST search) | name, edition, set code, condition, foil, stock, price |
-| `cardmarket.com`     | OAuth1 API (opt-in)                    | aggregate priceGuide (TREND/AVG/LOW + foil), EUR→CZK |
+| `cardmarket.com`     | OAuth1 API (opt-in, **untested live**) | aggregate priceGuide (TREND/AVG/LOW + foil), EUR→CZK — see [Cardmarket section](#optional-enable-cardmarket) |
 
 ---
 
@@ -277,9 +277,11 @@ If something doesn't work, jump to [Troubleshooting](#troubleshooting).
 
 ## Optional: enable Cardmarket
 
-Cardmarket gives you EU-wide pricing as a fallback for cards Czech shops don't carry. It's **off by default** and only activates if you provide OAuth1 credentials.
+Cardmarket would give you EU-wide pricing as a fallback for cards Czech shops don't carry. The adapter is implemented and ships with the server, but it's **off by default** and only activates if you provide the four `MKM_*` OAuth1 credentials as environment variables.
 
-### 1. Get a Cardmarket dedicated app token
+> ⚠️ **Untested in production.** As of the last update to this repo, **Cardmarket is not accepting new API access requests** — they've paused signups for the Dedicated App / Personal tier. The adapter was built against their published API spec (request signing verified against the OAuth1 reference, response shape verified against their `/products/find` schema), and unit tests cover the full request/response cycle, but it has not been live-tested end-to-end. If you have an existing Cardmarket API key from before signups were paused, the steps below should work — please open an issue if anything misbehaves.
+
+### 1. Get a Cardmarket dedicated app token (if signups have reopened)
 
 1. Go to https://www.cardmarket.com/en/Magic/Account/API
 2. Apply for a **Dedicated App** (Personal/Free tier is enough for read-only price aggregates).
@@ -311,9 +313,13 @@ Add an `"env"` block alongside `"command"` and `"args"` in your existing entry. 
 }
 ```
 
-`MKM_EUR_TO_CZK` is optional (default `24.5`). Restart Claude Desktop and Cardmarket offers will start showing up alongside the Czech shops.
+`MKM_EUR_TO_CZK` is optional (default `24.5`). Restart Claude Desktop and Cardmarket offers should start showing up alongside the Czech shops; verify with `list_shops`.
 
-> **Note**: the Free tier only exposes aggregate priceGuide data (TREND / AVG / LOW + foil variants) — not specific seller listings. Per-seller offers require a paid Trader-tier account and are not yet implemented in this server.
+### What the adapter does and doesn't cover
+
+- **Covered**: `/products/find?search=<name>&idGame=1` with OAuth1 HMAC-SHA1 signing, `priceGuide` parsing (TREND / AVG / LOW with LOW fallback), foil variants surfaced as separate offers, EUR→CZK conversion, `set_code` / `edition` filtering, max-results truncation, missing-key tolerance.
+- **Not covered**: per-seller article listings (`/articles/{idProduct}` — requires a paid Trader-tier API key, ~€20/year). The Free/Personal tier only exposes aggregate priceGuide data, so cardmarket offers come back without specific condition / language / seller info — `condition` is `UNKNOWN` and `stock_qty` defaults to 1 (priceGuide implies sellers exist but doesn't quantify them).
+- **Behaviour without credentials**: if any of the four `MKM_*` env vars is missing or empty, the adapter is silently dropped from the default adapter list — no startup errors, no failed auth requests, just no `cardmarket` entries in `list_shops`.
 
 ---
 
