@@ -127,6 +127,68 @@ async def test_quantities_sum_when_card_appears_twice():
 
 
 @pytest.mark.asyncio
+async def test_shopping_plan_groups_picks_by_shop():
+    agg = Aggregator(
+        [
+            _StubAdapter(
+                "tolarie",
+                {
+                    "Lightning Bolt": [_o("tolarie", "Lightning Bolt", 50)],
+                    "Sol Ring": [_o("tolarie", "Sol Ring", 25)],
+                },
+            ),
+            _StubAdapter(
+                "najada",
+                {
+                    "Lightning Bolt": [_o("najada", "Lightning Bolt", 35)],
+                    "Counterspell": [_o("najada", "Counterspell", 30)],
+                },
+            ),
+        ]
+    )
+    optimizer = DecklistOptimizer(agg)
+    result = await optimizer.optimize(
+        "4 Lightning Bolt\n2 Counterspell\n2 Sol Ring\n"
+    )
+
+    by_shop = {g.shop: g for g in result.shopping_plan}
+    # Lightning Bolt and Counterspell are cheaper at najada;
+    # Sol Ring only available at tolarie.
+    assert set(by_shop.keys()) == {"najada", "tolarie"}
+
+    najada = by_shop["najada"]
+    najada_names = {l.name for l in najada.lines}
+    assert najada_names == {"Lightning Bolt", "Counterspell"}
+    assert najada.cards_count == 4 + 2
+    assert najada.items_count == 2
+    assert najada.subtotal_czk == 35 * 4 + 30 * 2
+
+    tolarie = by_shop["tolarie"]
+    assert {l.name for l in tolarie.lines} == {"Sol Ring"}
+    assert tolarie.subtotal_czk == 25 * 2
+
+    # Plan is sorted by descending subtotal -> najada first (200 > 50).
+    assert result.shopping_plan[0].shop == "najada"
+
+    # Sum of plan subtotals must match the headline total.
+    plan_sum = sum(g.subtotal_czk for g in result.shopping_plan)
+    assert plan_sum == result.cheapest_split_total_czk
+
+
+@pytest.mark.asyncio
+async def test_shopping_plan_skips_missing_cards():
+    agg = Aggregator(
+        [_StubAdapter("tolarie", {"Lightning Bolt": [_o("tolarie", "Lightning Bolt", 50)]})]
+    )
+    optimizer = DecklistOptimizer(agg)
+    result = await optimizer.optimize("4 Lightning Bolt\n1 Black Lotus\n")
+
+    assert len(result.shopping_plan) == 1
+    only = result.shopping_plan[0]
+    assert {l.name for l in only.lines} == {"Lightning Bolt"}
+
+
+@pytest.mark.asyncio
 async def test_picks_lowest_among_ties_by_condition():
     # Two shops at identical prices, NM beats LP.
     agg = Aggregator(

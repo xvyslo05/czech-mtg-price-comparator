@@ -49,6 +49,29 @@ class ShopBundle(BaseModel):
     coverage_pct: float  # covered_cards / total_unique_cards * 100
 
 
+class ShoppingLine(BaseModel):
+    """One line in the shopping plan: a card to buy from a specific shop."""
+
+    quantity: int
+    name: str
+    edition: str | None = None
+    condition: Condition
+    foil: bool
+    unit_price_czk: int
+    subtotal_czk: int  # quantity * unit_price_czk
+    url: str
+
+
+class ShoppingGroup(BaseModel):
+    """All cards to buy from a single shop, grouped from the cheapest split."""
+
+    shop: ShopId
+    lines: list[ShoppingLine]
+    items_count: int   # number of distinct entries (lines)
+    cards_count: int   # sum of quantities
+    subtotal_czk: int  # sum of line subtotals
+
+
 class DecklistOptimization(BaseModel):
     total_cards: int
     unique_cards: int
@@ -57,6 +80,10 @@ class DecklistOptimization(BaseModel):
     picks: list[CardPick]
     cheapest_split_total_czk: int
     cheapest_split_missing: list[str]
+
+    # Same data as `picks`, regrouped by shop for direct rendering as a
+    # shopping plan / chart. Sorted by descending shop subtotal.
+    shopping_plan: list[ShoppingGroup] = Field(default_factory=list)
 
     per_shop_bundles: list[ShopBundle]
 
@@ -127,6 +154,7 @@ class DecklistOptimizer:
         cheapest_split_missing = [p.name for p in picks if p.missing]
 
         per_shop_bundles = self._build_shop_bundles(unique_entries, results)
+        shopping_plan = _build_shopping_plan(picks)
 
         return DecklistOptimization(
             total_cards=parsed.total_cards,
@@ -135,6 +163,7 @@ class DecklistOptimizer:
             picks=picks,
             cheapest_split_total_czk=cheapest_split_total,
             cheapest_split_missing=cheapest_split_missing,
+            shopping_plan=shopping_plan,
             per_shop_bundles=per_shop_bundles,
         )
 
@@ -179,3 +208,40 @@ class DecklistOptimizer:
         # Sort bundles best-to-worst: highest coverage, then lowest total.
         bundles.sort(key=lambda b: (-b.coverage_pct, b.total_czk))
         return bundles
+
+
+def _build_shopping_plan(picks: list[CardPick]) -> list[ShoppingGroup]:
+    """Regroup the cheapest-split `picks` by shop for chart-friendly output."""
+    by_shop: dict[ShopId, list[ShoppingLine]] = {}
+    for p in picks:
+        if p.chosen is None:
+            continue
+        line = ShoppingLine(
+            quantity=p.quantity,
+            name=p.name,
+            edition=p.chosen.edition,
+            condition=p.chosen.condition,
+            foil=p.chosen.foil,
+            unit_price_czk=p.chosen.price_czk,
+            subtotal_czk=p.quantity * p.chosen.price_czk,
+            url=p.chosen.url,
+        )
+        by_shop.setdefault(p.chosen.shop, []).append(line)
+
+    groups: list[ShoppingGroup] = []
+    for shop, lines in by_shop.items():
+        # Stable, readable order within a shop: cheapest first, then by name.
+        lines.sort(key=lambda l: (l.unit_price_czk, l.name.lower()))
+        groups.append(
+            ShoppingGroup(
+                shop=shop,
+                lines=lines,
+                items_count=len(lines),
+                cards_count=sum(l.quantity for l in lines),
+                subtotal_czk=sum(l.subtotal_czk for l in lines),
+            )
+        )
+
+    # Most cards / largest spend first — the "primary shop" surfaces at the top.
+    groups.sort(key=lambda g: (-g.subtotal_czk, -g.cards_count, g.shop))
+    return groups

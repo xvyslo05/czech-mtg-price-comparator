@@ -64,9 +64,20 @@ async def optimize_decklist(
 
     - `picks`: cheapest in-stock offer per card (multi-shop "greedy split")
     - `cheapest_split_total_czk`: grand total of that split
-    - `per_shop_bundles`: how each individual shop covers the decklist (cards
-      covered, cards missing, single-shop total in CZK), sorted best-to-worst
+    - `shopping_plan`: the same picks regrouped per shop — render this as a
+      summary table for the user. Each group has the shop name, an `lines`
+      list (each: quantity, card name, edition, condition, foil, unit price,
+      subtotal, url) and a `subtotal_czk`. Groups are sorted by descending
+      shop subtotal so the "primary shop" surfaces first.
+    - `per_shop_bundles`: how each individual shop covers the decklist on its
+      own (cards covered, cards missing, single-shop total CZK), sorted
+      best-to-worst
     - `cheapest_split_missing`: cards no shop has in stock
+
+    When presenting results to the user for a multi-card query, render the
+    `shopping_plan` as a per-shop chart: one section per shop with a table
+    of cards to buy from it, plus the shop subtotal. Then show the grand
+    total `cheapest_split_total_czk` and any `cheapest_split_missing`.
 
     The decklist must contain at most 100 cards (Commander deck size). Format
     example:
