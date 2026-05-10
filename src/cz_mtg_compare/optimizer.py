@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 from typing import Iterable
 
 from pydantic import BaseModel, Field
@@ -19,6 +20,30 @@ log = logging.getLogger(__name__)
 # the queue* before they ever execute. Six concurrent cards × 4 shops = 24
 # requests in flight, comfortably under the per-host queue limit.
 MAX_CONCURRENT_CARDS = 6
+
+# Hard cap on the number of distinct cards optimize() will search for in a
+# single call. Each unique card triggers up to one HTTP request per shop, so
+# 100 unique × 6 shops = up to 600 requests; that's already the upper bound
+# of polite behaviour. Override via the CZ_MTG_MAX_UNIQUE_CARDS env var.
+DEFAULT_MAX_UNIQUE_CARDS = 100
+MAX_UNIQUE_CARDS_ENV = "CZ_MTG_MAX_UNIQUE_CARDS"
+
+
+def _max_unique_cards() -> int:
+    raw = os.environ.get(MAX_UNIQUE_CARDS_ENV, "").strip()
+    if not raw:
+        return DEFAULT_MAX_UNIQUE_CARDS
+    try:
+        value = int(raw)
+    except ValueError:
+        log.warning("ignoring invalid %s=%r; using default %d",
+                    MAX_UNIQUE_CARDS_ENV, raw, DEFAULT_MAX_UNIQUE_CARDS)
+        return DEFAULT_MAX_UNIQUE_CARDS
+    if value <= 0:
+        log.warning("ignoring non-positive %s=%d; using default %d",
+                    MAX_UNIQUE_CARDS_ENV, value, DEFAULT_MAX_UNIQUE_CARDS)
+        return DEFAULT_MAX_UNIQUE_CARDS
+    return value
 
 
 # When picking "best" per card we prefer lower price; among equal prices, we
@@ -139,6 +164,13 @@ class DecklistOptimizer:
                 per_name[key] = e
 
         unique_entries = list(per_name.values())
+        limit = _max_unique_cards()
+        if len(unique_entries) > limit:
+            raise ValueError(
+                f"decklist has {len(unique_entries)} unique cards, "
+                f"exceeds the {limit}-card search limit. "
+                f"Set {MAX_UNIQUE_CARDS_ENV} to override."
+            )
 
         # Fan out one aggregator.search() per unique card, capped by an outer
         # concurrency limit so the per-host queue inside the aggregator stays

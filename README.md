@@ -353,6 +353,7 @@ Add an `"env"` block alongside `"command"` and `"args"` in your existing entry. 
 | `MKM_EUR_TO_CZK`              | EUR → CZK conversion rate for Cardmarket prices    | `24.5` |
 | `CZ_MTG_SCRYFALL_CACHE`       | Override Scryfall on-disk cache directory          | `~/.cache/cz-mtg-compare/scryfall/` |
 | `CZ_MTG_DISABLED_SHOPS`       | Comma-separated, case-insensitive list of shop IDs to drop at startup (e.g. `blacklotus,untap`) | unset |
+| `CZ_MTG_MAX_UNIQUE_CARDS`     | Hard cap on unique cards per `optimize_decklist` call (one HTTP request per unique card per shop). Invalid / non-positive values are ignored | `100` |
 
 ### Disabling individual shops
 
@@ -472,7 +473,7 @@ Claude will pass the flag through automatically.
 - **No shipping cost optimization.** The multi-shop split picks the cheapest *card* prices, ignoring that buying from six shops means six shipping fees. Per-shop totals let you see the trade-off, but the optimizer doesn't pick for you.
 - **blacklotus condition can occasionally still be `?`** if the product page lacks the gtag variant marker — best-effort only.
 - **Cardmarket per-seller offers** require a paid Trader-tier API key, not yet wired up. Free tier surfaces priceGuide aggregates only.
-- **Decklist size capped at 100 cards.** Commander format is the largest legal format.
+- **Decklist size capped at 100 cards total AND 100 unique cards.** Commander format is the largest legal format. The unique-cards limit is what actually drives the request count (one search per unique card per shop = up to 600 requests at 100/6) and exists to keep a single tool call from spawning runaway traffic. Override via `CZ_MTG_MAX_UNIQUE_CARDS` if you genuinely need a bigger list.
 - **No price history.** Each query is a fresh snapshot. Track prices yourself if you need it (or open an issue requesting it).
 
 ---

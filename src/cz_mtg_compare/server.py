@@ -99,7 +99,11 @@ async def optimize_decklist(
     of cards to buy from it, plus the shop subtotal. Then show the grand
     total `cheapest_split_total_czk` and any `cheapest_split_missing`.
 
-    The decklist must contain at most 100 cards (Commander deck size). Format
+    The decklist must contain at most 100 cards in total (Commander deck size)
+    AND at most 100 *unique* cards (one HTTP request per unique card per shop —
+    the unique-cards cap exists to keep a single tool call from spawning a
+    runaway number of requests). Override the unique cap via the
+    `CZ_MTG_MAX_UNIQUE_CARDS` env var if you need a higher limit. Format
     example:
 
         4 Lightning Bolt
