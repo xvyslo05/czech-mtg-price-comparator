@@ -30,6 +30,10 @@ class SearchQuery(BaseModel):
     name: str = Field(min_length=1)
     edition: str | None = None
     in_stock_only: bool = True
+    # Display-only products (Art Series, oversized, helper cards) are filtered
+    # out by default because they aren't legal in constructed formats. Set
+    # this to True for collectors who explicitly want them.
+    include_non_playable: bool = False
 
 
 class Offer(BaseModel):

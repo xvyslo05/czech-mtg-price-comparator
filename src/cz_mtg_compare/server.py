@@ -24,13 +24,24 @@ async def search_card(
     edition: str | None = None,
     in_stock_only: bool = True,
     shops: list[ShopId] | None = None,
+    include_non_playable: bool = False,
 ) -> list[Offer]:
     """Search a Magic: The Gathering single card across Czech shops.
 
     Returns a flat list of offers sorted by price_czk ascending. Each offer has shop, edition,
     condition, language, foil, price_czk, stock_qty, and a deep-link url.
+
+    Display-only products (Art Series, oversized, helper / tip / checklist cards,
+    spindowns) are excluded by default because they aren't legal in constructed
+    Magic formats. Pass `include_non_playable=True` if you specifically want them
+    (e.g. for a collector / art print query).
     """
-    query = SearchQuery(name=name, edition=edition, in_stock_only=in_stock_only)
+    query = SearchQuery(
+        name=name,
+        edition=edition,
+        in_stock_only=in_stock_only,
+        include_non_playable=include_non_playable,
+    )
     return await _aggregator.search(query, shops=shops)
 
 
@@ -58,6 +69,7 @@ async def lookup_card(name: str, exact: bool = False) -> CardInfo | None:
 async def optimize_decklist(
     decklist: str,
     in_stock_only: bool = True,
+    include_non_playable: bool = False,
 ) -> DecklistOptimization:
     """Resolve a Magic decklist (Arena/MTGO text) against all shops in parallel
     and return:
@@ -88,8 +100,15 @@ async def optimize_decklist(
 
         Sideboard
         1 Negate
+
+    Display-only products (Art Series, oversized, helper cards) are excluded by
+    default. Pass `include_non_playable=True` to keep them in the picks.
     """
-    return await _optimizer.optimize(decklist, in_stock_only=in_stock_only)
+    return await _optimizer.optimize(
+        decklist,
+        in_stock_only=in_stock_only,
+        include_non_playable=include_non_playable,
+    )
 
 
 def main() -> None:

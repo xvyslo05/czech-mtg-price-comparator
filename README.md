@@ -409,6 +409,16 @@ Each `Offer` includes a `url` you can click through to the shop.
 
 ---
 
+## Non-playable cards
+
+Display-only products (Art Series, oversized cards, helper / tip / checklist cards, spindowns) are **excluded by default** because they aren't legal in any constructed Magic format. The filter looks at both card name and edition for any of these markers.
+
+If you specifically want them — e.g. you're price-checking an art print or a collector item — pass `include_non_playable=True` to either `search_card` or `optimize_decklist`. Or just say so in chat:
+
+> "Find me Art Series Lightning Bolt — include non-playable cards."
+
+Claude will pass the flag through automatically.
+
 ## Limitations
 
 - **No shipping cost optimization.** The multi-shop split picks the cheapest *card* prices, ignoring that buying from four shops means four shipping fees. Per-shop totals let you see the trade-off, but the optimizer doesn't pick for you.

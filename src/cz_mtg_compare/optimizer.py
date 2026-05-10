@@ -108,7 +108,12 @@ class DecklistOptimizer:
     def __init__(self, aggregator: Aggregator | None = None) -> None:
         self._aggregator = aggregator or Aggregator()
 
-    async def optimize(self, decklist_text: str, in_stock_only: bool = True) -> DecklistOptimization:
+    async def optimize(
+        self,
+        decklist_text: str,
+        in_stock_only: bool = True,
+        include_non_playable: bool = False,
+    ) -> DecklistOptimization:
         parsed = parse_decklist(decklist_text)
 
         # Sum quantities per unique (case-insensitive) card name; keep first-seen casing
@@ -129,7 +134,11 @@ class DecklistOptimizer:
         # parallelizes across shops; httpx semaphore caps per-host concurrency.
         async def _search(entry: DecklistEntry) -> tuple[DecklistEntry, list[Offer]]:
             offers = await self._aggregator.search(
-                SearchQuery(name=entry.name, in_stock_only=in_stock_only)
+                SearchQuery(
+                    name=entry.name,
+                    in_stock_only=in_stock_only,
+                    include_non_playable=include_non_playable,
+                )
             )
             return entry, offers
 

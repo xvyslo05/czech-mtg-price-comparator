@@ -6,6 +6,7 @@ from collections.abc import Iterable
 
 from .adapters import ShopAdapter, build_default_adapters
 from .cache import TTLCache
+from .filters import filter_playable
 from .models import Offer, SearchQuery, ShopId, ShopStatus
 
 log = logging.getLogger(__name__)
@@ -49,6 +50,9 @@ class Aggregator:
                 shop=adapter.shop_id, ok=True, last_offer_count=len(result)
             )
             offers.extend(result)
+
+        if not query.include_non_playable:
+            offers = filter_playable(offers)
 
         offers.sort(key=lambda o: (o.price_czk, o.shop))
         return offers
