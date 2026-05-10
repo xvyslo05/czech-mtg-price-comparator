@@ -21,7 +21,7 @@ Claude: (calls search_card)
 - [What this is](#what-this-is)
 - [Supported shops](#supported-shops)
 - [What you can ask Claude](#what-you-can-ask-claude)
-- [Setup](#setup) — three install options: `uvx`, `pipx`, plain `pip`
+- [Setup](#setup) — `uvx`, `pipx`, plain `pip`, or local clone
 - [Verify it's working](#verify-its-working)
 - [Optional: enable Cardmarket](#optional-enable-cardmarket)
 - [Configuration reference](#configuration-reference)
@@ -78,7 +78,7 @@ Claude picks the right tool, calls it, and summarises the result.
 
 ## Setup
 
-You don't need to clone the repo. Pick one of the install methods below, paste the matching JSON into Claude Desktop's config, restart Claude — done.
+You don't need to clone the repo. Pick one of the install methods below, paste the matching JSON into Claude Desktop's config, restart Claude — done. Method **D** is for users who *do* want to clone (development, running unreleased commits).
 
 ### Prerequisites
 
@@ -86,7 +86,7 @@ You don't need to clone the repo. Pick one of the install methods below, paste t
 |-------------------|---------------------------------------|
 | Claude Desktop    | https://claude.ai/download            |
 | Python 3.11+      | `python3 --version`                   |
-| One of: `uvx`, `pipx`, or plain `pip` | see below |
+| One of: `uvx`, `pipx`, plain `pip`, or a local clone | see below |
 
 If your `python3` is 3.10 or older, install a newer one: `brew install python@3.12` on macOS, or [python.org](https://www.python.org/downloads/) on any platform.
 
@@ -132,16 +132,6 @@ The first time Claude Desktop starts the server, uvx fetches the package from Py
 
 To **upgrade** later, run `uvx --refresh-package cz-mtg-compare-mcp cz-mtg-compare-mcp` once.
 
-> **Pre-publish fallback**: until [v0.1.0 is published to PyPI](https://pypi.org/project/cz-mtg-compare-mcp/), you can install directly from GitHub by replacing the `args` block with:
->
-> ```json
-> "args": [
->   "--from",
->   "git+https://github.com/xvyslo05/czech-mtg-price-comparator.git",
->   "cz-mtg-compare-mcp"
-> ]
-> ```
-
 ### Install method B — `pipx`
 
 `pipx` installs Python apps in isolated venvs and exposes their console scripts on your `PATH`.
@@ -166,8 +156,6 @@ Reopen your terminal so `PATH` updates take effect.
 
 ```bash
 pipx install cz-mtg-compare-mcp
-# or, before the first PyPI release:
-# pipx install git+https://github.com/xvyslo05/czech-mtg-price-comparator.git
 ```
 
 **3. Find the absolute path of the installed binary**:
@@ -202,8 +190,6 @@ If you don't want extra tooling, install with system pip and point Claude at the
 
 ```bash
 python3 -m pip install --user cz-mtg-compare-mcp
-# or, before the first PyPI release:
-# python3 -m pip install --user git+https://github.com/xvyslo05/czech-mtg-price-comparator.git
 
 # Find the script
 python3 -c "import sysconfig; print(sysconfig.get_path('scripts'))"
@@ -227,6 +213,34 @@ The full path to the script is `<that-directory>/cz-mtg-compare-mcp`. Then add t
 
 To **upgrade** later: `python3 -m pip install --user --upgrade cz-mtg-compare-mcp`.
 
+### Install method D — from a local clone (development / unreleased changes)
+
+Use this when you've cloned the repo and want to run the server from your working copy — useful for developing on the server, testing PRs, or running an unreleased commit.
+
+```bash
+git clone https://github.com/xvyslo05/czech-mtg-price-comparator.git
+cd czech-mtg-price-comparator
+python3 -m venv .venv
+source .venv/bin/activate          # macOS / Linux
+# .venv\Scripts\activate           # Windows PowerShell
+pip install -e .
+```
+
+Then point Claude Desktop at the in-venv interpreter:
+
+```json
+{
+  "mcpServers": {
+    "cz-mtg-compare": {
+      "command": "/absolute/path/to/repo/.venv/bin/python",
+      "args": ["-m", "cz_mtg_compare"]
+    }
+  }
+}
+```
+
+Edits to the source take effect on the next Claude Desktop restart — no rebuild needed thanks to `-e` (editable install).
+
 ### Step: add to Claude Desktop's config file
 
 The config file lives at:
@@ -245,12 +259,8 @@ A complete macOS example using uvx:
 {
   "mcpServers": {
     "cz-mtg-compare": {
-      "command": "/Users/robin/.local/bin/uvx",
-      "args": [
-        "--from",
-        "git+https://github.com/xvyslo05/czech-mtg-price-comparator.git",
-        "cz-mtg-compare-mcp"
-      ]
+      "command": "/opt/homebrew/bin/uvx",
+      "args": ["cz-mtg-compare-mcp"]
     }
   }
 }
@@ -305,12 +315,8 @@ Add an `"env"` block alongside `"command"` and `"args"` in your existing entry. 
 {
   "mcpServers": {
     "cz-mtg-compare": {
-      "command": "/Users/you/.local/bin/uvx",
-      "args": [
-        "--from",
-        "git+https://github.com/xvyslo05/czech-mtg-price-comparator.git",
-        "cz-mtg-compare-mcp"
-      ],
+      "command": "/opt/homebrew/bin/uvx",
+      "args": ["cz-mtg-compare-mcp"],
       "env": {
         "MKM_APP_TOKEN": "...",
         "MKM_APP_SECRET": "...",
@@ -364,8 +370,9 @@ Two ways:
 - Make sure the path in `command` is **absolute**. Claude Desktop usually doesn't inherit your shell's `PATH`, so a bare `uvx` or `cz-mtg-compare-mcp` will fail to launch.
 - Open Claude Desktop's developer tools (macOS: `Cmd+Option+I` while focused on the chat) and check the console for MCP server errors.
 - Try running the server manually:
-  - uvx: `uvx --from git+https://github.com/xvyslo05/czech-mtg-price-comparator.git cz-mtg-compare-mcp`
+  - uvx: `uvx cz-mtg-compare-mcp`
   - pipx / pip: `cz-mtg-compare-mcp`
+  - local clone: `.venv/bin/python -m cz_mtg_compare`
 
   It should hang waiting for stdin input — that's correct behaviour. Press `Ctrl+C` to exit.
 
@@ -373,7 +380,7 @@ Two ways:
 - The install didn't complete. Re-run your install command (`pipx install ...` or `python3 -m pip install --user ...`) and confirm it finishes without errors.
 
 **uvx hangs or times out the first time Claude Desktop starts the server.**
-- First-time installs through git can take 10–30 seconds while uvx fetches dependencies. Subsequent starts are instant. If it consistently fails, run the manual command above from a terminal to see the underlying error.
+- First-time installs take a few seconds while uvx fetches the package + its dependencies from PyPI. Subsequent starts are instant. If it consistently fails, run the manual command above from a terminal to see the underlying error.
 
 **`Event loop is closed` errors during testing.**
 - Already handled by `tests/conftest.py`. If you see it elsewhere, the shared `httpx.AsyncClient` was bound to a now-closed loop — call `cz_mtg_compare.http_client.close_client()` between event-loop boundaries.
@@ -447,39 +454,23 @@ Claude will pass the flag through automatically.
 
 ## Development
 
-If you want to hack on the server or run the test suite, do a clone-and-editable-install:
+The local-clone setup is documented as [Install method D](#install-method-d--from-a-local-clone-development--unreleased-changes) above — that gets the working copy hooked up to Claude Desktop. To run the test suite, install with the `dev` extra and use `pytest`:
 
 ```bash
-git clone https://github.com/xvyslo05/czech-mtg-price-comparator.git
-cd czech-mtg-price-comparator
-python3 -m venv .venv
-source .venv/bin/activate           # macOS/Linux; .venv\Scripts\activate on Windows
+# from inside the cloned repo with the venv activated
 pip install -e ".[dev]"
 
-# Fast deterministic tests (~0.2s)
+# Fast deterministic tests (~0.2s, 134 tests)
 pytest
 
-# Live smoke tests against real shops + Scryfall (~5s)
+# Live smoke tests against real shops + Scryfall (~30s, 8 tests)
 pytest -m live --override-ini="addopts="
 
-# Manual MCP smoke test (server speaks stdio)
+# Manual MCP smoke test (server speaks stdio; Ctrl+C to exit)
 python -m cz_mtg_compare
 ```
 
 The shop adapters are tested against checked-in HTML/JSON fixtures in `tests/fixtures/`, so the bulk of the test suite is offline and deterministic. Live smoke tests under `tests/test_live_smoke.py` are opt-in via `-m live`.
-
-To point Claude Desktop at your local working copy instead of the published GitHub version, use the `.venv/bin/python -m cz_mtg_compare` command form:
-
-```json
-{
-  "mcpServers": {
-    "cz-mtg-compare": {
-      "command": "/absolute/path/to/repo/.venv/bin/python",
-      "args": ["-m", "cz_mtg_compare"]
-    }
-  }
-}
-```
 
 ### Releasing to PyPI
 
