@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import asyncio
+
 import pytest
 
 from cz_mtg_compare.adapters.base import ShopAdapter
 from cz_mtg_compare.aggregator import Aggregator
 from cz_mtg_compare.models import Condition, Offer, SearchQuery, ShopId
-from cz_mtg_compare.optimizer import DecklistOptimizer
+from cz_mtg_compare.optimizer import MAX_CONCURRENT_CARDS, DecklistOptimizer
 
 
 class _StubAdapter(ShopAdapter):
@@ -186,6 +188,74 @@ async def test_shopping_plan_skips_missing_cards():
     assert len(result.shopping_plan) == 1
     only = result.shopping_plan[0]
     assert {l.name for l in only.lines} == {"Lightning Bolt"}
+
+
+class _ConcurrencyTrackingAdapter(ShopAdapter):
+    """Stub adapter that records the maximum number of concurrent search calls."""
+
+    def __init__(self, shop_id: ShopId, delay_s: float = 0.05):
+        self.shop_id = shop_id
+        self.base_url = f"https://example.com/{shop_id}"
+        self._delay = delay_s
+        self._in_flight = 0
+        self.peak_concurrency = 0
+        self._lock = asyncio.Lock()
+
+    async def search(self, query: SearchQuery) -> list[Offer]:
+        async with self._lock:
+            self._in_flight += 1
+            self.peak_concurrency = max(self.peak_concurrency, self._in_flight)
+        try:
+            await asyncio.sleep(self._delay)
+            return [_o(self.shop_id, query.name, 50)]
+        finally:
+            async with self._lock:
+                self._in_flight -= 1
+
+
+@pytest.mark.asyncio
+async def test_optimizer_outer_fanout_is_capped():
+    """A 30-card decklist must not let more than MAX_CONCURRENT_CARDS aggregator
+    searches run at once — otherwise the per-host queue inside the aggregator
+    blows past its timeout (real-world bug observed on Commander decks)."""
+    tracker = _ConcurrencyTrackingAdapter("tolarie", delay_s=0.02)
+    agg = Aggregator([tracker])
+    optimizer = DecklistOptimizer(agg)
+
+    decklist = "\n".join(f"1 Card{i}" for i in range(30))
+    result = await optimizer.optimize(decklist)
+
+    assert result.unique_cards == 30
+    assert tracker.peak_concurrency <= MAX_CONCURRENT_CARDS, (
+        f"peak concurrency {tracker.peak_concurrency} exceeded "
+        f"MAX_CONCURRENT_CARDS={MAX_CONCURRENT_CARDS}"
+    )
+
+
+@pytest.mark.live
+@pytest.mark.asyncio
+async def test_optimizer_handles_full_commander_deck_live():
+    """Regression for: a real 100-card Commander decklist that previously
+    failed with TimeoutError on most cards because the per-host semaphore
+    queue was overrun. The optimizer must resolve the bulk of the deck
+    within Claude Desktop's tool-call timeout."""
+    from pathlib import Path
+
+    text = (Path(__file__).parent / "fixtures" / "krenko_commander_100.txt").read_text()
+    optimizer = DecklistOptimizer()
+    result = await optimizer.optimize(text)
+
+    assert result.total_cards == 100
+    assert result.unique_cards == 72
+
+    # Sol Ring is one of the most stocked cards in MTG; if this resolves we
+    # know the pipeline is healthy. (User-reported failure included Sol Ring.)
+    sol_ring = next((p for p in result.picks if p.name == "Sol Ring"), None)
+    assert sol_ring is not None and sol_ring.chosen is not None, "Sol Ring must resolve"
+
+    resolved = sum(1 for p in result.picks if p.chosen)
+    # Healthy run resolves ~64 of 72; tolerate some flux from real shop stock.
+    assert resolved >= 50, f"only {resolved}/72 resolved — pipeline may be timing out again"
 
 
 @pytest.mark.asyncio

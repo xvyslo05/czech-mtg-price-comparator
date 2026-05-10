@@ -12,6 +12,14 @@ from .models import Condition, Offer, SearchQuery, ShopId
 
 log = logging.getLogger(__name__)
 
+# Cap how many per-card searches the optimizer fans out at once. Each card
+# search internally fans out to all shops in parallel; without an outer cap a
+# 100-card Commander deck enqueues ~400 HTTP requests through the per-host
+# concurrency semaphore (3) at once, and most of them time out *waiting in
+# the queue* before they ever execute. Six concurrent cards × 4 shops = 24
+# requests in flight, comfortably under the per-host queue limit.
+MAX_CONCURRENT_CARDS = 6
+
 
 # When picking "best" per card we prefer lower price; among equal prices, we
 # prefer better condition and non-foil (foil is usually a different SKU,
@@ -130,16 +138,20 @@ class DecklistOptimizer:
 
         unique_entries = list(per_name.values())
 
-        # Fan out one aggregator.search() per unique card. The aggregator already
-        # parallelizes across shops; httpx semaphore caps per-host concurrency.
+        # Fan out one aggregator.search() per unique card, capped by an outer
+        # concurrency limit so the per-host queue inside the aggregator stays
+        # short enough that individual requests don't time out waiting their turn.
+        sem = asyncio.Semaphore(MAX_CONCURRENT_CARDS)
+
         async def _search(entry: DecklistEntry) -> tuple[DecklistEntry, list[Offer]]:
-            offers = await self._aggregator.search(
-                SearchQuery(
-                    name=entry.name,
-                    in_stock_only=in_stock_only,
-                    include_non_playable=include_non_playable,
+            async with sem:
+                offers = await self._aggregator.search(
+                    SearchQuery(
+                        name=entry.name,
+                        in_stock_only=in_stock_only,
+                        include_non_playable=include_non_playable,
+                    )
                 )
-            )
             return entry, offers
 
         results = await asyncio.gather(*(_search(e) for e in unique_entries))

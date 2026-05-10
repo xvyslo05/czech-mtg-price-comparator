@@ -11,7 +11,7 @@ from .models import Offer, SearchQuery, ShopId, ShopStatus
 
 log = logging.getLogger(__name__)
 
-PER_SHOP_TIMEOUT_S = 10.0
+PER_SHOP_TIMEOUT_S = 20.0
 CACHE_TTL_S = 600.0  # 10 min
 
 
