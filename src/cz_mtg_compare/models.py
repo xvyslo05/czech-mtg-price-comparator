@@ -6,8 +6,14 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-ShopId = Literal["cernyrytir", "najada", "blacklotus", "tolarie"]
-ALL_SHOPS: tuple[ShopId, ...] = ("cernyrytir", "najada", "blacklotus", "tolarie")
+ShopId = Literal["cernyrytir", "najada", "blacklotus", "tolarie", "cardmarket"]
+ALL_SHOPS: tuple[ShopId, ...] = (
+    "cernyrytir",
+    "najada",
+    "blacklotus",
+    "tolarie",
+    "cardmarket",
+)
 
 
 class Condition(str, Enum):

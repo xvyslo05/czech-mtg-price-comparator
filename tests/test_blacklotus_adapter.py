@@ -52,3 +52,28 @@ async def test_edition_extracted_from_description(load_fixture, adapter: BlackLo
     offers = await adapter.parse(html, SearchQuery(name="Lightning Bolt", in_stock_only=False))
     # Many products carry edition; at least one should resolve.
     assert any(o.edition for o in offers), "expected at least one offer with edition"
+
+
+@pytest.mark.asyncio
+async def test_detail_enrichment_fills_condition_and_edition(load_fixture):
+    """When listing alt is generic ('Detail karty'), follow the detail page and
+    extract condition + foil from the gtag view_item variant + edition from meta."""
+    from cz_mtg_compare.models import Offer
+
+    detail_html = load_fixture("blacklotus_detail_lightning-bolt-7.html")
+    offer = Offer(
+        shop="blacklotus",
+        card_name="Lightning Bolt",
+        edition=None,
+        condition=Condition.UNKNOWN,
+        foil=False,
+        price_czk=33,
+        stock_qty=1,
+        url="https://www.blacklotus.cz/lightning-bolt-7/",
+    )
+    BlackLotusAdapter._apply_detail(offer, detail_html)
+
+    assert offer.condition == Condition.NM
+    assert offer.foil is False
+    assert offer.edition is not None
+    assert "Baldur" in offer.edition

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import re
 import urllib.parse
 from html import unescape
@@ -17,11 +18,23 @@ _ALT_RE = re.compile(
     r"\(\s*Foil\s+(ANO|NE)\s*,\s*Stav\s+([^)]+?)\s*\)", re.IGNORECASE
 )
 _EDITION_RE = re.compile(r"z\s+edice\s+(.+?)\s*[.\n]", re.IGNORECASE)
+# On the product detail page, Shoptet emits a gtag view_item event whose
+# `variant` field encodes the same data: "Foil: ANO|NE, Stav: <condition>".
+_DETAIL_VARIANT_RE = re.compile(
+    r'"variant"\s*:\s*"(?:[^"]*~)?Foil:\s*(ANO|NE)\s*,\s*Stav:\s*([^"]+?)"',
+    re.IGNORECASE,
+)
+_DETAIL_META_DESC_RE = re.compile(
+    r'<meta\s+name="description"\s+content="([^"]+)"', re.IGNORECASE
+)
 
 
 class BlackLotusAdapter(ShopAdapter):
     shop_id = "blacklotus"
     base_url = BASE
+
+    def __init__(self, *, enrich_detail: bool = True) -> None:
+        self._enrich_detail = enrich_detail
 
     def _search_url(self, query: SearchQuery) -> str:
         params = {"string": query.name}
@@ -33,10 +46,54 @@ class BlackLotusAdapter(ShopAdapter):
         async with host_slot("blacklotus.cz"):
             resp = await client.get(url)
         resp.raise_for_status()
-        return self._parse(resp.text, query)
+        offers = self._parse(resp.text, query)
+        if self._enrich_detail:
+            await self._enrich_offers(offers)
+        return offers
 
     async def parse(self, html: str, query: SearchQuery) -> list[Offer]:
         return self._parse(html, query)
+
+    async def _enrich_offers(self, offers: list[Offer]) -> None:
+        """Follow detail URLs for offers where the listing didn't expose condition.
+
+        The detail page carries a gtag view_item event with the exact variant
+        ("Foil: ANO/NE, Stav: <cond>") plus the edition in the meta description.
+        """
+        targets = [
+            o for o in offers
+            if o.condition is Condition.UNKNOWN or o.edition is None
+        ]
+        if not targets:
+            return
+        client = await get_client()
+
+        async def fetch_one(offer: Offer) -> None:
+            try:
+                async with host_slot("blacklotus.cz"):
+                    resp = await client.get(offer.url)
+                resp.raise_for_status()
+                self._apply_detail(offer, resp.text)
+            except Exception:  # noqa: BLE001 — enrichment is best-effort
+                return
+
+        await asyncio.gather(*(fetch_one(o) for o in targets))
+
+    @staticmethod
+    def _apply_detail(offer: Offer, html: str) -> None:
+        m = _DETAIL_VARIANT_RE.search(html)
+        if m:
+            if offer.condition is Condition.UNKNOWN:
+                offer.condition = normalize_condition(m.group(2))
+            # Listing's foil flag wins when set; otherwise take detail page's.
+            if not offer.foil:
+                offer.foil = m.group(1).strip().upper() == "ANO"
+        if offer.edition is None:
+            md = _DETAIL_META_DESC_RE.search(html)
+            if md:
+                em = _EDITION_RE.search(unescape(md.group(1)))
+                if em:
+                    offer.edition = " ".join(em.group(1).split())
 
     def _parse(self, html: str, query: SearchQuery) -> list[Offer]:
         tree = HTMLParser(html)
