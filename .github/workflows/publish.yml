@@ -1,0 +1,66 @@
+name: Publish to PyPI
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build distributions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install build tooling
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install build
+
+      - name: Build sdist + wheel
+        run: python -m build
+
+      - name: Smoke-test the wheel installs and the entry point loads
+        run: |
+          python -m venv .smoke
+          .smoke/bin/pip install --quiet dist/*.whl
+          # The MCP server speaks stdio — sending an EOF should make it exit cleanly.
+          .smoke/bin/cz-mtg-compare-mcp < /dev/null || true
+          .smoke/bin/python -c "import cz_mtg_compare; print(cz_mtg_compare.__version__)"
+
+      - name: Upload distributions
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  publish-pypi:
+    name: Publish to PyPI
+    needs: build
+    runs-on: ubuntu-latest
+    # PyPI Trusted Publishing requires id-token: write at the job level.
+    # No tokens or secrets are needed — PyPI verifies the OIDC claim against
+    # the Trusted Publisher configured in the project's settings.
+    permissions:
+      id-token: write
+    environment:
+      name: pypi
+      url: https://pypi.org/p/cz-mtg-compare-mcp
+    steps:
+      - name: Download distributions
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1

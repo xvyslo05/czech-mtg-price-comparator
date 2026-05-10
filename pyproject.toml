@@ -10,6 +10,35 @@ readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [{ name = "Robin Vyslouzil" }]
+keywords = [
+    "mcp",
+    "model-context-protocol",
+    "magic-the-gathering",
+    "mtg",
+    "card-prices",
+    "czech",
+    "tolarie",
+    "najada",
+    "blacklotus",
+    "cernyrytir",
+    "cardmarket",
+    "claude",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Games/Entertainment :: Board Games",
+    "Topic :: Internet :: WWW/HTTP :: Indexing/Search",
+    "Typing :: Typed",
+]
 dependencies = [
     "mcp>=1.2.0",
     "httpx[http2]>=0.27",
@@ -18,11 +47,19 @@ dependencies = [
     "tenacity>=8.2",
 ]
 
+[project.urls]
+Homepage = "https://github.com/xvyslo05/czech-mtg-price-comparator"
+Repository = "https://github.com/xvyslo05/czech-mtg-price-comparator"
+Issues = "https://github.com/xvyslo05/czech-mtg-price-comparator/issues"
+Changelog = "https://github.com/xvyslo05/czech-mtg-price-comparator/releases"
+
 [project.optional-dependencies]
 dev = [
     "pytest>=8.0",
     "pytest-asyncio>=0.23",
     "respx>=0.21",
+    "build>=1.2",
+    "twine>=5.0",
 ]
 
 [project.scripts]
@@ -30,6 +67,15 @@ cz-mtg-compare-mcp = "cz_mtg_compare.server:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/cz_mtg_compare"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/src",
+    "/tests",
+    "/README.md",
+    "/LICENSE",
+    "/pyproject.toml",
+]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

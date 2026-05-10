@@ -92,7 +92,7 @@ If your `python3` is 3.10 or older, install a newer one: `brew install python@3.
 
 ### Install method A — `uvx` (recommended)
 
-`uv` is a fast Python package manager. `uvx` runs Python apps in isolated environments and caches them. **No clone, no venv, no manual install** — uvx fetches the package from GitHub on first run and caches it.
+`uv` is a fast Python package manager. `uvx` runs Python apps in isolated environments and caches them. **No clone, no venv, no manual install** — uvx fetches the package and caches it on first run.
 
 **1. Install uv** (one-liner):
 
@@ -122,19 +122,25 @@ which uvx
   "mcpServers": {
     "cz-mtg-compare": {
       "command": "/ABSOLUTE/PATH/TO/uvx",
-      "args": [
-        "--from",
-        "git+https://github.com/xvyslo05/czech-mtg-price-comparator.git",
-        "cz-mtg-compare-mcp"
-      ]
+      "args": ["cz-mtg-compare-mcp"]
     }
   }
 }
 ```
 
-The first time Claude Desktop starts the server, uvx fetches and installs the package (~10–20 seconds). Subsequent starts are instant.
+The first time Claude Desktop starts the server, uvx fetches the package from PyPI and installs it (a few seconds). Subsequent starts are instant.
 
-To **upgrade** later, run `uvx --refresh-package cz-mtg-compare-mcp --from git+https://github.com/xvyslo05/czech-mtg-price-comparator.git cz-mtg-compare-mcp` once.
+To **upgrade** later, run `uvx --refresh-package cz-mtg-compare-mcp cz-mtg-compare-mcp` once.
+
+> **Pre-publish fallback**: until [v0.1.0 is published to PyPI](https://pypi.org/project/cz-mtg-compare-mcp/), you can install directly from GitHub by replacing the `args` block with:
+>
+> ```json
+> "args": [
+>   "--from",
+>   "git+https://github.com/xvyslo05/czech-mtg-price-comparator.git",
+>   "cz-mtg-compare-mcp"
+> ]
+> ```
 
 ### Install method B — `pipx`
 
@@ -159,7 +165,9 @@ Reopen your terminal so `PATH` updates take effect.
 **2. Install the server**:
 
 ```bash
-pipx install git+https://github.com/xvyslo05/czech-mtg-price-comparator.git
+pipx install cz-mtg-compare-mcp
+# or, before the first PyPI release:
+# pipx install git+https://github.com/xvyslo05/czech-mtg-price-comparator.git
 ```
 
 **3. Find the absolute path of the installed binary**:
@@ -193,7 +201,9 @@ To **upgrade** later: `pipx upgrade cz-mtg-compare-mcp`.
 If you don't want extra tooling, install with system pip and point Claude at the script directly.
 
 ```bash
-python3 -m pip install --user git+https://github.com/xvyslo05/czech-mtg-price-comparator.git
+python3 -m pip install --user cz-mtg-compare-mcp
+# or, before the first PyPI release:
+# python3 -m pip install --user git+https://github.com/xvyslo05/czech-mtg-price-comparator.git
 
 # Find the script
 python3 -c "import sysconfig; print(sysconfig.get_path('scripts'))"
@@ -215,7 +225,7 @@ The full path to the script is `<that-directory>/cz-mtg-compare-mcp`. Then add t
 }
 ```
 
-To **upgrade** later: `python3 -m pip install --user --upgrade git+https://github.com/xvyslo05/czech-mtg-price-comparator.git`.
+To **upgrade** later: `python3 -m pip install --user --upgrade cz-mtg-compare-mcp`.
 
 ### Step: add to Claude Desktop's config file
 
@@ -469,6 +479,42 @@ To point Claude Desktop at your local working copy instead of the published GitH
     }
   }
 }
+```
+
+### Releasing to PyPI
+
+The project ships a `Publish to PyPI` GitHub Actions workflow at `.github/workflows/publish.yml`. It builds an sdist + wheel, smoke-tests the wheel install + entry point in a fresh venv, then publishes via [PyPI Trusted Publishing](https://docs.pypi.org/trusted-publishers/) (OIDC — no API tokens stored anywhere).
+
+**One-time setup** (maintainer only):
+
+1. Create the project on PyPI by going to https://pypi.org/manage/account/publishing/ and adding a new "pending" Trusted Publisher with:
+   - **PyPI Project Name**: `cz-mtg-compare-mcp`
+   - **Owner**: `xvyslo05`
+   - **Repository name**: `czech-mtg-price-comparator`
+   - **Workflow filename**: `publish.yml`
+   - **Environment name**: `pypi`
+2. In the GitHub repo, go to **Settings → Environments → New environment** and create one named `pypi`. (Optional: add required reviewers as a release-gate.)
+
+**Cutting a release**:
+
+```bash
+# Bump the version in pyproject.toml, commit it
+sed -i '' 's/version = "0.1.0"/version = "0.1.1"/' pyproject.toml
+git add pyproject.toml && git commit -m "Release v0.1.1"
+
+# Tag and push — this triggers the workflow
+git tag v0.1.1
+git push origin main v0.1.1
+```
+
+The workflow runs on the tag push: build → smoke test → publish. Verify on https://pypi.org/project/cz-mtg-compare-mcp/. Users can then `uvx cz-mtg-compare-mcp` immediately.
+
+**Manual publish from a local machine** (fallback if Trusted Publishing isn't set up yet):
+
+```bash
+pip install -e ".[dev]"
+rm -rf dist && python -m build
+python -m twine upload dist/*    # prompts for PyPI API token
 ```
 
 ---
