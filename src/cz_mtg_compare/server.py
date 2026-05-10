@@ -24,12 +24,18 @@ async def search_card(
     edition: str | None = None,
     in_stock_only: bool = True,
     shops: list[ShopId] | None = None,
+    exclude_shops: list[ShopId] | None = None,
     include_non_playable: bool = False,
 ) -> list[Offer]:
     """Search a Magic: The Gathering single card across Czech shops.
 
     Returns a flat list of offers sorted by price_czk ascending. Each offer has shop, edition,
     condition, language, foil, price_czk, stock_qty, and a deep-link url.
+
+    Shop selection:
+    - `shops`: optional allow-list. If given, only these shops are queried. None = all.
+    - `exclude_shops`: optional deny-list. Any shop here is dropped after `shops` is applied.
+      Use this when the user wants results "from everywhere except shop X".
 
     Display-only products (Art Series, oversized, helper / tip / checklist cards,
     spindowns) are excluded by default because they aren't legal in constructed
@@ -42,7 +48,7 @@ async def search_card(
         in_stock_only=in_stock_only,
         include_non_playable=include_non_playable,
     )
-    return await _aggregator.search(query, shops=shops)
+    return await _aggregator.search(query, shops=shops, exclude_shops=exclude_shops)
 
 
 @mcp.tool()
@@ -70,6 +76,8 @@ async def optimize_decklist(
     decklist: str,
     in_stock_only: bool = True,
     include_non_playable: bool = False,
+    shops: list[ShopId] | None = None,
+    exclude_shops: list[ShopId] | None = None,
 ) -> DecklistOptimization:
     """Resolve a Magic decklist (Arena/MTGO text) against all shops in parallel
     and return:
@@ -103,11 +111,19 @@ async def optimize_decklist(
 
     Display-only products (Art Series, oversized, helper cards) are excluded by
     default. Pass `include_non_playable=True` to keep them in the picks.
+
+    Shop selection mirrors `search_card`:
+    - `shops`: allow-list (None = all configured shops).
+    - `exclude_shops`: deny-list (applied after the allow-list).
+    Excluded shops also disappear from `per_shop_bundles` so the chart only
+    shows the shops the user actually wants to see.
     """
     return await _optimizer.optimize(
         decklist,
         in_stock_only=in_stock_only,
         include_non_playable=include_non_playable,
+        shops=shops,
+        exclude_shops=exclude_shops,
     )
 
 

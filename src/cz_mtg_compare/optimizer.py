@@ -121,6 +121,8 @@ class DecklistOptimizer:
         decklist_text: str,
         in_stock_only: bool = True,
         include_non_playable: bool = False,
+        shops: Iterable[ShopId] | None = None,
+        exclude_shops: Iterable[ShopId] | None = None,
     ) -> DecklistOptimization:
         parsed = parse_decklist(decklist_text)
 
@@ -150,7 +152,9 @@ class DecklistOptimizer:
                         name=entry.name,
                         in_stock_only=in_stock_only,
                         include_non_playable=include_non_playable,
-                    )
+                    ),
+                    shops=shops,
+                    exclude_shops=exclude_shops,
                 )
             return entry, offers
 
@@ -174,7 +178,8 @@ class DecklistOptimizer:
         cheapest_split_total = sum(p.chosen_total_czk or 0 for p in picks if p.chosen)
         cheapest_split_missing = [p.name for p in picks if p.missing]
 
-        per_shop_bundles = self._build_shop_bundles(unique_entries, results)
+        active_shops = self._active_shops(shops, exclude_shops)
+        per_shop_bundles = self._build_shop_bundles(unique_entries, results, active_shops)
         shopping_plan = _build_shopping_plan(picks)
 
         return DecklistOptimization(
@@ -188,10 +193,23 @@ class DecklistOptimizer:
             per_shop_bundles=per_shop_bundles,
         )
 
+    def _active_shops(
+        self,
+        shops: Iterable[ShopId] | None,
+        exclude_shops: Iterable[ShopId] | None,
+    ) -> list[ShopId]:
+        target = set(shops) if shops else None
+        deny = set(exclude_shops) if exclude_shops else set()
+        return [
+            s for s in self._aggregator.shop_ids
+            if (target is None or s in target) and s not in deny
+        ]
+
     def _build_shop_bundles(
         self,
         unique_entries: list[DecklistEntry],
         results: list[tuple[DecklistEntry, list[Offer]]],
+        active_shops: list[ShopId],
     ) -> list[ShopBundle]:
         # Per-card per-shop best offer.
         per_card_per_shop: dict[str, dict[ShopId, Offer]] = {}
@@ -205,7 +223,7 @@ class DecklistOptimizer:
 
         total_unique = max(len(unique_entries), 1)
         bundles: list[ShopBundle] = []
-        for shop in self._aggregator.shop_ids:
+        for shop in active_shops:
             covered = 0
             missing: list[str] = []
             total = 0

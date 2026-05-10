@@ -28,10 +28,18 @@ class Aggregator:
         return [a.shop_id for a in self._adapters]
 
     async def search(
-        self, query: SearchQuery, shops: Iterable[ShopId] | None = None
+        self,
+        query: SearchQuery,
+        shops: Iterable[ShopId] | None = None,
+        exclude_shops: Iterable[ShopId] | None = None,
     ) -> list[Offer]:
         target_ids = set(shops) if shops else None
-        adapters = [a for a in self._adapters if target_ids is None or a.shop_id in target_ids]
+        deny_ids = set(exclude_shops) if exclude_shops else set()
+        adapters = [
+            a for a in self._adapters
+            if (target_ids is None or a.shop_id in target_ids)
+            and a.shop_id not in deny_ids
+        ]
 
         coros = [self._run_one(a, query) for a in adapters]
         results = await asyncio.gather(*coros, return_exceptions=True)

@@ -352,17 +352,39 @@ Add an `"env"` block alongside `"command"` and `"args"` in your existing entry. 
 | `MKM_API_BASE`                | Override Cardmarket API base URL                   | `https://api.cardmarket.com/ws/v2.0/output.json` |
 | `MKM_EUR_TO_CZK`              | EUR → CZK conversion rate for Cardmarket prices    | `24.5` |
 | `CZ_MTG_SCRYFALL_CACHE`       | Override Scryfall on-disk cache directory          | `~/.cache/cz-mtg-compare/scryfall/` |
+| `CZ_MTG_DISABLED_SHOPS`       | Comma-separated, case-insensitive list of shop IDs to drop at startup (e.g. `blacklotus,untap`) | unset |
 
 ### Disabling individual shops
 
-Two ways:
+Three ways, in increasing scope:
 
-1. **Per-call**: tell Claude which shops to use.
+1. **Per-call allow-list**: tell Claude which shops you DO want.
    > "Only check tolarie and najada for this card."
 
-   Claude will pass `shops=["tolarie", "najada"]` to `search_card`.
+   Claude passes `shops=["tolarie", "najada"]` to `search_card` / `optimize_decklist`.
 
-2. **Globally**: edit `src/cz_mtg_compare/adapters/__init__.py` and remove the unwanted adapter from `build_default_adapters()`.
+2. **Per-call deny-list** (opt-out): tell Claude which shops you DON'T want.
+   > "Search Lightning Bolt everywhere except blacklotus."
+
+   Claude passes `exclude_shops=["blacklotus"]`. Combines with `shops`: the deny-list is applied AFTER the allow-list, so an explicit deny always wins. Excluded shops also disappear from `per_shop_bundles` in the optimizer's output.
+
+3. **Server-wide opt-out** via env var. Add `CZ_MTG_DISABLED_SHOPS` to your Claude Desktop config — comma-separated, case-insensitive — and those shops are dropped from the default adapter list at startup. Useful if you have a standing reason to never query a particular shop (bad past experience, slow responses, etc.):
+
+   ```json
+   {
+     "mcpServers": {
+       "cz-mtg-compare": {
+         "command": "/opt/homebrew/bin/uvx",
+         "args": ["cz-mtg-compare-mcp"],
+         "env": {
+           "CZ_MTG_DISABLED_SHOPS": "blacklotus,untap"
+         }
+       }
+     }
+   }
+   ```
+
+   Unknown shop names in the env var are silently ignored, so a typo can't brick the server.
 
 ---
 
