@@ -38,7 +38,7 @@ Claude: (calls search_card)
 This is an MCP server. MCP is the protocol Claude Desktop (and other clients) use to call external tools. Once configured, Claude can:
 
 - **Search a single card** across all six Czech shops at once.
-- **Optimize a Commander/Standard/Modern decklist** — paste the list in chat, get back the cheapest combination of shops to buy from, plus each shop's solo total.
+- **Optimize a Commander/Standard/Modern decklist** — paste the list in chat, get back either the cheapest cross-shop split (default) or a plan that consolidates into the fewest distinct shops (`strategy="fewest_shops"`, within a 10% price tolerance), plus each shop's solo total.
 - **Resolve card names** through Scryfall (canonical name, set/collector#, oracle text, multilingual printed names).
 - **Fall back to Cardmarket** for European pricing when CZ shops don't carry a card (optional, requires API credentials).
 
@@ -73,6 +73,8 @@ Once installed, you can talk to Claude in plain Czech or English. Some examples 
 > "Lookup Atraxa, Praetors' Voice on Scryfall and tell me which sets it's printed in."
 >
 > "Compare prices for the cards in this Pioneer deck — but only from najada and tolarie."
+>
+> "I'd rather place fewer separate orders — optimize this decklist to use the fewest shops possible, even if it costs a bit more."
 
 Claude picks the right tool, calls it, and summarises the result.
 
@@ -354,6 +356,7 @@ Add an `"env"` block alongside `"command"` and `"args"` in your existing entry. 
 | `CZ_MTG_SCRYFALL_CACHE`       | Override Scryfall on-disk cache directory          | `~/.cache/cz-mtg-compare/scryfall/` |
 | `CZ_MTG_DISABLED_SHOPS`       | Comma-separated, case-insensitive list of shop IDs to drop at startup (e.g. `blacklotus,untap`) | unset |
 | `CZ_MTG_MAX_UNIQUE_CARDS`     | Hard cap on unique cards per `optimize_decklist` call (one HTTP request per unique card per shop). Invalid / non-positive values are ignored | `100` |
+| `CZ_MTG_CONSOLIDATE_TOLERANCE_PCT` | How much extra (in %) the `fewest_shops` strategy may pay vs. the cheapest-split total in exchange for consolidating into fewer shops. Integer percent; invalid / non-positive values are ignored | `10` |
 
 ### Disabling individual shops
 
@@ -449,10 +452,14 @@ Three ways, in increasing scope:
 - Per-shop results are cached in-memory for 10 minutes (LRU eviction not yet, just TTL).
 - One shop failing or timing out **never** kills the query — partial results come back, and the failed shop's error is surfaced through `list_shops`.
 
-The decklist optimizer is a thin layer on top: it parses the deck, fans out one `search_card` per unique card (still capped per-host, so 100 cards → 100 sequential-per-host searches but parallel across shops), then computes:
+The decklist optimizer is a thin layer on top: it parses the deck, fans out one `search_card` per unique card (still capped per-host, so 100 cards → 100 sequential-per-host searches but parallel across shops), then computes one of two shopping plans:
 
-- **Multi-shop split**: pick the cheapest in-stock copy of each card across all shops.
-- **Per-shop bundles**: for each shop on its own, sum the cheapest offer per card it has and count cards it's missing.
+- **`cheapest` (default)** — per-card greedy split: pick the cheapest in-stock copy of each card across all shops. Minimizes total CZK; may fragment the order across many shops.
+- **`fewest_shops`** — consolidate the order into the smallest number of distinct shops, while staying within 10% of the cheapest-split total (overridable via `CZ_MTG_CONSOLIDATE_TOLERANCE_PCT`). Internally it enumerates every non-empty subset of contributing shops, picks the cheapest in-subset offer per card (falling back to the global cheapest for cards the subset doesn't sell), filters to candidates within budget, and returns the plan with the fewest effective shops, ties broken by total.
+
+Both modes return a `shopping_plan` grouped by shop plus a `cheapest_split_total_czk` baseline; `fewest_shops` also populates `consolidated_total_czk` so callers can show the consolidation premium.
+
+- **Per-shop bundles**: for each shop on its own, sum the cheapest offer per card it has and count cards it's missing. Strategy-independent — always returned.
 
 Each `Offer` includes a `url` you can click through to the shop.
 
@@ -470,7 +477,7 @@ Claude will pass the flag through automatically.
 
 ## Limitations
 
-- **No shipping cost optimization.** The multi-shop split picks the cheapest *card* prices, ignoring that buying from six shops means six shipping fees. Per-shop totals let you see the trade-off, but the optimizer doesn't pick for you.
+- **Shipping cost isn't modelled explicitly.** The `cheapest` strategy minimizes card prices only and ignores per-shop shipping fees. Use `strategy="fewest_shops"` to consolidate into fewer orders (within 10% of the cheapest-split total by default, configurable via `CZ_MTG_CONSOLIDATE_TOLERANCE_PCT`). Per-shop totals still let you eyeball trade-offs manually.
 - **blacklotus condition can occasionally still be `?`** if the product page lacks the gtag variant marker — best-effort only.
 - **Cardmarket per-seller offers** require a paid Trader-tier API key, not yet wired up. Free tier surfaces priceGuide aggregates only.
 - **Decklist size capped at 100 cards total AND 100 unique cards.** Commander format is the largest legal format. The unique-cards limit is what actually drives the request count (one search per unique card per shop = up to 600 requests at 100/6) and exists to keep a single tool call from spawning runaway traffic. Override via `CZ_MTG_MAX_UNIQUE_CARDS` if you genuinely need a bigger list.
