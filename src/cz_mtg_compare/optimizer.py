@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
-from typing import Iterable
+from typing import Iterable, Literal
 
 from pydantic import BaseModel, Field
 
@@ -12,6 +12,8 @@ from .decklist import DeckSection, DecklistEntry, parse_decklist
 from .models import Condition, Offer, SearchQuery, ShopId
 
 log = logging.getLogger(__name__)
+
+Strategy = Literal["cheapest", "fewest_shops"]
 
 # Cap how many per-card searches the optimizer fans out at once. Each card
 # search internally fans out to all shops in parallel; without an outer cap a
@@ -43,6 +45,30 @@ def _max_unique_cards() -> int:
         log.warning("ignoring non-positive %s=%d; using default %d",
                     MAX_UNIQUE_CARDS_ENV, value, DEFAULT_MAX_UNIQUE_CARDS)
         return DEFAULT_MAX_UNIQUE_CARDS
+    return value
+
+
+# How much extra the fewest_shops strategy may pay (vs. the cheapest-split
+# total) in exchange for consolidating the order into fewer shops. Expressed
+# as an integer percent. Override via CZ_MTG_CONSOLIDATE_TOLERANCE_PCT.
+DEFAULT_CONSOLIDATE_TOLERANCE_PCT = 10
+CONSOLIDATE_TOLERANCE_ENV = "CZ_MTG_CONSOLIDATE_TOLERANCE_PCT"
+
+
+def _consolidate_tolerance_pct() -> int:
+    raw = os.environ.get(CONSOLIDATE_TOLERANCE_ENV, "").strip()
+    if not raw:
+        return DEFAULT_CONSOLIDATE_TOLERANCE_PCT
+    try:
+        value = int(raw)
+    except ValueError:
+        log.warning("ignoring invalid %s=%r; using default %d",
+                    CONSOLIDATE_TOLERANCE_ENV, raw, DEFAULT_CONSOLIDATE_TOLERANCE_PCT)
+        return DEFAULT_CONSOLIDATE_TOLERANCE_PCT
+    if value <= 0:
+        log.warning("ignoring non-positive %s=%d; using default %d",
+                    CONSOLIDATE_TOLERANCE_ENV, value, DEFAULT_CONSOLIDATE_TOLERANCE_PCT)
+        return DEFAULT_CONSOLIDATE_TOLERANCE_PCT
     return value
 
 
@@ -110,9 +136,19 @@ class DecklistOptimization(BaseModel):
     unique_cards: int
     parser_errors: list[str] = Field(default_factory=list)
 
+    # Which strategy produced `picks` and `shopping_plan`.
+    strategy: Strategy = "cheapest"
+
     picks: list[CardPick]
+    # Total of the per-card greedy cheapest split — always populated as a
+    # baseline reference, regardless of the active strategy.
     cheapest_split_total_czk: int
     cheapest_split_missing: list[str]
+
+    # Total of the consolidated plan when strategy == "fewest_shops". Equals
+    # the sum of `shopping_plan` subtotals in that mode. None when
+    # strategy == "cheapest".
+    consolidated_total_czk: int | None = None
 
     # Same data as `picks`, regrouped by shop for direct rendering as a
     # shopping plan / chart. Sorted by descending shop subtotal.
@@ -148,6 +184,7 @@ class DecklistOptimizer:
         include_non_playable: bool = False,
         shops: Iterable[ShopId] | None = None,
         exclude_shops: Iterable[ShopId] | None = None,
+        strategy: Strategy = "cheapest",
     ) -> DecklistOptimization:
         parsed = parse_decklist(decklist_text)
 
@@ -192,10 +229,10 @@ class DecklistOptimizer:
 
         results = await asyncio.gather(*(_search(e) for e in unique_entries))
 
-        picks: list[CardPick] = []
+        baseline_picks: list[CardPick] = []
         for entry, offers in results:
             chosen = _pick_best(offers)
-            picks.append(
+            baseline_picks.append(
                 CardPick(
                     name=entry.name,
                     quantity=entry.quantity,
@@ -207,20 +244,37 @@ class DecklistOptimizer:
                 )
             )
 
-        cheapest_split_total = sum(p.chosen_total_czk or 0 for p in picks if p.chosen)
-        cheapest_split_missing = [p.name for p in picks if p.missing]
+        cheapest_split_total = sum(p.chosen_total_czk or 0 for p in baseline_picks if p.chosen)
+        cheapest_split_missing = [p.name for p in baseline_picks if p.missing]
+
+        per_card_per_shop = _build_per_card_per_shop(results)
 
         active_shops = self._active_shops(shops, exclude_shops)
-        per_shop_bundles = self._build_shop_bundles(unique_entries, results, active_shops)
+        per_shop_bundles = _build_shop_bundles(unique_entries, per_card_per_shop, active_shops)
+
+        if strategy == "fewest_shops":
+            picks, consolidated_total = _build_fewest_shops_picks(
+                unique_entries,
+                per_card_per_shop,
+                baseline_picks,
+                cheapest_split_total,
+                _consolidate_tolerance_pct(),
+            )
+        else:
+            picks = baseline_picks
+            consolidated_total = None
+
         shopping_plan = _build_shopping_plan(picks)
 
         return DecklistOptimization(
             total_cards=parsed.total_cards,
             unique_cards=len(unique_entries),
             parser_errors=parsed.errors,
+            strategy=strategy,
             picks=picks,
             cheapest_split_total_czk=cheapest_split_total,
             cheapest_split_missing=cheapest_split_missing,
+            consolidated_total_czk=consolidated_total,
             shopping_plan=shopping_plan,
             per_shop_bundles=per_shop_bundles,
         )
@@ -237,48 +291,134 @@ class DecklistOptimizer:
             if (target is None or s in target) and s not in deny
         ]
 
-    def _build_shop_bundles(
-        self,
-        unique_entries: list[DecklistEntry],
-        results: list[tuple[DecklistEntry, list[Offer]]],
-        active_shops: list[ShopId],
-    ) -> list[ShopBundle]:
-        # Per-card per-shop best offer.
-        per_card_per_shop: dict[str, dict[ShopId, Offer]] = {}
-        for entry, offers in results:
-            best_in_shop: dict[ShopId, Offer] = {}
-            for o in offers:
-                cur = best_in_shop.get(o.shop)
-                if cur is None or _offer_score(o) < _offer_score(cur):
-                    best_in_shop[o.shop] = o
-            per_card_per_shop[entry.name.lower()] = best_in_shop
 
-        total_unique = max(len(unique_entries), 1)
-        bundles: list[ShopBundle] = []
-        for shop in active_shops:
-            covered = 0
-            missing: list[str] = []
-            total = 0
-            for entry in unique_entries:
-                offer = per_card_per_shop.get(entry.name.lower(), {}).get(shop)
-                if offer is None:
-                    missing.append(entry.name)
-                else:
-                    covered += 1
-                    total += offer.price_czk * entry.quantity
-            bundles.append(
-                ShopBundle(
-                    shop=shop,
-                    covered_cards=covered,
-                    missing_cards=missing,
-                    total_czk=total,
-                    coverage_pct=round(covered / total_unique * 100, 1),
-                )
+def _build_per_card_per_shop(
+    results: list[tuple[DecklistEntry, list[Offer]]],
+) -> dict[str, dict[ShopId, Offer]]:
+    """For each card, the best (by `_offer_score`) offer in each shop."""
+    per_card_per_shop: dict[str, dict[ShopId, Offer]] = {}
+    for entry, offers in results:
+        best_in_shop: dict[ShopId, Offer] = {}
+        for o in offers:
+            cur = best_in_shop.get(o.shop)
+            if cur is None or _offer_score(o) < _offer_score(cur):
+                best_in_shop[o.shop] = o
+        per_card_per_shop[entry.name.lower()] = best_in_shop
+    return per_card_per_shop
+
+
+def _build_shop_bundles(
+    unique_entries: list[DecklistEntry],
+    per_card_per_shop: dict[str, dict[ShopId, Offer]],
+    active_shops: list[ShopId],
+) -> list[ShopBundle]:
+    total_unique = max(len(unique_entries), 1)
+    bundles: list[ShopBundle] = []
+    for shop in active_shops:
+        covered = 0
+        missing: list[str] = []
+        total = 0
+        for entry in unique_entries:
+            offer = per_card_per_shop.get(entry.name.lower(), {}).get(shop)
+            if offer is None:
+                missing.append(entry.name)
+            else:
+                covered += 1
+                total += offer.price_czk * entry.quantity
+        bundles.append(
+            ShopBundle(
+                shop=shop,
+                covered_cards=covered,
+                missing_cards=missing,
+                total_czk=total,
+                coverage_pct=round(covered / total_unique * 100, 1),
+            )
+        )
+
+    # Sort bundles best-to-worst: highest coverage, then lowest total.
+    bundles.sort(key=lambda b: (-b.coverage_pct, b.total_czk))
+    return bundles
+
+
+def _build_fewest_shops_picks(
+    unique_entries: list[DecklistEntry],
+    per_card_per_shop: dict[str, dict[ShopId, Offer]],
+    baseline_picks: list[CardPick],
+    baseline_total: int,
+    tolerance_pct: int,
+) -> tuple[list[CardPick], int]:
+    """Pick offers so the final shopping plan uses the fewest distinct shops,
+    subject to staying within `tolerance_pct` of the cheapest-split total.
+
+    Algorithm: enumerate every non-empty subset S of shops that have at least
+    one offer in this query. For each subset, build candidate picks by taking
+    the cheapest in-S offer per card, falling back to the globally-cheapest
+    offer when no shop in S sells the card (overflow). Reject candidates over
+    budget; among the rest, pick the one with the fewest *effective* shops in
+    the plan, ties broken by lowest total.
+
+    Returns (picks, total). Falls back to (baseline_picks, baseline_total) if
+    no candidate fits — only reachable when there is nothing to consolidate
+    (e.g. every card missing).
+    """
+    contributing_shops = sorted({
+        shop for offers_by_shop in per_card_per_shop.values() for shop in offers_by_shop
+    })
+    n = len(contributing_shops)
+    if n == 0 or baseline_total <= 0:
+        return baseline_picks, baseline_total
+
+    # CZK is integer; tolerance is integer percent. Floor is fine — it just
+    # makes the budget marginally tighter than the float equivalent.
+    budget = baseline_total * (100 + tolerance_pct) // 100
+
+    baseline_by_name = {p.name.lower(): p for p in baseline_picks}
+
+    best_key: tuple[int, int] | None = None
+    best_picks: list[CardPick] | None = None
+    best_total = 0
+
+    # 2^n - 1 non-empty subsets. With n <= ~6 contributing shops this is at
+    # most 63 iterations; the inner loop is O(unique_cards).
+    for mask in range(1, 1 << n):
+        subset = {contributing_shops[i] for i in range(n) if mask & (1 << i)}
+        total = 0
+        candidate_picks: list[CardPick] = []
+        for entry in unique_entries:
+            baseline_pick = baseline_by_name[entry.name.lower()]
+            card_shops = per_card_per_shop.get(entry.name.lower(), {})
+            in_subset = [offer for shop, offer in card_shops.items() if shop in subset]
+            if in_subset:
+                chosen: Offer | None = min(in_subset, key=_offer_score)
+            elif baseline_pick.chosen is not None:
+                chosen = baseline_pick.chosen
+            else:
+                chosen = None
+
+            if chosen is not None:
+                total += chosen.price_czk * entry.quantity
+
+            candidate_picks.append(
+                baseline_pick.model_copy(update={
+                    "chosen": chosen,
+                    "chosen_total_czk": (chosen.price_czk * entry.quantity) if chosen else None,
+                    "missing": chosen is None,
+                })
             )
 
-        # Sort bundles best-to-worst: highest coverage, then lowest total.
-        bundles.sort(key=lambda b: (-b.coverage_pct, b.total_czk))
-        return bundles
+        if total > budget:
+            continue
+
+        effective_shops = len({p.chosen.shop for p in candidate_picks if p.chosen})
+        key = (effective_shops, total)
+        if best_key is None or key < best_key:
+            best_key = key
+            best_picks = candidate_picks
+            best_total = total
+
+    if best_picks is None:
+        return baseline_picks, baseline_total
+    return best_picks, best_total
 
 
 def _build_shopping_plan(picks: list[CardPick]) -> list[ShoppingGroup]:

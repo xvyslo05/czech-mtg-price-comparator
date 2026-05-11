@@ -7,7 +7,7 @@ from mcp.server.fastmcp import FastMCP
 from .aggregator import Aggregator
 from .http_client import close_client
 from .models import Offer, SearchQuery, ShopId, ShopStatus
-from .optimizer import DecklistOptimization, DecklistOptimizer
+from .optimizer import DecklistOptimization, DecklistOptimizer, Strategy
 from .scryfall import CardInfo, ScryfallClient
 
 log = logging.getLogger("cz_mtg_compare")
@@ -78,26 +78,46 @@ async def optimize_decklist(
     include_non_playable: bool = False,
     shops: list[ShopId] | None = None,
     exclude_shops: list[ShopId] | None = None,
+    strategy: Strategy = "cheapest",
 ) -> DecklistOptimization:
     """Resolve a Magic decklist (Arena/MTGO text) against all shops in parallel
-    and return:
+    and return a `shopping_plan` built under one of two strategies.
 
-    - `picks`: cheapest in-stock offer per card (multi-shop "greedy split")
-    - `cheapest_split_total_czk`: grand total of that split
-    - `shopping_plan`: the same picks regrouped per shop — render this as a
-      summary table for the user. Each group has the shop name, an `lines`
-      list (each: quantity, card name, edition, condition, foil, unit price,
-      subtotal, url) and a `subtotal_czk`. Groups are sorted by descending
-      shop subtotal so the "primary shop" surfaces first.
-    - `per_shop_bundles`: how each individual shop covers the decklist on its
-      own (cards covered, cards missing, single-shop total CZK), sorted
-      best-to-worst
-    - `cheapest_split_missing`: cards no shop has in stock
+    Strategies (`strategy` param):
+    - `"cheapest"` (default): per-card greedy lowest price across all shops.
+      Minimises total CZK; may fragment the order across many shops.
+    - `"fewest_shops"`: minimises the number of distinct shops in the final
+      plan so the user places fewer separate orders / pays less shipping.
+      Stays within 10% of the cheapest-split total by default; override the
+      tolerance via the `CZ_MTG_CONSOLIDATE_TOLERANCE_PCT` env var (integer
+      percent). When no single shop can cover everything, cards missing from
+      the chosen set fall back to the globally-cheapest offer (which may add
+      one or more shops to the plan).
 
-    When presenting results to the user for a multi-card query, render the
-    `shopping_plan` as a per-shop chart: one section per shop with a table
-    of cards to buy from it, plus the shop subtotal. Then show the grand
-    total `cheapest_split_total_czk` and any `cheapest_split_missing`.
+    Response shape:
+    - `strategy`: echoes the strategy that produced the picks/plan.
+    - `picks`: chosen offer per card under the active strategy.
+    - `shopping_plan`: the picks regrouped per shop — render as a summary
+      table. Each group has the shop name, a `lines` list (quantity, card
+      name, edition, condition, foil, unit price, subtotal, url) and a
+      `subtotal_czk`. Groups sorted by descending shop subtotal.
+    - `cheapest_split_total_czk`: total of the per-card cheapest split,
+      always populated as a reference even in fewest_shops mode.
+    - `consolidated_total_czk`: total of the consolidated plan in
+      fewest_shops mode (equals the sum of `shopping_plan` subtotals).
+      `null` in cheapest mode.
+    - `per_shop_bundles`: how each individual shop covers the decklist on
+      its own (cards covered/missing, single-shop total CZK), sorted
+      best-to-worst.
+    - `cheapest_split_missing`: cards no shop has in stock.
+
+    When presenting results to the user, render the `shopping_plan` as a
+    per-shop chart: one section per shop with a table of cards to buy from
+    it, plus the shop subtotal. Then show the headline total (use
+    `consolidated_total_czk` for fewest_shops, otherwise
+    `cheapest_split_total_czk`) and any `cheapest_split_missing`. In
+    fewest_shops mode it's useful to also surface the delta vs. the cheapest
+    split so the user can see the consolidation premium.
 
     The decklist must contain at most 100 cards in total (Commander deck size)
     AND at most 100 *unique* cards (one HTTP request per unique card per shop —
@@ -128,6 +148,7 @@ async def optimize_decklist(
         include_non_playable=include_non_playable,
         shops=shops,
         exclude_shops=exclude_shops,
+        strategy=strategy,
     )
 
 
