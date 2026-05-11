@@ -336,3 +336,146 @@ async def test_shopping_plan_subtotals_match_grand_total():
     plan_cards = sum(g.cards_count for g in result.shopping_plan)
     resolved_cards = sum(p.quantity for p in result.picks if p.chosen)
     assert plan_cards == resolved_cards
+
+
+@pytest.mark.asyncio
+async def test_default_strategy_is_cheapest_and_omits_consolidated_total():
+    """Backwards-compat: with no explicit strategy, the result still reflects
+    the cheapest-split plan and `consolidated_total_czk` stays None."""
+    agg = Aggregator(
+        [
+            _StubAdapter(
+                "tolarie",
+                {"Lightning Bolt": [_o("tolarie", "Lightning Bolt", 50)],
+                 "Counterspell": [_o("tolarie", "Counterspell", 30)]},
+            ),
+            _StubAdapter(
+                "najada",
+                {"Lightning Bolt": [_o("najada", "Lightning Bolt", 35)],
+                 "Counterspell": [_o("najada", "Counterspell", 80)]},
+            ),
+        ]
+    )
+    optimizer = DecklistOptimizer(agg)
+    result = await optimizer.optimize("4 Lightning Bolt\n2 Counterspell\n")
+
+    assert result.strategy == "cheapest"
+    assert result.consolidated_total_czk is None
+    # Cheapest split picks: bolt from najada, counterspell from tolarie.
+    by_name = {p.name: p.chosen.shop for p in result.picks}
+    assert by_name["Lightning Bolt"] == "najada"
+    assert by_name["Counterspell"] == "tolarie"
+
+
+@pytest.mark.asyncio
+async def test_fewest_shops_consolidates_when_within_tolerance():
+    """When one shop covers everything within 10% of the cheapest split,
+    the plan collapses to that single shop."""
+    # Cheapest split: A from najada (100) + B from cernyrytir (80) = 180.
+    # cernyrytir alone: 110 + 80 = 190 → within 10% of 180 (budget = 198).
+    agg = Aggregator(
+        [
+            _StubAdapter("najada", {"A": [_o("najada", "A", 100)]}),
+            _StubAdapter(
+                "cernyrytir",
+                {"A": [_o("cernyrytir", "A", 110)],
+                 "B": [_o("cernyrytir", "B", 80)]},
+            ),
+        ]
+    )
+    optimizer = DecklistOptimizer(agg)
+    result = await optimizer.optimize("1 A\n1 B\n", strategy="fewest_shops")
+
+    assert result.strategy == "fewest_shops"
+    assert result.cheapest_split_total_czk == 180
+    assert result.consolidated_total_czk == 190
+    # Single-shop plan.
+    assert len(result.shopping_plan) == 1
+    assert result.shopping_plan[0].shop == "cernyrytir"
+    assert {l.name for l in result.shopping_plan[0].lines} == {"A", "B"}
+    # picks reflect the consolidated choice.
+    assert all(p.chosen.shop == "cernyrytir" for p in result.picks if p.chosen)
+
+
+@pytest.mark.asyncio
+async def test_fewest_shops_falls_back_to_split_when_tolerance_exceeded():
+    """When no consolidation fits within tolerance, the result equals the
+    cheapest split (just with the consolidated total reported)."""
+    # Cheapest split: A from najada (100) + B from cernyrytir (80) = 180.
+    # cernyrytir alone: 200 + 80 = 280 → exceeds budget 198. Reject.
+    # Only the 2-shop solution survives.
+    agg = Aggregator(
+        [
+            _StubAdapter("najada", {"A": [_o("najada", "A", 100)]}),
+            _StubAdapter(
+                "cernyrytir",
+                {"A": [_o("cernyrytir", "A", 200)],
+                 "B": [_o("cernyrytir", "B", 80)]},
+            ),
+        ]
+    )
+    optimizer = DecklistOptimizer(agg)
+    result = await optimizer.optimize("1 A\n1 B\n", strategy="fewest_shops")
+
+    assert result.strategy == "fewest_shops"
+    assert result.cheapest_split_total_czk == 180
+    assert result.consolidated_total_czk == 180
+    # Plan ends up with the same two shops as the cheapest split.
+    shops_in_plan = {g.shop for g in result.shopping_plan}
+    assert shops_in_plan == {"najada", "cernyrytir"}
+    # Each card picked from its cheapest shop.
+    by_name = {p.name: p.chosen.shop for p in result.picks if p.chosen}
+    assert by_name == {"A": "najada", "B": "cernyrytir"}
+
+
+@pytest.mark.asyncio
+async def test_fewest_shops_overflows_to_extra_shop_for_missing_card():
+    """A 'primary' shop covers most of the deck; the remaining card overflows
+    to the globally-cheapest shop, producing a 2-shop plan."""
+    # shop_a has A and B; shop_b has only C.
+    # Cheapest split = A(10)+B(10)+C(10) = 30 across {shop_a, shop_b}.
+    # Any subset ends up using both shops effectively → tie at (2 shops, 30).
+    agg = Aggregator(
+        [
+            _StubAdapter(
+                "najada",
+                {"A": [_o("najada", "A", 10)],
+                 "B": [_o("najada", "B", 10)]},
+            ),
+            _StubAdapter("cernyrytir", {"C": [_o("cernyrytir", "C", 10)]}),
+        ]
+    )
+    optimizer = DecklistOptimizer(agg)
+    result = await optimizer.optimize("1 A\n1 B\n1 C\n", strategy="fewest_shops")
+
+    assert result.consolidated_total_czk == 30
+    shops_in_plan = {g.shop for g in result.shopping_plan}
+    assert shops_in_plan == {"najada", "cernyrytir"}
+    # Each card lands in the only shop that sells it.
+    by_name = {p.name: p.chosen.shop for p in result.picks if p.chosen}
+    assert by_name == {"A": "najada", "B": "najada", "C": "cernyrytir"}
+
+
+@pytest.mark.asyncio
+async def test_fewest_shops_with_globally_missing_card():
+    """A card sold nowhere stays missing under fewest_shops too, doesn't
+    appear in the plan, and doesn't inflate the consolidated total."""
+    agg = Aggregator(
+        [_StubAdapter("najada", {"A": [_o("najada", "A", 50)]})]
+    )
+    optimizer = DecklistOptimizer(agg)
+    result = await optimizer.optimize("1 A\n1 Unobtainium\n", strategy="fewest_shops")
+
+    assert result.strategy == "fewest_shops"
+    # A picked, Unobtainium missing.
+    by_name = {p.name: p for p in result.picks}
+    assert by_name["A"].chosen is not None and by_name["A"].chosen.shop == "najada"
+    assert by_name["Unobtainium"].missing is True
+    assert by_name["Unobtainium"].chosen is None
+    # Missing surfaces in cheapest_split_missing regardless of strategy.
+    assert "Unobtainium" in result.cheapest_split_missing
+    # Consolidated total covers only the resolvable cards.
+    assert result.consolidated_total_czk == 50
+    # Plan has one shop, one line (no entry for the missing card).
+    assert len(result.shopping_plan) == 1
+    assert {l.name for l in result.shopping_plan[0].lines} == {"A"}
