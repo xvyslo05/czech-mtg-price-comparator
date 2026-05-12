@@ -5,6 +5,8 @@ import json
 import urllib.parse
 from typing import Any
 
+import httpx
+
 from ..credentials import CredentialError, credentials_for
 from ..http_client import get_client, host_slot
 from ..models import Condition, Offer, SearchQuery
@@ -220,64 +222,86 @@ class NajadaAdapter(ShopAdapter):
         if resp.status_code not in (200, 204):
             resp.raise_for_status()
 
-    async def add_to_cart(self, offer: Offer, count: int = 1) -> dict[str, Any]:
-        if offer.shop != self.shop_id:
-            raise ValueError(f"offer.shop={offer.shop!r} cannot be added to najada cart")
-        if not offer.shop_ref:
-            raise ValueError(
-                "offer is missing shop_ref (najada article id) — re-run search_card "
-                "so adapters populate it"
-            )
+    async def _authed_request(
+        self,
+        method: str,
+        url: str,
+        *,
+        json_body: dict[str, Any] | None = None,
+    ) -> "httpx.Response":
+        """Make an authenticated request. On 401, drop the cached token,
+        re-login, and retry the request exactly once."""
+        client = await get_client()
+        for attempt in range(2):
+            token = await self._ensure_auth()
+            headers = self._bearer_headers(token)
+            async with host_slot("wizardshop.cz"):
+                if method == "GET":
+                    resp = await client.get(url, headers=headers)
+                elif method == "POST":
+                    resp = await client.post(url, json=json_body, headers=headers)
+                elif method == "DELETE":
+                    resp = await client.delete(url, headers=headers)
+                else:
+                    raise AssertionError(f"unsupported method {method!r}")
+            if resp.status_code == 401 and attempt == 0:
+                # Stale token (server-side expiry, restart, …) — drop it and
+                # let _ensure_auth re-login on the next loop iteration.
+                self._auth_token = None
+                continue
+            return resp
+        return resp  # unreachable; satisfies type checker
+
+    async def add_to_cart(self, shop_ref: str, count: int = 1) -> dict[str, Any]:
+        """Add ``count`` of najada article ``shop_ref`` to the cart.
+
+        ``shop_ref`` is najada's article UUID, populated on every ``Offer``
+        returned by ``search_card`` / ``optimize_decklist``. Logs in on first
+        use and transparently re-logs in if the cached token expires.
+        """
+        if not shop_ref:
+            raise ValueError("shop_ref is required (najada article UUID)")
         if count < 1:
             raise ValueError("count must be >= 1")
-        # Najada article ids are UUIDs (e.g. ``d762c438-...``); the API accepts
-        # them verbatim as the ``article`` field.
-        article_id = offer.shop_ref
-        token = await self._ensure_auth()
-        client = await get_client()
-        async with host_slot("wizardshop.cz"):
-            resp = await client.post(
-                CART_ITEMS_URL,
-                json={"article": article_id, "count": count},
-                headers=self._bearer_headers(token),
-            )
+        resp = await self._authed_request(
+            "POST", CART_ITEMS_URL, json_body={"article": shop_ref, "count": count}
+        )
         if resp.status_code == 401:
-            self._auth_token = None
-            raise CredentialError("najada session rejected — retry to re-login")
+            raise CredentialError(
+                f"najada cart rejected the token even after re-login "
+                f"(status {resp.status_code}); check CZ_MTG_NAJADA_* credentials"
+            )
         resp.raise_for_status()
         return resp.json()
 
     async def view_cart(self) -> dict[str, Any]:
-        token = await self._ensure_auth()
-        client = await get_client()
-        async with host_slot("wizardshop.cz"):
-            resp = await client.get(CART_ITEMS_URL, headers=self._bearer_headers(token))
+        resp = await self._authed_request("GET", CART_ITEMS_URL)
         if resp.status_code == 401:
-            self._auth_token = None
-            raise CredentialError("najada session rejected — retry to re-login")
+            raise CredentialError(
+                f"najada cart rejected the token even after re-login "
+                f"(status {resp.status_code}); check CZ_MTG_NAJADA_* credentials"
+            )
         resp.raise_for_status()
         return resp.json()
 
     async def clear_cart(self) -> dict[str, Any]:
-        token = await self._ensure_auth()
         cart = await self.view_cart()
         items = cart.get("items", []) if isinstance(cart, dict) else []
-        client = await get_client()
         removed = 0
         for item in items:
             item_id = item.get("id")
             if item_id is None:
                 continue
-            async with host_slot("wizardshop.cz"):
-                resp = await client.delete(
-                    f"{CART_ITEMS_URL}{item_id}/",
-                    headers=self._bearer_headers(token),
-                )
+            resp = await self._authed_request(
+                "DELETE", f"{CART_ITEMS_URL}{item_id}/"
+            )
             if resp.status_code in (200, 204):
                 removed += 1
                 continue
             if resp.status_code == 401:
-                self._auth_token = None
-                raise CredentialError("najada session rejected — retry to re-login")
+                raise CredentialError(
+                    f"najada cart rejected the token even after re-login "
+                    f"(status {resp.status_code}); check CZ_MTG_NAJADA_* credentials"
+                )
             resp.raise_for_status()
         return {"removed_items": removed}

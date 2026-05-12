@@ -59,9 +59,9 @@ async def test_default_login_raises_not_supported() -> None:
         await adapter.login()
     assert exc.value.feature == "login"
     with pytest.raises(AccountFeatureNotSupported):
-        await adapter.add_to_cart(Offer(shop="cernyrytir", card_name="x", price_czk=1, url="x"))
+        await adapter.add_to_cart("some-ref")
     with pytest.raises(AccountFeatureNotSupported):
-        await adapter.add_to_watchlist(Offer(shop="cernyrytir", card_name="x", price_czk=1, url="x"))
+        await adapter.add_to_watchlist("some-ref")
 
 
 def test_najada_advertises_login_and_cart() -> None:
@@ -141,14 +141,6 @@ async def test_najada_add_to_cart_posts_article_and_count(monkeypatch: pytest.Mo
     monkeypatch.setenv("CZ_MTG_NAJADA_PASS", "secret")
     adapter = NajadaAdapter()
     article_uuid = "d762c438-8915-4131-be7e-e301d91d8935"
-    offer = Offer(
-        shop="najada",
-        card_name="Lightning Bolt",
-        price_czk=29,
-        stock_qty=4,
-        url="https://najada.games/vyhledavani?q=Lightning+Bolt",
-        shop_ref=article_uuid,
-    )
 
     captured: dict[str, object] = {}
 
@@ -165,7 +157,7 @@ async def test_najada_add_to_cart_posts_article_and_count(monkeypatch: pytest.Mo
         )
         mock.post(CART_ITEMS_URL).mock(side_effect=_capture_cart)
 
-        result = await adapter.add_to_cart(offer, count=2)
+        result = await adapter.add_to_cart(article_uuid, count=2)
 
     assert result == {"id": 1, "article": article_uuid, "count": 2}
     assert captured["body"] == {"article": article_uuid, "count": 2}
@@ -174,31 +166,43 @@ async def test_najada_add_to_cart_posts_article_and_count(monkeypatch: pytest.Mo
 
 
 @pytest.mark.asyncio
-async def test_najada_add_to_cart_rejects_offers_from_other_shops() -> None:
+async def test_najada_add_to_cart_requires_shop_ref() -> None:
     adapter = NajadaAdapter()
-    offer = Offer(
-        shop="tolarie",
-        card_name="x",
-        price_czk=1,
-        url="x",
-        shop_ref="1",
-    )
-    with pytest.raises(ValueError, match="cannot be added to najada cart"):
-        await adapter.add_to_cart(offer)
+    with pytest.raises(ValueError, match="shop_ref is required"):
+        await adapter.add_to_cart("")
 
 
 @pytest.mark.asyncio
-async def test_najada_add_to_cart_requires_shop_ref() -> None:
+async def test_najada_add_to_cart_retries_once_on_401(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A stale cached token should be transparently refreshed: cart POST gets
+    a 401, the adapter drops the token, logs in again, and replays the POST."""
+    monkeypatch.setenv("CZ_MTG_NAJADA_USER", "alice@example.com")
+    monkeypatch.setenv("CZ_MTG_NAJADA_PASS", "secret")
     adapter = NajadaAdapter()
-    offer = Offer(
-        shop="najada",
-        card_name="x",
-        price_czk=1,
-        url="x",
-        shop_ref=None,
-    )
-    with pytest.raises(ValueError, match="missing shop_ref"):
-        await adapter.add_to_cart(offer)
+    article_uuid = "d762c438-8915-4131-be7e-e301d91d8935"
+
+    login_tokens = iter(["tok-stale", "tok-fresh"])
+
+    def _login(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json={"auth_token": next(login_tokens)})
+
+    seen_tokens: list[str] = []
+
+    def _cart(request: httpx.Request) -> httpx.Response:
+        token = request.headers.get("authorization", "").removeprefix("Bearer ")
+        seen_tokens.append(token)
+        if token == "tok-stale":
+            return httpx.Response(401, json={"detail": "expired"})
+        return httpx.Response(201, json={"ok": True})
+
+    async with respx.mock(assert_all_called=True) as mock:
+        mock.post(AUTH_LOGIN_URL).mock(side_effect=_login)
+        mock.post(CART_ITEMS_URL).mock(side_effect=_cart)
+        result = await adapter.add_to_cart(article_uuid, count=1)
+
+    assert result == {"ok": True}
+    assert seen_tokens == ["tok-stale", "tok-fresh"]
+    assert adapter._auth_token == "tok-fresh"
 
 
 @pytest.mark.asyncio
@@ -245,19 +249,22 @@ async def test_najada_clear_cart_deletes_each_item(monkeypatch: pytest.MonkeyPat
 
 
 @pytest.mark.asyncio
-async def test_najada_401_clears_token_for_relogin(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_najada_view_cart_raises_when_relogin_also_401(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """If both attempts get 401, the adapter surfaces a clear credential error
+    rather than retrying forever."""
     monkeypatch.setenv("CZ_MTG_NAJADA_USER", "alice@example.com")
     monkeypatch.setenv("CZ_MTG_NAJADA_PASS", "secret")
     adapter = NajadaAdapter()
 
     async with respx.mock(assert_all_called=False) as mock:
         mock.post(AUTH_LOGIN_URL).mock(
-            return_value=httpx.Response(200, json={"auth_token": "tok-old"})
+            return_value=httpx.Response(200, json={"auth_token": "tok-bad"})
         )
         mock.get(CART_ITEMS_URL).mock(return_value=httpx.Response(401, json={"detail": "expired"}))
-        with pytest.raises(credentials.CredentialError, match="session rejected"):
+        with pytest.raises(credentials.CredentialError, match="even after re-login"):
             await adapter.view_cart()
-    assert adapter._auth_token is None
 
 
 @pytest.mark.asyncio
