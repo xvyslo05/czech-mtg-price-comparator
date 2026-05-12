@@ -544,3 +544,166 @@ async def test_tolarie_clear_cart_visits_del_buy_per_item(
 
     assert result == {"removed_items": 2}
     assert del_11.called and del_22.called
+
+
+# --- rishada cart ------------------------------------------------------------
+
+
+from cz_mtg_compare.adapters.rishada import (  # noqa: E402
+    BASE as RISHADA_BASE,
+    CART_URL as RISHADA_CART_URL,
+    LOGIN_URL as RISHADA_LOGIN_URL,
+    RishadaAdapter,
+)
+
+# Minimal post-login homepage: no ``id="login-form"`` → ``_login_locked`` accepts it.
+_RISHADA_LOGGED_IN_HOME = '<html><body><div>Uživatel: <span>bob</span></div></body></html>'
+# Post-login response after a cart submit: contains the sidebar anchor that
+# ``_parse_cart_summary`` reads. ``Košík:`` lives in one span, the price/count
+# in the trailing text node — same shape as the live site.
+_RISHADA_SIDEBAR_AFTER_ADD = (
+    '<html><body>'
+    '<a href="/nakupni-kosik"><span class="bold">Košík: </span>60,- Kč / 1 položek</a>'
+    '</body></html>'
+)
+
+
+def _dispatch_rishada_post(capture_add):
+    """Route POST /. Login POSTs carry ``dologin``; cart POSTs carry ``act``."""
+
+    def _route(request: httpx.Request) -> httpx.Response:
+        body = request.content.decode()
+        if "dologin=" in body:
+            return httpx.Response(200, text=_RISHADA_LOGGED_IN_HOME)
+        return capture_add(request)
+
+    return _route
+
+
+@pytest.mark.asyncio
+async def test_rishada_logged_in_fixture_captures_cardid(load_fixture) -> None:
+    """Logged-in result rows render ``<form id="sellformN">`` with a hidden
+    ``cardid`` input — the parser must lift it into ``Offer.shop_ref`` so
+    cart calls have a numeric id without an extra fetch."""
+    adapter = RishadaAdapter()
+    html = load_fixture("rishada_counterspell_logged_in.html")
+    offers = await adapter.parse(html, SearchQuery(name="Counterspell", in_stock_only=False))
+    with_ref = [o for o in offers if o.shop_ref]
+    assert with_ref, "expected at least one offer with a captured cardid"
+    for o in with_ref:
+        assert o.shop_ref is not None and o.shop_ref.isdigit()
+
+
+@pytest.mark.asyncio
+async def test_rishada_add_to_cart_posts_form_payload(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The rishada cart-add request mimics the per-row ``<form>`` submit:
+    POST ``act=20005``, ``cardid=<id>``, ``sell=<count>`` to the site root.
+    ``max`` is intentionally omitted (client-side validation hint only)."""
+    monkeypatch.setenv("CZ_MTG_RISHADA_USER", "bob")
+    monkeypatch.setenv("CZ_MTG_RISHADA_PASS", "bobpass")
+    adapter = RishadaAdapter()
+
+    captured: dict[str, str] = {}
+
+    def _capture_add(request: httpx.Request) -> httpx.Response:
+        captured["url"] = str(request.url)
+        captured["body"] = request.content.decode()
+        captured["referer"] = request.headers.get("referer", "")
+        return httpx.Response(200, text=_RISHADA_SIDEBAR_AFTER_ADD)
+
+    async with respx.mock(assert_all_called=True) as mock:
+        mock.post(RISHADA_LOGIN_URL).mock(side_effect=_dispatch_rishada_post(_capture_add))
+        mock.get(RISHADA_LOGIN_URL).mock(
+            return_value=httpx.Response(200, text=_RISHADA_LOGGED_IN_HOME)
+        )
+        result = await adapter.add_to_cart("59214", count=2)
+
+    assert captured["url"] == RISHADA_LOGIN_URL
+    body = captured["body"]
+    assert "act=20005" in body
+    assert "cardid=59214" in body
+    assert "sell=2" in body
+    assert "max=" not in body  # client-side validation hint only — we don't echo it
+    assert result["cardid"] == "59214"
+    assert result["count"] == 2
+    assert result["cart_total_czk"] == 60
+    assert result["cart_item_count"] == 1
+
+
+@pytest.mark.asyncio
+async def test_rishada_add_to_cart_rejects_invalid_inputs() -> None:
+    adapter = RishadaAdapter()
+    with pytest.raises(ValueError, match="shop_ref is required"):
+        await adapter.add_to_cart("")
+    with pytest.raises(ValueError, match="numeric cardid"):
+        await adapter.add_to_cart("abc")
+    with pytest.raises(ValueError, match="count must be >= 1"):
+        await adapter.add_to_cart("123", count=0)
+
+
+@pytest.mark.asyncio
+async def test_rishada_view_cart_parses_items_and_summary(
+    load_fixture, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The cart fixture has one line item rendered with an ``odstranit``
+    anchor whose href encodes the ``itemid``. ``view_cart`` should surface
+    that id alongside the parsed name/price + the sidebar totals."""
+    monkeypatch.setenv("CZ_MTG_RISHADA_USER", "bob")
+    monkeypatch.setenv("CZ_MTG_RISHADA_PASS", "bobpass")
+    adapter = RishadaAdapter()
+    adapter._authenticated = True  # skip the login round-trip in the mock
+
+    cart_html = load_fixture("rishada_cart_one_item.html")
+    async with respx.mock(assert_all_called=True) as mock:
+        mock.get(RISHADA_CART_URL).mock(return_value=httpx.Response(200, text=cart_html))
+        cart = await adapter.view_cart()
+
+    assert cart["url"] == RISHADA_CART_URL
+    assert cart["item_count"] == 1
+    assert cart["total_czk"] is not None and cart["total_czk"] > 0
+    assert len(cart["items"]) == 1
+    item = cart["items"][0]
+    assert item["itemid"].isdigit()
+    assert item["name"] and "counter" in item["name"].lower()
+    assert item["price_czk"] is not None and item["price_czk"] > 0
+
+
+@pytest.mark.asyncio
+async def test_rishada_clear_cart_visits_remove_link_per_item(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """``clear_cart`` walks ``view_cart`` items and GETs the
+    ``?itemid=N&act=20032`` link the cart page renders for each row."""
+    monkeypatch.setenv("CZ_MTG_RISHADA_USER", "bob")
+    monkeypatch.setenv("CZ_MTG_RISHADA_PASS", "bobpass")
+    adapter = RishadaAdapter()
+    adapter._authenticated = True
+
+    cart_html = (
+        '<html><body>'
+        '<a href="/nakupni-kosik"><span class="bold">Košík: </span>50,- Kč / 2 položek</a>'
+        '<table>'
+        '<tr><td>Card A</td><td>25 Kč</td><td>25 Kč</td>'
+        '<td><a href="/nakupni-kosik?itemid=11&amp;act=20032">odstranit</a></td></tr>'
+        '<tr><td>Card B</td><td>25 Kč</td><td>25 Kč</td>'
+        '<td><a href="/nakupni-kosik?itemid=22&amp;act=20032">odstranit</a></td></tr>'
+        '</table>'
+        '</body></html>'
+    )
+    async with respx.mock(assert_all_called=True) as mock:
+        mock.get(re.compile(r"^https://www\.rishada\.cz/nakupni-kosik$")).mock(
+            return_value=httpx.Response(200, text=cart_html)
+        )
+        del_a = mock.get(
+            re.compile(r"/nakupni-kosik\?itemid=11&act=20032")
+        ).mock(return_value=httpx.Response(200))
+        del_b = mock.get(
+            re.compile(r"/nakupni-kosik\?itemid=22&act=20032")
+        ).mock(return_value=httpx.Response(200))
+        result = await adapter.clear_cart()
+
+    assert result == {"removed_items": 2}
+    assert del_a.called and del_b.called
+    assert adapter.base_url == RISHADA_BASE
