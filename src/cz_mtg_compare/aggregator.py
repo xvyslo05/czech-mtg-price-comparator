@@ -27,6 +27,16 @@ class Aggregator:
     def shop_ids(self) -> list[ShopId]:
         return [a.shop_id for a in self._adapters]
 
+    @property
+    def adapters(self) -> list[ShopAdapter]:
+        return list(self._adapters)
+
+    def get_adapter(self, shop_id: str) -> ShopAdapter | None:
+        for adapter in self._adapters:
+            if adapter.shop_id == shop_id:
+                return adapter
+        return None
+
     async def search(
         self,
         query: SearchQuery,

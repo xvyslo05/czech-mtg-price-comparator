@@ -24,6 +24,7 @@ Claude: (calls search_card)
 - [Setup](#setup) — `uvx`, `pipx`, plain `pip`, or local clone
 - [Verify it's working](#verify-its-working)
 - [Optional: enable Cardmarket](#optional-enable-cardmarket)
+- [Optional: account features (login + cart)](#optional-account-features-login--cart)
 - [Configuration reference](#configuration-reference)
 - [Troubleshooting](#troubleshooting)
 - [How it works under the hood](#how-it-works-under-the-hood)
@@ -41,8 +42,9 @@ This is an MCP server. MCP is the protocol Claude Desktop (and other clients) us
 - **Optimize a Commander/Standard/Modern decklist** — paste the list in chat, get back either the cheapest cross-shop split (default) or a plan that consolidates into the fewest distinct shops (`strategy="fewest_shops"`, within a 10% price tolerance), plus each shop's solo total.
 - **Resolve card names** through Scryfall (canonical name, set/collector#, oracle text, multilingual printed names).
 - **Fall back to Cardmarket** for European pricing when CZ shops don't carry a card (optional, requires API credentials).
+- **(Optional) Log into a shop and manage your cart** for shops where account features are implemented. Currently: `najada` (full — login + add/view/clear cart) and `tolarie` (login only). See [Account features](#optional-account-features-login--cart). Credentials may be plain strings *or* `op://...` 1Password references.
 
-It does **not**: place orders, log in to shops, manage carts, send notifications, or do anything other than read public listings.
+It does **not** place orders or send notifications — cart contents must still be checked out manually on each shop's website.
 
 ---
 
@@ -75,6 +77,10 @@ Once installed, you can talk to Claude in plain Czech or English. Some examples 
 > "Compare prices for the cards in this Pioneer deck — but only from najada and tolarie."
 >
 > "I'd rather place fewer separate orders — optimize this decklist to use the fewest shops possible, even if it costs a bit more."
+>
+> "Log into najada and add 4× Lightning Bolt at the cheapest price into my cart." *(requires `CZ_MTG_NAJADA_USER` / `_PASS` env vars; see [Account features](#optional-account-features-login--cart))*
+>
+> "Show me what's currently in my najada cart."
 
 Claude picks the right tool, calls it, and summarises the result.
 
@@ -282,12 +288,13 @@ Open a new chat in Claude Desktop and ask:
 
 > "What MCP tools do you have available?"
 
-You should see at least these four tools listed:
+You should see at least these tools listed:
 
 - `search_card`
 - `optimize_decklist`
 - `lookup_card`
 - `list_shops`
+- `shop_account_capabilities`, `shop_login`, `add_to_cart`, `view_cart`, `clear_cart`, `add_to_watchlist` *(account features — only useful for shops where they're supported; see [the matrix below](#optional-account-features-login--cart))*
 
 Then try a real query:
 
@@ -343,6 +350,108 @@ Add an `"env"` block alongside `"command"` and `"args"` in your existing entry. 
 
 ---
 
+## Optional: account features (login + cart)
+
+In addition to anonymous price comparison, the server can **log into individual shops on your behalf** and manage the contents of your cart there. Useful when Claude has already picked the cheapest split — instead of clicking through every offer URL manually, you can ask Claude to add them straight into the shop's cart, then check out yourself on the shop's website.
+
+This is **opt-in per shop**. The server has no credentials by default and never tries to log in unless you explicitly configure them.
+
+> ⚠️ **Read this before enabling.** You are storing shop passwords in your local Claude Desktop config (or your 1Password vault). The MCP server will use them to make authenticated requests on your behalf. Use a unique password per shop; consider whether each shop's Terms of Service permit automated cart manipulation; and remember that any `search_card` call made after a successful login goes out with your session cookie attached, so the shop can correlate those searches with your account.
+
+### Per-shop capability matrix
+
+| Shop          | Login | Cart (add / view / clear) | Watchlist |
+|---------------|-------|---------------------------|-----------|
+| `najada`      | ✅    | ✅                        | ❌ (planned) |
+| `tolarie`     | ✅    | ❌ (planned)              | ❌ (planned) |
+| `blacklotus`  | ❌    | ❌                        | ❌        |
+| `cernyrytir`  | ❌    | ❌                        | ❌        |
+| `rishada`     | ❌    | ❌                        | ❌        |
+| `untap`       | ❌    | ❌                        | ❌        |
+| `cardmarket`  | ❌    | ❌                        | ❌        |
+
+Each shop's account flow has to be reverse-engineered separately, so the supported set grows shop-by-shop. The `shop_account_capabilities` MCP tool reports this matrix at runtime including whether credentials are currently configured — ask Claude *"which shops can I log into?"*.
+
+### Configuring credentials
+
+Each shop reads its credentials from two env vars, set in your Claude Desktop config under the server's `"env"` block:
+
+```
+CZ_MTG_<SHOP>_USER   # username or email (depending on shop)
+CZ_MTG_<SHOP>_PASS   # password
+```
+
+Shop ids match those used everywhere else (`najada`, `tolarie`, …). Example using the uvx setup:
+
+```json
+{
+  "mcpServers": {
+    "cz-mtg-compare": {
+      "command": "/opt/homebrew/bin/uvx",
+      "args": ["cz-mtg-compare-mcp"],
+      "env": {
+        "CZ_MTG_NAJADA_USER": "alice@example.com",
+        "CZ_MTG_NAJADA_PASS": "your-najada-password",
+        "CZ_MTG_TOLARIE_USER": "alice",
+        "CZ_MTG_TOLARIE_PASS": "your-tolarie-password"
+      }
+    }
+  }
+}
+```
+
+If one var of a pair is set and the other isn't, you'll get an explicit `CredentialError` on the first login attempt for that shop — silent partial-config is rejected. Both vars missing means the shop is just treated as "no credentials" (the read-only search adapter keeps working).
+
+### Using 1Password instead of putting passwords in config
+
+Either env var value may be a **1Password secret reference** of the form `op://Vault/Item/Field`. On first use, the server shells out to the [1Password CLI](https://developer.1password.com/docs/cli) (`op`) to resolve it and caches the result in-process — so each `op read` happens at most once per server run.
+
+```json
+{
+  "env": {
+    "CZ_MTG_NAJADA_USER": "op://Personal/Najada/username",
+    "CZ_MTG_NAJADA_PASS": "op://Personal/Najada/password"
+  }
+}
+```
+
+Requirements:
+
+1. The [`op` CLI](https://developer.1password.com/docs/cli/get-started) is installed and on the PATH visible to Claude Desktop. (Same `PATH` caveat as `uvx` — Claude Desktop may not inherit your shell PATH; if `op read` resolution fails, the error message will say so.)
+2. You're signed into 1Password (`op signin`) **or** have biometric / system-auth integration enabled so non-interactive `op read` calls succeed.
+3. Each `op://` reference resolves to a non-empty value (an empty value is rejected with a clear error).
+
+You can mix the two forms — e.g. literal `_USER` and `op://` `_PASS` — freely.
+
+### What Claude can actually do
+
+Once configured, ask Claude things like:
+
+> "Add four copies of Lightning Bolt from najada into my cart — pick the cheapest in-stock copies."
+>
+> "What's in my najada cart right now?"
+>
+> "Empty my najada cart, I'm starting over." *(asks for confirmation; `clear_cart` is destructive)*
+
+Under the hood Claude calls:
+
+- `shop_account_capabilities()` — discover what's supported and what's configured
+- `shop_login(shop="najada")` — eager-login if needed; otherwise the cart tools log in lazily
+- `add_to_cart(shop, offer, count=N)` — `offer` must come from a `search_card` / `optimize_decklist` call in the same server session so it carries the per-shop `shop_ref` (product/article id)
+- `view_cart(shop)` — return the shop's current cart contents
+- `clear_cart(shop)` — delete every item from the shop's cart (returns `{"removed_items": N}`)
+- `add_to_watchlist(shop, offer)` — only on shops that support it (none today; placeholder for follow-up PRs)
+
+Sessions live in-process for the lifetime of the MCP server, so once you've logged in within a Claude Desktop session you stay logged in until you restart it.
+
+### Known limitations
+
+- **najada watchlist (`own-wantlist-items` / `own-shopping-list-items`) is not wired up yet** — the endpoints exist but require an authenticated session to inspect the schema, and the nested-product shape is non-trivial. Planned for a follow-up PR.
+- **tolarie cart endpoint is not implemented** — the URL pattern can't be confirmed without logging in, so this PR ships login only. The search adapter does already capture each row's product id into `Offer.shop_ref` so the follow-up implementation only has to wire the cart HTTP calls.
+- **No checkout.** The server stops at "items are in your cart"; finalizing the order, choosing shipping, paying — all still happens manually on the shop's website. By design.
+
+---
+
 ## Configuration reference
 
 | Environment variable          | Purpose                                            | Default |
@@ -357,6 +466,8 @@ Add an `"env"` block alongside `"command"` and `"args"` in your existing entry. 
 | `CZ_MTG_DISABLED_SHOPS`       | Comma-separated, case-insensitive list of shop IDs to drop at startup (e.g. `blacklotus,untap`) | unset |
 | `CZ_MTG_MAX_UNIQUE_CARDS`     | Hard cap on unique cards per `optimize_decklist` call (one HTTP request per unique card per shop). Invalid / non-positive values are ignored | `100` |
 | `CZ_MTG_CONSOLIDATE_TOLERANCE_PCT` | How much extra (in %) the `fewest_shops` strategy may pay vs. the cheapest-split total in exchange for consolidating into fewer shops. Integer percent; invalid / non-positive values are ignored | `10` |
+| `CZ_MTG_NAJADA_USER` / `CZ_MTG_NAJADA_PASS`   | Najada (`wizardshop.cz`) account credentials for login + cart. Literal or `op://...` 1Password reference. See [Account features](#optional-account-features-login--cart) | unset (login disabled for najada) |
+| `CZ_MTG_TOLARIE_USER` / `CZ_MTG_TOLARIE_PASS` | Tolarie account credentials. Literal or `op://...` 1Password reference. Currently only powers `shop_login`; cart endpoints not yet implemented | unset (login disabled for tolarie) |
 
 ### Disabling individual shops
 
@@ -461,7 +572,18 @@ Both modes return a `shopping_plan` grouped by shop plus a `cheapest_split_total
 
 - **Per-shop bundles**: for each shop on its own, sum the cheapest offer per card it has and count cards it's missing. Strategy-independent — always returned.
 
-Each `Offer` includes a `url` you can click through to the shop.
+Each `Offer` includes a `url` you can click through to the shop. Offers from shops that support account features also carry an opaque `shop_ref` (e.g. najada's UUID article id, tolarie's numeric product id) that the cart tools need — but only when produced by a search in the same server session.
+
+### Account features pipeline
+
+The login + cart tools live in `adapters/base.py` (capability flags + `AccountFeatureNotSupported` default impls), `credentials.py` (env-var and 1Password resolution), and each adapter that opts in. The pipeline for an `add_to_cart` call:
+
+1. `server.py` looks up the right adapter by `shop_id`.
+2. The adapter checks for an existing auth token / session. If absent, it pulls credentials via `credentials_for(shop_id)` (resolving any `op://` references through the 1Password CLI on first use), hits the shop's login endpoint, and stores the resulting bearer token or session cookie on the adapter instance.
+3. It POSTs the cart-add request using the offer's `shop_ref`. On 401 it clears the cached session so the next call triggers a fresh login.
+4. The raw shop response (or an error with a clear message) is returned to Claude.
+
+Sessions are per-process; they live as long as the MCP server does and are torn down on restart.
 
 ---
 
@@ -482,6 +604,8 @@ Claude will pass the flag through automatically.
 - **Cardmarket per-seller offers** require a paid Trader-tier API key, not yet wired up. Free tier surfaces priceGuide aggregates only.
 - **Decklist size capped at 100 cards total AND 100 unique cards.** Commander format is the largest legal format. The unique-cards limit is what actually drives the request count (one search per unique card per shop = up to 600 requests at 100/6) and exists to keep a single tool call from spawning runaway traffic. Override via `CZ_MTG_MAX_UNIQUE_CARDS` if you genuinely need a bigger list.
 - **No price history.** Each query is a fresh snapshot. Track prices yourself if you need it (or open an issue requesting it).
+- **Account features cover two shops today.** `najada` has login + cart wired up against its self-documenting DRF API; `tolarie` has login only. The other five shops report `supports_login=False` from `shop_account_capabilities`. Each shop is added in its own follow-up PR because the auth + cart flows have to be reverse-engineered separately.
+- **No automated checkout.** The cart tools stop at "items are in the cart" — finalizing the order, shipping, and payment still happen manually on the shop's website. This is intentional.
 
 ---
 
@@ -548,19 +672,22 @@ python -m twine upload dist/*    # prompts for PyPI API token
 ```
 src/cz_mtg_compare/
   server.py            MCP entrypoint; registers search_card / optimize_decklist /
-                       lookup_card / list_shops tools
+                       lookup_card / list_shops + account-feature tools
+                       (shop_account_capabilities / shop_login /
+                       add_to_cart / view_cart / clear_cart / add_to_watchlist)
   models.py            Offer / Condition / SearchQuery / ShopId
-  aggregator.py        async fan-out + per-shop timeouts + cache
+  aggregator.py        async fan-out + per-shop timeouts + cache + get_adapter()
   optimizer.py         decklist optimization (multi-shop split + per-shop bundles)
   decklist.py          Arena/MTGO text parser; ≤100 cards
   scryfall.py          Scryfall lookup with throttle + disk cache
+  credentials.py       env-var resolver with 1Password (`op://...`) support
   http_client.py       shared httpx.AsyncClient
   cache.py             TTL cache
   normalize.py         price / stock / condition / foil helpers
   adapters/
-    base.py            ShopAdapter ABC
-    tolarie.py
-    najada.py          (JSON API on wizardshop.cz)
+    base.py            ShopAdapter ABC + account capability flags
+    tolarie.py         (Django; login implemented, cart pending)
+    najada.py          (JSON API on wizardshop.cz; login + cart implemented)
     blacklotus.py      (Shoptet HTML + detail-page enrichment)
     cernyrytir.py      (windows-1250 HTML)
     rishada.py         (custom-PHP tabular HTML)
