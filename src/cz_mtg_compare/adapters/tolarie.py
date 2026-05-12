@@ -4,6 +4,7 @@ import asyncio
 import re
 import urllib.parse
 from html import unescape
+from typing import Any
 
 from selectolax.parser import HTMLParser, Node
 
@@ -20,6 +21,12 @@ from .base import ShopAdapter
 
 BASE = "https://www.tolarie.cz"
 LOGIN_URL = f"{BASE}/accounts/login/"
+CART_URL = f"{BASE}/eshop/cart/"
+# Cart-add endpoint discovered by post-login recon — the JS in /static/js/eshop.js
+# wraps it as ``jQuery.getJSON(self.attr("data-url") + "?amount=" + …)``.
+# ``data-url`` resolves to ``/eshop/cart/add-buy/<product_id>/`` per row.
+CART_ADD_PATH = "/eshop/cart/add-buy/{product_id}/"
+CART_REMOVE_PATH = "/eshop/cart/del-buy/{cart_item_id}/"
 
 # Cart product id is encoded in classes like ``js-add_to_cart_amount-63411-card``
 # on search-result rows. Captured during search so cart features can reference it.
@@ -43,12 +50,7 @@ class TolarieAdapter(ShopAdapter):
     shop_id = "tolarie"
     base_url = BASE
     supports_login = True
-    # Cart and watchlist endpoints exist on tolarie.cz but their exact request
-    # shapes can only be confirmed from inside a logged-in session. Login is
-    # implemented so a future PR can add cart/watchlist once verified live;
-    # the search adapter captures product IDs into Offer.shop_ref now so that
-    # follow-up doesn't need to touch the parser.
-    supports_cart = False
+    supports_cart = True
     supports_watchlist = False
 
     def __init__(self) -> None:
@@ -218,3 +220,143 @@ class TolarieAdapter(ShopAdapter):
         raise CredentialError(
             f"tolarie login failed (status {resp.status_code}, sessionid set: {has_session})"
         )
+
+    async def _ensure_auth(self) -> None:
+        if self._authenticated:
+            return
+        async with self._auth_lock:
+            if self._authenticated:
+                return
+            await self._login_locked()
+
+    async def add_to_cart(self, shop_ref: str, count: int = 1) -> dict[str, Any]:
+        """Add ``count`` of tolarie product ``shop_ref`` (numeric product id
+        captured from ``js-add_to_cart_amount-<id>-card`` during search) to
+        the cart.
+
+        Hits the same JSON endpoint the in-page jQuery handler uses
+        (``/eshop/cart/add-buy/<id>/?amount=N``). Auth is via the Django
+        sessionid cookie set by ``login()``; the endpoint 302s anonymous
+        callers to /accounts/login/, so we auto-relogin on that redirect.
+        """
+        if not shop_ref:
+            raise ValueError("shop_ref is required (tolarie product id)")
+        if not shop_ref.isdigit():
+            raise ValueError(
+                f"tolarie shop_ref must be a numeric product id, got {shop_ref!r}"
+            )
+        if count < 1:
+            raise ValueError("count must be >= 1")
+        await self._ensure_auth()
+        client = await get_client()
+        url = f"{BASE}{CART_ADD_PATH.format(product_id=shop_ref)}"
+        async with host_slot("tolarie.cz"):
+            resp = await client.get(
+                url,
+                params={"amount": str(count)},
+                headers={"Referer": f"{BASE}/", "Accept": "application/json"},
+                follow_redirects=False,
+            )
+        # Anonymous requests get 302 → /accounts/login/?next=…; if the cached
+        # session expired server-side, retry exactly once after fresh login.
+        if resp.status_code in (302, 303) and "/accounts/login/" in resp.headers.get(
+            "location", ""
+        ):
+            self._authenticated = False
+            await self.login()
+            async with host_slot("tolarie.cz"):
+                resp = await client.get(
+                    url,
+                    params={"amount": str(count)},
+                    headers={"Referer": f"{BASE}/", "Accept": "application/json"},
+                    follow_redirects=False,
+                )
+        if resp.status_code in (302, 303) and "/accounts/login/" in resp.headers.get(
+            "location", ""
+        ):
+            raise CredentialError(
+                "tolarie cart rejected even after re-login; check CZ_MTG_TOLARIE_* credentials"
+            )
+        resp.raise_for_status()
+        try:
+            return resp.json()
+        except ValueError:
+            return {"status_code": resp.status_code, "product_id": shop_ref, "amount": count}
+
+    async def view_cart(self) -> dict[str, Any]:
+        """Return the HTML body of the cart page after logging in. Tolarie's
+        cart page is server-rendered HTML; we don't try to parse it into a
+        structured object — that's left for whichever caller wants line-item
+        breakdowns.
+        """
+        await self._ensure_auth()
+        client = await get_client()
+        async with host_slot("tolarie.cz"):
+            resp = await client.get(CART_URL, follow_redirects=False)
+        if resp.status_code in (302, 303) and "/accounts/login/" in resp.headers.get(
+            "location", ""
+        ):
+            self._authenticated = False
+            await self.login()
+            async with host_slot("tolarie.cz"):
+                resp = await client.get(CART_URL, follow_redirects=False)
+        resp.raise_for_status()
+        items = self._parse_cart_items(resp.text)
+        return {"items": items, "item_count": len(items), "url": CART_URL}
+
+    async def clear_cart(self) -> dict[str, Any]:
+        await self._ensure_auth()
+        cart = await self.view_cart()
+        items = cart.get("items", []) if isinstance(cart, dict) else []
+        client = await get_client()
+        removed = 0
+        for item in items:
+            cart_item_id = item.get("cart_item_id")
+            if not cart_item_id:
+                continue
+            url = f"{BASE}{CART_REMOVE_PATH.format(cart_item_id=cart_item_id)}"
+            async with host_slot("tolarie.cz"):
+                resp = await client.get(
+                    url,
+                    headers={"Referer": CART_URL},
+                    follow_redirects=False,
+                )
+            if resp.status_code in (200, 302, 303):
+                removed += 1
+                continue
+            resp.raise_for_status()
+        return {"removed_items": removed}
+
+    @staticmethod
+    def _parse_cart_items(html: str) -> list[dict[str, Any]]:
+        """Best-effort scrape of the tolarie cart table. Returns one dict per
+        line item with ``cart_item_id`` (from any ``del-buy/<id>/`` link) and
+        the visible row text. Empty list if the cart is empty or the layout
+        changed."""
+        tree = HTMLParser(html)
+        items: list[dict[str, Any]] = []
+        for a in tree.css('a[href*="/eshop/cart/del-buy/"]'):
+            href = (a.attributes.get("href") or "").strip()
+            m = re.search(r"/eshop/cart/del-buy/(\d+)/", href)
+            if not m:
+                continue
+            row = a
+            for _ in range(6):  # walk up to enclosing <tr>
+                row = row.parent
+                if row is None:
+                    break
+                if (row.tag or "").lower() == "tr":
+                    break
+            row_text = (
+                " ".join((row.text(separator=" ", strip=True) or "").split())
+                if row is not None
+                else ""
+            )
+            items.append(
+                {
+                    "cart_item_id": m.group(1),
+                    "remove_url": href if href.startswith("http") else BASE + href,
+                    "row_text": row_text,
+                }
+            )
+        return items

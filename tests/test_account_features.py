@@ -72,10 +72,10 @@ def test_najada_advertises_login_and_cart() -> None:
     assert adapter.supports_watchlist is False
 
 
-def test_tolarie_advertises_login_only() -> None:
+def test_tolarie_advertises_login_and_cart() -> None:
     adapter = TolarieAdapter()
     assert adapter.supports_login is True
-    assert adapter.supports_cart is False
+    assert adapter.supports_cart is True
     assert adapter.supports_watchlist is False
 
 
@@ -374,3 +374,173 @@ async def test_tolarie_search_captures_product_id_into_shop_ref(load_fixture) ->
     if with_ref:  # if any captured, they must be numeric
         for o in with_ref:
             assert o.shop_ref is not None and o.shop_ref.isdigit()
+
+
+# --- tolarie cart ------------------------------------------------------------
+
+
+from cz_mtg_compare.adapters.tolarie import CART_URL as TOLARIE_CART_URL  # noqa: E402
+
+
+@pytest.mark.asyncio
+async def test_tolarie_add_to_cart_uses_per_product_url(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Recon confirmed tolarie's cart-add endpoint is
+    ``GET /eshop/cart/add-buy/<product_id>/?amount=N`` — verify the adapter
+    hits exactly that URL with the right query and inherited sessionid."""
+    monkeypatch.setenv("CZ_MTG_TOLARIE_USER", "bob")
+    monkeypatch.setenv("CZ_MTG_TOLARIE_PASS", "bobpass")
+    adapter = TolarieAdapter()
+
+    captured: dict[str, str] = {}
+
+    def _capture_cart(request: httpx.Request) -> httpx.Response:
+        captured["url"] = str(request.url)
+        captured["referer"] = request.headers.get("referer", "")
+        return httpx.Response(200, json={"success": True, "message": "Přidáno do košíku"})
+
+    async with respx.mock(assert_all_called=True) as mock:
+        # Eager login first.
+        mock.get(TOLARIE_LOGIN_URL).mock(
+            return_value=httpx.Response(200, text=TOLARIE_LOGIN_FORM_HTML)
+        )
+        mock.post(TOLARIE_LOGIN_URL).mock(
+            return_value=httpx.Response(
+                302,
+                headers={
+                    "location": "/",
+                    "set-cookie": "sessionid=session-abc; Path=/; HttpOnly",
+                },
+            )
+        )
+        mock.get(re.compile(r"^https://www\.tolarie\.cz/$")).mock(
+            return_value=httpx.Response(200, text="<html></html>")
+        )
+        mock.get(re.compile(r"^https://www\.tolarie\.cz/eshop/cart/add-buy/63411/")).mock(
+            side_effect=_capture_cart
+        )
+        result = await adapter.add_to_cart("63411", count=2)
+
+    assert result == {"success": True, "message": "Přidáno do košíku"}
+    assert "add-buy/63411/" in captured["url"]
+    assert "amount=2" in captured["url"]
+
+
+@pytest.mark.asyncio
+async def test_tolarie_add_to_cart_relogins_on_login_redirect(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """If the cached sessionid was invalidated server-side, the cart endpoint
+    302s anonymous callers to /accounts/login/. The adapter must drop the
+    flag, log in again, and replay the cart GET once."""
+    monkeypatch.setenv("CZ_MTG_TOLARIE_USER", "bob")
+    monkeypatch.setenv("CZ_MTG_TOLARIE_PASS", "bobpass")
+    adapter = TolarieAdapter()
+    adapter._authenticated = True  # pretend we're already authed but the cookie is stale
+
+    cart_responses = iter(
+        [
+            httpx.Response(
+                302, headers={"location": "/accounts/login/?next=/eshop/cart/add-buy/77/"}
+            ),
+            httpx.Response(200, json={"success": True}),
+        ]
+    )
+
+    async with respx.mock(assert_all_called=True) as mock:
+        mock.get(re.compile(r"^https://www\.tolarie\.cz/eshop/cart/add-buy/77/")).mock(
+            side_effect=lambda r: next(cart_responses)
+        )
+        mock.get(TOLARIE_LOGIN_URL).mock(
+            return_value=httpx.Response(200, text=TOLARIE_LOGIN_FORM_HTML)
+        )
+        mock.post(TOLARIE_LOGIN_URL).mock(
+            return_value=httpx.Response(
+                302,
+                headers={
+                    "location": "/",
+                    "set-cookie": "sessionid=session-fresh; Path=/; HttpOnly",
+                },
+            )
+        )
+        # Login POST 302s to "/" — httpx follows it under the shared client's
+        # follow_redirects=True default. The login flow itself doesn't read
+        # the homepage; we just need a mock so the request doesn't blow up.
+        mock.get(re.compile(r"^https://www\.tolarie\.cz/$")).mock(
+            return_value=httpx.Response(200, text="<html></html>")
+        )
+        result = await adapter.add_to_cart("77")
+
+    assert result == {"success": True}
+
+
+@pytest.mark.asyncio
+async def test_tolarie_add_to_cart_rejects_non_numeric_shop_ref() -> None:
+    adapter = TolarieAdapter()
+    with pytest.raises(ValueError, match="numeric product id"):
+        await adapter.add_to_cart("not-a-number")
+
+
+@pytest.mark.asyncio
+async def test_tolarie_view_cart_parses_remove_links(monkeypatch: pytest.MonkeyPatch) -> None:
+    """``view_cart`` extracts each line item's ``cart_item_id`` from the
+    ``/eshop/cart/del-buy/<id>/`` link rendered in the cart table — that's
+    the id ``clear_cart`` needs in order to remove items."""
+    monkeypatch.setenv("CZ_MTG_TOLARIE_USER", "bob")
+    monkeypatch.setenv("CZ_MTG_TOLARIE_PASS", "bobpass")
+    adapter = TolarieAdapter()
+    adapter._authenticated = True
+
+    cart_html = """
+    <html><body>
+    <table>
+      <tr>
+        <td>Lightning Bolt</td>
+        <td>35 Kč</td>
+        <td><a href="/eshop/cart/del-buy/9001/">Odebrat</a></td>
+      </tr>
+      <tr>
+        <td>Sol Ring</td>
+        <td>120 Kč</td>
+        <td><a href="/eshop/cart/del-buy/9002/">Odebrat</a></td>
+      </tr>
+    </table>
+    </body></html>
+    """
+    async with respx.mock(assert_all_called=True) as mock:
+        mock.get(TOLARIE_CART_URL).mock(return_value=httpx.Response(200, text=cart_html))
+        cart = await adapter.view_cart()
+
+    assert cart["item_count"] == 2
+    ids = sorted(item["cart_item_id"] for item in cart["items"])
+    assert ids == ["9001", "9002"]
+
+
+@pytest.mark.asyncio
+async def test_tolarie_clear_cart_visits_del_buy_per_item(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("CZ_MTG_TOLARIE_USER", "bob")
+    monkeypatch.setenv("CZ_MTG_TOLARIE_PASS", "bobpass")
+    adapter = TolarieAdapter()
+    adapter._authenticated = True
+
+    cart_html = """
+    <html><body>
+    <table>
+      <tr><td><a href="/eshop/cart/del-buy/11/">x</a></td></tr>
+      <tr><td><a href="/eshop/cart/del-buy/22/">x</a></td></tr>
+    </table>
+    </body></html>
+    """
+    async with respx.mock(assert_all_called=True) as mock:
+        mock.get(TOLARIE_CART_URL).mock(return_value=httpx.Response(200, text=cart_html))
+        del_11 = mock.get(re.compile(r"/eshop/cart/del-buy/11/")).mock(
+            return_value=httpx.Response(200)
+        )
+        del_22 = mock.get(re.compile(r"/eshop/cart/del-buy/22/")).mock(
+            return_value=httpx.Response(200)
+        )
+        result = await adapter.clear_cart()
+
+    assert result == {"removed_items": 2}
+    assert del_11.called and del_22.called
