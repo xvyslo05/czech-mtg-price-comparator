@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import asyncio
 import urllib.parse
 from html import unescape
 
 from selectolax.parser import HTMLParser, Node
 
+from ..credentials import CredentialError, credentials_for
 from ..http_client import get_client, host_slot
 from ..models import Condition, Offer, SearchQuery
 from ..normalize import (
@@ -16,6 +18,7 @@ from ..normalize import (
 from .base import ShopAdapter
 
 BASE = "https://www.rishada.cz"
+LOGIN_URL = f"{BASE}/"
 PAGE_SIZE = 100
 
 
@@ -29,6 +32,17 @@ class RishadaAdapter(ShopAdapter):
 
     shop_id = "rishada"
     base_url = BASE
+    supports_login = True
+    # Cart submit buttons on anonymous search results have an onclick handler
+    # that alerts "Pro manipulaci s košíkem musíte být přihlášeni!" — the
+    # actual cart endpoint only renders once logged in. Shipped login-only;
+    # cart is a follow-up once the post-login form shape is captured.
+    supports_cart = False
+    supports_watchlist = False
+
+    def __init__(self) -> None:
+        self._authenticated = False
+        self._auth_lock = asyncio.Lock()
 
     def _search_url(self, query: SearchQuery) -> str:
         params = {
@@ -140,3 +154,47 @@ class RishadaAdapter(ShopAdapter):
             stock_qty=stock_qty,
             url=url,
         )
+
+    # --- Account features ---------------------------------------------------
+
+    async def login(self) -> None:
+        async with self._auth_lock:
+            await self._login_locked()
+
+    async def _login_locked(self) -> None:
+        creds = credentials_for("rishada")
+        if creds is None:
+            raise CredentialError(
+                "rishada credentials not configured "
+                "(set CZ_MTG_RISHADA_USER and CZ_MTG_RISHADA_PASS)"
+            )
+        client = await get_client()
+        # rishada renders a tiny login form in the global sidebar — POST to /
+        # with login-name + login-pass + dologin=<empty>. Session cookie name
+        # varies across hosting setups but is set on success; the cleanest
+        # confirmation is fetching the homepage afterwards and checking that
+        # the menu no longer says "Uživatel: neznámý".
+        async with host_slot("rishada.cz"):
+            resp = await client.post(
+                LOGIN_URL,
+                data={
+                    "login-name": creds.username,
+                    "login-pass": creds.password,
+                    "dologin": "",
+                },
+                headers={"Referer": LOGIN_URL},
+                follow_redirects=False,
+            )
+        if resp.status_code not in (200, 302, 303):
+            raise CredentialError(
+                f"rishada login failed (status {resp.status_code})"
+            )
+        async with host_slot("rishada.cz"):
+            check = await client.get(BASE + "/")
+        if "Uživatel: neznámý" in check.text or "neznámý" in check.text:
+            self._authenticated = False
+            raise CredentialError(
+                "rishada login: server still reports user as anonymous "
+                "after submit — check CZ_MTG_RISHADA_* credentials"
+            )
+        self._authenticated = True
