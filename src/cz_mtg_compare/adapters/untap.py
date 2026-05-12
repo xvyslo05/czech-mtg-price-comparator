@@ -287,50 +287,82 @@ class UntapAdapter(ShopAdapter):
     async def add_to_cart(self, shop_ref: str, count: int = 1) -> dict[str, Any]:
         """Add ``count`` of untap product ``shop_ref`` (Prestashop id_product)
         to the cart. Logs in automatically on first call.
+
+        Prestashop's cart controller decides between an HTML response (the
+        full cart page) and a JSON response (status + errors[]) based on
+        whether ``ajax=1`` is present in the POST body — ``X-Requested-With``
+        alone is **not** enough. Without it the server returns 200 + the
+        full cart HTML which is indistinguishable from success at the
+        transport layer, so a silent "added but cart stays empty" bug
+        appears whenever Prestashop refuses the add (out-of-stock,
+        quantity rule, deactivated product, …). We pass ``ajax=1`` so the
+        response is always machine-readable, parse ``hasError``, and
+        surface the user-visible message untouched.
         """
         if not shop_ref:
             raise ValueError("shop_ref is required (untap id_product)")
         if count < 1:
             raise ValueError("count must be >= 1")
         await self._ensure_auth()
-        token = await self._ensure_token()
         client = await get_client()
-        async with host_slot("untap.cz"):
-            resp = await client.post(
-                CART_URL,
-                data={
-                    "token": token,
-                    "id_product": shop_ref,
-                    "id_customization": "0",
-                    "qty": str(count),
-                    "add": "1",
-                    "action": "update",
-                },
-                headers={"Referer": f"{BASE}/", "X-Requested-With": "XMLHttpRequest"},
-            )
-        # Prestashop rotates static_token if the session changes — retry once
-        # with a freshly fetched token on 403 / token-rejection responses.
+
+        async def _post_once() -> "httpx.Response":
+            token = await self._ensure_token()
+            payload = {
+                "token": token,
+                "id_product": shop_ref,
+                "id_product_attribute": "0",
+                "id_customization": "0",
+                "qty": str(count),
+                "add": "1",
+                "action": "update",
+                "ajax": "1",
+            }
+            async with host_slot("untap.cz"):
+                return await client.post(
+                    CART_URL,
+                    data=payload,
+                    headers={
+                        "Referer": f"{BASE}/",
+                        "X-Requested-With": "XMLHttpRequest",
+                        "Accept": "application/json, text/javascript, */*; q=0.01",
+                    },
+                )
+
+        resp = await _post_once()
+        # Prestashop rotates static_token whenever the session is renewed
+        # (e.g. after re-login). 403/401 + JSON ``{hasError: true, errors:["Bezpečnostní token..."]}``
+        # are both worth retrying once with a freshly fetched token.
         if resp.status_code in (403, 401):
             self._static_token = None
-            token = await self._ensure_token()
-            async with host_slot("untap.cz"):
-                resp = await client.post(
-                    CART_URL,
-                    data={
-                        "token": token,
-                        "id_product": shop_ref,
-                        "id_customization": "0",
-                        "qty": str(count),
-                        "add": "1",
-                        "action": "update",
-                    },
-                    headers={"Referer": f"{BASE}/", "X-Requested-With": "XMLHttpRequest"},
-                )
+            resp = await _post_once()
         resp.raise_for_status()
         try:
-            return resp.json()
+            payload = resp.json()
         except ValueError:
-            return {"status_code": resp.status_code, "id_product": shop_ref, "qty": count}
+            # Server returned HTML — almost certainly because ``ajax=1`` was
+            # stripped by a proxy or our session got reset. Treat as failure.
+            raise CredentialError(
+                "untap cart returned HTML, not JSON — Prestashop AJAX dispatch "
+                "failed (session reset, blocked, or template changed). Try "
+                "shop_login again."
+            )
+        if isinstance(payload, dict) and payload.get("hasError"):
+            errors = payload.get("errors", []) or []
+            errors_text = "; ".join(str(e) for e in errors) or "<no message>"
+            # Token-related errors are recoverable: drop the cached token and
+            # retry exactly once.
+            if "token" in errors_text.lower() or "Bezpečnostní" in errors_text:
+                self._static_token = None
+                resp = await _post_once()
+                try:
+                    payload = resp.json()
+                except ValueError:
+                    pass
+                if isinstance(payload, dict) and not payload.get("hasError"):
+                    return payload
+            raise RuntimeError(f"untap refused add_to_cart: {errors_text}")
+        return payload
 
     async def view_cart(self) -> dict[str, Any]:
         await self._ensure_auth()
