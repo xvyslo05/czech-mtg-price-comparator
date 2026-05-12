@@ -437,12 +437,12 @@ Under the hood Claude calls:
 
 - `shop_account_capabilities()` — discover what's supported and what's configured
 - `shop_login(shop="najada")` — eager-login if needed; otherwise the cart tools log in lazily
-- `add_to_cart(shop, offer, count=N)` — `offer` must come from a `search_card` / `optimize_decklist` call in the same server session so it carries the per-shop `shop_ref` (product/article id)
+- `add_to_cart(shop, shop_ref, count=N)` — `shop_ref` is the per-shop product/article id that appears on every `Offer` returned by `search_card` / `optimize_decklist`. Pass it through verbatim (it's a UUID for najada, a numeric id for tolarie). If you don't have a `shop_ref` yet, run `search_card` first.
 - `view_cart(shop)` — return the shop's current cart contents
 - `clear_cart(shop)` — delete every item from the shop's cart (returns `{"removed_items": N}`)
-- `add_to_watchlist(shop, offer)` — only on shops that support it (none today; placeholder for follow-up PRs)
+- `add_to_watchlist(shop, shop_ref)` — only on shops that support it (none today; placeholder for follow-up PRs)
 
-Sessions live in-process for the lifetime of the MCP server, so once you've logged in within a Claude Desktop session you stay logged in until you restart it.
+Sessions live in-process for the lifetime of the MCP server. If the cached token ever expires server-side, the next cart call transparently re-logs in and retries once before surfacing an error — you don't need to call `shop_login` manually.
 
 ### Known limitations
 

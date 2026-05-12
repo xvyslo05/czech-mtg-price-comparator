@@ -212,19 +212,22 @@ async def shop_login(shop: ShopId) -> dict[str, Any]:
 
 
 @mcp.tool()
-async def add_to_cart(shop: ShopId, offer: Offer, count: int = 1) -> dict[str, Any]:
-    """Add a previously-found Offer to the shop's online cart.
+async def add_to_cart(shop: ShopId, shop_ref: str, count: int = 1) -> dict[str, Any]:
+    """Add ``count`` of a specific offer to the shop's online cart.
 
-    ``offer`` must come from ``search_card`` / ``optimize_decklist`` on the SAME
-    server run so that the per-shop ``shop_ref`` (product/article id) is
-    populated. Logs in automatically on first call if not already authenticated.
+    ``shop_ref`` is the per-shop product/article identifier that appears on
+    every ``Offer`` returned by ``search_card`` / ``optimize_decklist``. For
+    najada it's the article UUID (e.g. ``d762c438-8915-4131-be7e-e301d91d8935``);
+    for tolarie it's the numeric product id. **Pass it through verbatim** —
+    don't construct it yourself. If you don't have one for the offer the user
+    wants, call ``search_card`` first.
 
-    Returns the shop's raw response (e.g. updated cart item record). Raises if
-    the shop doesn't support cart operations, the offer is missing ``shop_ref``,
-    or credentials are misconfigured.
+    Logs in automatically on first call and transparently re-logs in if the
+    cached token expires. Returns the shop's raw response (e.g. the updated
+    cart-item record).
     """
     adapter = _require_adapter(shop)
-    return await adapter.add_to_cart(offer, count=count)
+    return await adapter.add_to_cart(shop_ref, count=count)
 
 
 @mcp.tool()
@@ -248,13 +251,14 @@ async def clear_cart(shop: ShopId) -> dict[str, Any]:
 
 
 @mcp.tool()
-async def add_to_watchlist(shop: ShopId, offer: Offer) -> dict[str, Any]:
-    """Add an Offer to the shop's wishlist / watchlist / wantlist if the shop
-    supports it. Raises with a clear message otherwise — check
-    ``shop_account_capabilities`` first.
+async def add_to_watchlist(shop: ShopId, shop_ref: str) -> dict[str, Any]:
+    """Add an offer to the shop's wishlist / watchlist / wantlist if the shop
+    supports it. ``shop_ref`` is the same per-shop product/article identifier
+    used by ``add_to_cart``. Raises ``AccountFeatureNotSupported`` if the shop
+    has no watchlist concept — check ``shop_account_capabilities`` first.
     """
     adapter = _require_adapter(shop)
-    return await adapter.add_to_watchlist(offer)
+    return await adapter.add_to_watchlist(shop_ref)
 
 
 def main() -> None:

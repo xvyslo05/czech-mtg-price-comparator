@@ -44,7 +44,7 @@ class ShopAdapter(ABC):
     async def logout(self) -> None:
         raise AccountFeatureNotSupported(self.shop_id, "logout")
 
-    async def add_to_cart(self, offer: Offer, count: int = 1) -> dict[str, Any]:
+    async def add_to_cart(self, shop_ref: str, count: int = 1) -> dict[str, Any]:
         raise AccountFeatureNotSupported(self.shop_id, "add_to_cart")
 
     async def view_cart(self) -> dict[str, Any]:
@@ -53,5 +53,5 @@ class ShopAdapter(ABC):
     async def clear_cart(self) -> dict[str, Any]:
         raise AccountFeatureNotSupported(self.shop_id, "clear_cart")
 
-    async def add_to_watchlist(self, offer: Offer) -> dict[str, Any]:
+    async def add_to_watchlist(self, shop_ref: str) -> dict[str, Any]:
         raise AccountFeatureNotSupported(self.shop_id, "add_to_watchlist")
