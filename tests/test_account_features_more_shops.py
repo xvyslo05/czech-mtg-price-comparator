@@ -326,7 +326,66 @@ async def test_untap_add_to_cart_posts_id_product_and_token(
     assert captured["id_product"] == "21061"
     assert captured["qty"] == "2"
     assert captured["add"] == "1"
+    # Prestashop only switches to a JSON cart response when ``ajax=1`` is in
+    # the body. X-Requested-With on its own is silently ignored and the
+    # server returns the full cart HTML — see the live recon that found
+    # this. Regression-guard against accidentally dropping ajax=1.
+    assert captured["ajax"] == "1"
+    assert captured["id_product_attribute"] == "0"
     assert result == {"ok": True}
+
+
+@pytest.mark.asyncio
+async def test_untap_add_to_cart_surfaces_prestashop_errors(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """When Prestashop refuses the add (out of stock, quantity rule …), the
+    JSON response has ``hasError=true`` and a localised ``errors`` array.
+    The adapter must raise with that message instead of silently returning
+    success — that was the "cart stays empty" bug."""
+    monkeypatch.setenv("CZ_MTG_UNTAP_USER", "alice@example.com")
+    monkeypatch.setenv("CZ_MTG_UNTAP_PASS", "secret")
+    adapter = UntapAdapter()
+    adapter._authenticated = True
+    adapter._static_token = "abc123def456"
+
+    error_payload = {
+        "hasError": True,
+        "errors": [
+            'Produktu "Lightning Bolt" můžete koupit pouze 0 ks. '
+            "Pro pokračování prosím upravte množství v košíku.",
+        ],
+        "quantity": 0,
+    }
+    async with respx.mock(assert_all_called=True) as mock:
+        mock.post(CART_URL).mock(return_value=httpx.Response(200, json=error_payload))
+        with pytest.raises(RuntimeError, match="můžete koupit pouze 0 ks"):
+            await adapter.add_to_cart("21061")
+
+
+@pytest.mark.asyncio
+async def test_untap_add_to_cart_raises_when_response_is_html_not_json(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """If Prestashop returns HTML instead of JSON, something is wrong with
+    the AJAX dispatch (session reset, proxy stripping fields, template
+    change). Surface that loudly rather than pretending the add worked."""
+    monkeypatch.setenv("CZ_MTG_UNTAP_USER", "alice@example.com")
+    monkeypatch.setenv("CZ_MTG_UNTAP_PASS", "secret")
+    adapter = UntapAdapter()
+    adapter._authenticated = True
+    adapter._static_token = "abc123def456"
+
+    async with respx.mock(assert_all_called=True) as mock:
+        mock.post(CART_URL).mock(
+            return_value=httpx.Response(
+                200,
+                text="<html><body>full cart page</body></html>",
+                headers={"content-type": "text/html; charset=utf-8"},
+            )
+        )
+        with pytest.raises(credentials.CredentialError, match="HTML, not JSON"):
+            await adapter.add_to_cart("21061")
 
 
 @pytest.mark.asyncio
