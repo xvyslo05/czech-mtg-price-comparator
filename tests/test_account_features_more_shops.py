@@ -52,12 +52,16 @@ def _isolated_creds(monkeypatch: pytest.MonkeyPatch):
 
 def test_capability_flags_per_shop() -> None:
     """The four new adapters expose the right capability flags. blacklotus
-    and untap support cart; cernyrytir and rishada are login-only."""
+    supports cart; untap / cernyrytir / rishada are login-only. untap's cart
+    implementation works against the API but is intentionally disabled at
+    the capability layer because each adapter login starts a fresh
+    Prestashop checkout, so cart items don't persist across sessions and
+    the feature would silently confuse users."""
     bl = BlackLotusAdapter(enrich_detail=False)
     assert (bl.supports_login, bl.supports_cart, bl.supports_watchlist) == (True, True, False)
 
     ut = UntapAdapter()
-    assert (ut.supports_login, ut.supports_cart, ut.supports_watchlist) == (True, True, False)
+    assert (ut.supports_login, ut.supports_cart, ut.supports_watchlist) == (True, False, False)
 
     cr = CernyRytirAdapter()
     assert (cr.supports_login, cr.supports_cart, cr.supports_watchlist) == (True, False, False)

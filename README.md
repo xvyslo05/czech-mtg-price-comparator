@@ -42,7 +42,7 @@ This is an MCP server. MCP is the protocol Claude Desktop (and other clients) us
 - **Optimize a Commander/Standard/Modern decklist** — paste the list in chat, get back either the cheapest cross-shop split (default) or a plan that consolidates into the fewest distinct shops (`strategy="fewest_shops"`, within a 10% price tolerance), plus each shop's solo total.
 - **Resolve card names** through Scryfall (canonical name, set/collector#, oracle text, multilingual printed names).
 - **Fall back to Cardmarket** for European pricing when CZ shops don't carry a card (optional, requires API credentials).
-- **(Optional) Log into a shop and manage your cart** for shops where account features are implemented. Currently: `najada` / `blacklotus` / `untap` / `tolarie` (full — login + add/view/clear cart) and `cernyrytir` / `rishada` (login only). See [Account features](#optional-account-features-login--cart). Credentials may be plain strings *or* `op://...` 1Password references.
+- **(Optional) Log into a shop and manage your cart** for shops where account features are implemented. Currently: `najada` / `blacklotus` / `tolarie` (full — login + add/view/clear cart) and `untap` / `cernyrytir` / `rishada` (login only). See [Account features](#optional-account-features-login--cart). Credentials may be plain strings *or* `op://...` 1Password references.
 
 It does **not** place orders or send notifications — cart contents must still be checked out manually on each shop's website.
 
@@ -364,8 +364,8 @@ This is **opt-in per shop**. The server has no credentials by default and never 
 |---------------|-------|---------------------------|-----------|
 | `najada`      | ✅    | ✅                        | ❌ (planned) |
 | `blacklotus`  | ✅    | ✅                        | ❌        |
-| `untap`       | ✅    | ✅                        | ❌        |
 | `tolarie`     | ✅    | ✅                        | ❌ (planned) |
+| `untap`       | ✅    | ⛔ disabled (each login starts a fresh checkout — items don't persist) | ❌ |
 | `cernyrytir`  | ✅    | ❌ (cart trigger is JS-injected post-login) | ❌        |
 | `rishada`     | ✅    | ❌ (cart submit handler `notLogged()` not yet mapped) | ❌ |
 | `cardmarket`  | ❌    | ❌                        | ❌        |
@@ -456,6 +456,7 @@ Sessions live in-process for the lifetime of the MCP server. If the cached token
 
 - **najada watchlist (`own-wantlist-items` / `own-shopping-list-items`) is not wired up yet** — the endpoints exist but require an authenticated session to inspect the schema, and the nested-product shape is non-trivial. Planned for a follow-up PR.
 - **cernyrytir / rishada cart endpoints are not implemented.** Both render their cart trigger only inside a logged-in session: cernyrytir's row markup post-login still doesn't expose a cart link in plain HTML (the trigger is injected by a JS bundle); rishada's per-row OK button calls a `notLogged()` JS handler that needs to be mapped from the bundle. Login works on both — the cart shape will come in a follow-up PR once the JS-side dispatch is captured. Tracking: [issue #6](https://github.com/xvyslo05/czech-mtg-price-comparator/issues/6).
+- **untap cart is disabled even though it works.** untap's Prestashop install starts a brand-new checkout on every login. Items added by this MCP server during a Claude Desktop session disappear the moment the user logs in again (whether through this server or in a browser). The cart code is kept around so a future PR can flip `supports_cart` back on if untap migrates to a session-spanning cart, but exposing it today would just confuse users — the cart-add API call returns success but the cards never materialise on the user's account.
 - **No checkout.** The server stops at "items are in your cart"; finalizing the order, choosing shipping, paying — all still happens manually on the shop's website. By design.
 
 ---
@@ -616,7 +617,7 @@ Claude will pass the flag through automatically.
 - **Cardmarket per-seller offers** require a paid Trader-tier API key, not yet wired up. Free tier surfaces priceGuide aggregates only.
 - **Decklist size capped at 100 cards total AND 100 unique cards.** Commander format is the largest legal format. The unique-cards limit is what actually drives the request count (one search per unique card per shop = up to 600 requests at 100/6) and exists to keep a single tool call from spawning runaway traffic. Override via `CZ_MTG_MAX_UNIQUE_CARDS` if you genuinely need a bigger list.
 - **No price history.** Each query is a fresh snapshot. Track prices yourself if you need it (or open an issue requesting it).
-- **Account features cover six of seven shops, with four of them fully cartable.** Full login + cart: `najada` (Djoser/DRF API), `blacklotus` (Shoptet), `untap` (Prestashop), `tolarie` (Django + jQuery `getJSON` per-product URLs). Login only (cart trigger is JS-injected from a bundle that still needs mapping): `cernyrytir`, `rishada`. Cardmarket has no per-user cart on the free tier and stays out of scope. The two login-only shops are tracked for follow-up cart support in [issue #6](https://github.com/xvyslo05/czech-mtg-price-comparator/issues/6).
+- **Account features cover six of seven shops, with three of them fully cartable.** Full login + cart: `najada` (Djoser/DRF API), `blacklotus` (Shoptet), `tolarie` (Django + jQuery `getJSON` per-product URLs). Login only: `untap` (cart works against Prestashop but doesn't persist between logins — see Known limitations), `cernyrytir` and `rishada` (cart trigger is JS-injected from a bundle that still needs mapping). Cardmarket has no per-user cart on the free tier and stays out of scope. The login-only shops are tracked for follow-up cart support in [issue #6](https://github.com/xvyslo05/czech-mtg-price-comparator/issues/6).
 - **No automated checkout.** The cart tools stop at "items are in the cart" — finalizing the order, shipping, and payment still happen manually on the shop's website. This is intentional.
 
 ---

@@ -63,7 +63,17 @@ class UntapAdapter(ShopAdapter):
     shop_id = "untap"
     base_url = BASE
     supports_login = True
-    supports_cart = True
+    # Cart is **intentionally disabled at the capability layer** even though
+    # the underlying ``add_to_cart`` / ``view_cart`` / ``clear_cart``
+    # implementations work against the live Prestashop API. The reason:
+    # untap starts a fresh checkout on every login, so items added by this
+    # MCP server in one Claude Desktop session are gone the next time the
+    # user logs in (whether via this server or in their browser). Exposing
+    # the tool would just frustrate users — the cart appears populated to
+    # the bot but stays empty for the human. The methods are kept around
+    # so a future PR can flip this back on if untap migrates to a
+    # session-spanning cart, without re-doing the reverse engineering.
+    supports_cart = False
     supports_watchlist = False
 
     def __init__(self) -> None:
