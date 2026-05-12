@@ -165,6 +165,18 @@ def _require_adapter(shop: ShopId):
     return adapter
 
 
+def _require_capability(adapter, feature: str):
+    """Refuse a cart/watchlist call at the MCP layer when the shop's capability
+    flag is False, even if the underlying adapter happens to implement the
+    method. Some adapters keep their implementation around (e.g. untap, whose
+    cart works against the API but doesn't persist across sessions) but the
+    capability flag is the source of truth for what's exposed to Claude.
+    """
+    flag = f"supports_{feature}"
+    if not getattr(adapter, flag, False):
+        raise AccountFeatureNotSupported(adapter.shop_id, feature)
+
+
 @mcp.tool()
 def shop_account_capabilities() -> list[dict[str, Any]]:
     """Per-shop account-feature support and credential status.
@@ -193,6 +205,11 @@ def shop_account_capabilities() -> list[dict[str, Any]]:
     return out
 
 
+def _require_login(adapter):
+    if not getattr(adapter, "supports_login", False):
+        raise AccountFeatureNotSupported(adapter.shop_id, "login")
+
+
 @mcp.tool()
 async def shop_login(shop: ShopId) -> dict[str, Any]:
     """Authenticate against a shop using its CZ_MTG_<SHOP>_USER / _PASS credentials.
@@ -207,6 +224,7 @@ async def shop_login(shop: ShopId) -> dict[str, Any]:
     1Password reference can't be resolved.
     """
     adapter = _require_adapter(shop)
+    _require_login(adapter)
     await adapter.login()
     return {"shop": shop, "ok": True}
 
@@ -227,6 +245,7 @@ async def add_to_cart(shop: ShopId, shop_ref: str, count: int = 1) -> dict[str, 
     cart-item record).
     """
     adapter = _require_adapter(shop)
+    _require_capability(adapter, "cart")
     return await adapter.add_to_cart(shop_ref, count=count)
 
 
@@ -236,6 +255,7 @@ async def view_cart(shop: ShopId) -> dict[str, Any]:
     authenticated user. Logs in automatically if needed.
     """
     adapter = _require_adapter(shop)
+    _require_capability(adapter, "cart")
     return await adapter.view_cart()
 
 
@@ -247,6 +267,7 @@ async def clear_cart(shop: ShopId) -> dict[str, Any]:
     before calling.
     """
     adapter = _require_adapter(shop)
+    _require_capability(adapter, "cart")
     return await adapter.clear_cart()
 
 
@@ -258,6 +279,7 @@ async def add_to_watchlist(shop: ShopId, shop_ref: str) -> dict[str, Any]:
     has no watchlist concept — check ``shop_account_capabilities`` first.
     """
     adapter = _require_adapter(shop)
+    _require_capability(adapter, "watchlist")
     return await adapter.add_to_watchlist(shop_ref)
 
 
