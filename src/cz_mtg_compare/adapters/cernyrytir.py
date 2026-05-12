@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import asyncio
 import re
 import urllib.parse
 from html import unescape
 
 from selectolax.parser import HTMLParser, Node
 
+from ..credentials import CredentialError, credentials_for
 from ..http_client import get_client, host_slot
 from ..models import Condition, Offer, SearchQuery
 from ..normalize import normalize_condition, parse_price_czk, parse_stock_qty
@@ -13,6 +15,7 @@ from .base import ShopAdapter
 
 BASE = "https://www.cernyrytir.cz"
 SEARCH_PATH = "/index.php3?akce=3"
+LOGIN_URL = f"{BASE}/index.php3?akce=0"
 PAGE_SIZE = 100  # poczob — most queries fit in a single page at 100 results.
 
 # Cards with no real price (out of stock placeholders) are quoted at 9999 Kč.
@@ -28,6 +31,18 @@ _SET_ICON_RE = re.compile(r"/images/kusovky/([a-z0-9]+)\.gif", re.IGNORECASE)
 class CernyRytirAdapter(ShopAdapter):
     shop_id = "cernyrytir"
     base_url = BASE
+    supports_login = True
+    # Cart UI on cernyrytir's search results is gated behind a "Pro přidání
+    # položek do košíku je třeba se přihlásit." message — the actual cart
+    # POST shape is only visible inside a logged-in session and hasn't been
+    # mapped yet. See https://github.com/xvyslo05/czech-mtg-price-comparator/
+    # issues for the follow-up tracking ticket.
+    supports_cart = False
+    supports_watchlist = False
+
+    def __init__(self) -> None:
+        self._authenticated = False
+        self._auth_lock = asyncio.Lock()
 
     def _request_url(self) -> str:
         return f"{BASE}{SEARCH_PATH}"
@@ -162,6 +177,60 @@ class CernyRytirAdapter(ShopAdapter):
             price_czk=price_czk,
             stock_qty=stock_qty,
             url=self._result_url(query),
+        )
+
+    # --- Account features ---------------------------------------------------
+
+    async def login(self) -> None:
+        async with self._auth_lock:
+            await self._login_locked()
+
+    async def _login_locked(self) -> None:
+        creds = credentials_for("cernyrytir")
+        if creds is None:
+            raise CredentialError(
+                "cernyrytir credentials not configured "
+                "(set CZ_MTG_CERNYRYTIR_USER and CZ_MTG_CERNYRYTIR_PASS)"
+            )
+        client = await get_client()
+        # The login form is the small POST on the top-banner — fields
+        # ``uzivjmeno`` + ``uzivheslo`` + hidden ``login=LOG IN``. The server
+        # responds with the same page (200) and a PHPSESSID cookie that's
+        # bound to the user account on success, or to an anonymous browser
+        # session on failure. We follow that up with a request that should
+        # only succeed when logged in (a "logout" link is rendered on the
+        # account page) to confirm.
+        async with host_slot("cernyrytir.cz"):
+            resp = await client.post(
+                LOGIN_URL,
+                data={
+                    "uzivjmeno": creds.username,
+                    "uzivheslo": creds.password,
+                    "login": "LOG IN",
+                },
+                headers={"Referer": f"{BASE}/"},
+                follow_redirects=False,
+            )
+        if resp.status_code not in (200, 302, 303):
+            raise CredentialError(
+                f"cernyrytir login failed (status {resp.status_code})"
+            )
+        # Probe the account page; a logged-in session renders an "Odhlásit"
+        # (log out) link, anonymous renders the login form again.
+        async with host_slot("cernyrytir.cz"):
+            check = await client.get(LOGIN_URL)
+        try:
+            check.encoding = "windows-1250"
+            body = check.text
+        except Exception:  # noqa: BLE001
+            body = check.content.decode("windows-1250", errors="replace")
+        if "Odhlášení" in body or "odhlas" in body.lower() or "odhlásit" in body.lower():
+            self._authenticated = True
+            return
+        self._authenticated = False
+        raise CredentialError(
+            "cernyrytir login: server didn't return a logged-in account page; "
+            "check CZ_MTG_CERNYRYTIR_* credentials"
         )
 
     @staticmethod

@@ -42,7 +42,7 @@ This is an MCP server. MCP is the protocol Claude Desktop (and other clients) us
 - **Optimize a Commander/Standard/Modern decklist** — paste the list in chat, get back either the cheapest cross-shop split (default) or a plan that consolidates into the fewest distinct shops (`strategy="fewest_shops"`, within a 10% price tolerance), plus each shop's solo total.
 - **Resolve card names** through Scryfall (canonical name, set/collector#, oracle text, multilingual printed names).
 - **Fall back to Cardmarket** for European pricing when CZ shops don't carry a card (optional, requires API credentials).
-- **(Optional) Log into a shop and manage your cart** for shops where account features are implemented. Currently: `najada` (full — login + add/view/clear cart) and `tolarie` (login only). See [Account features](#optional-account-features-login--cart). Credentials may be plain strings *or* `op://...` 1Password references.
+- **(Optional) Log into a shop and manage your cart** for shops where account features are implemented. Currently: `najada` / `blacklotus` / `untap` (full — login + add/view/clear cart) and `tolarie` / `cernyrytir` / `rishada` (login only). See [Account features](#optional-account-features-login--cart). Credentials may be plain strings *or* `op://...` 1Password references.
 
 It does **not** place orders or send notifications — cart contents must still be checked out manually on each shop's website.
 
@@ -363,11 +363,11 @@ This is **opt-in per shop**. The server has no credentials by default and never 
 | Shop          | Login | Cart (add / view / clear) | Watchlist |
 |---------------|-------|---------------------------|-----------|
 | `najada`      | ✅    | ✅                        | ❌ (planned) |
+| `blacklotus`  | ✅    | ✅                        | ❌        |
+| `untap`       | ✅    | ✅                        | ❌        |
 | `tolarie`     | ✅    | ❌ (planned)              | ❌ (planned) |
-| `blacklotus`  | ❌    | ❌                        | ❌        |
-| `cernyrytir`  | ❌    | ❌                        | ❌        |
-| `rishada`     | ❌    | ❌                        | ❌        |
-| `untap`       | ❌    | ❌                        | ❌        |
+| `cernyrytir`  | ✅    | ❌ (cart UI auth-gated)   | ❌        |
+| `rishada`     | ✅    | ❌ (cart UI auth-gated)   | ❌        |
 | `cardmarket`  | ❌    | ❌                        | ❌        |
 
 Each shop's account flow has to be reverse-engineered separately, so the supported set grows shop-by-shop. The `shop_account_capabilities` MCP tool reports this matrix at runtime including whether credentials are currently configured — ask Claude *"which shops can I log into?"*.
@@ -392,8 +392,16 @@ Shop ids match those used everywhere else (`najada`, `tolarie`, …). Example us
       "env": {
         "CZ_MTG_NAJADA_USER": "alice@example.com",
         "CZ_MTG_NAJADA_PASS": "your-najada-password",
+        "CZ_MTG_BLACKLOTUS_USER": "alice@example.com",
+        "CZ_MTG_BLACKLOTUS_PASS": "your-blacklotus-password",
+        "CZ_MTG_UNTAP_USER": "alice@example.com",
+        "CZ_MTG_UNTAP_PASS": "your-untap-password",
         "CZ_MTG_TOLARIE_USER": "alice",
-        "CZ_MTG_TOLARIE_PASS": "your-tolarie-password"
+        "CZ_MTG_TOLARIE_PASS": "your-tolarie-password",
+        "CZ_MTG_CERNYRYTIR_USER": "alice",
+        "CZ_MTG_CERNYRYTIR_PASS": "your-cernyrytir-password",
+        "CZ_MTG_RISHADA_USER": "alice",
+        "CZ_MTG_RISHADA_PASS": "your-rishada-password"
       }
     }
   }
@@ -447,7 +455,7 @@ Sessions live in-process for the lifetime of the MCP server. If the cached token
 ### Known limitations
 
 - **najada watchlist (`own-wantlist-items` / `own-shopping-list-items`) is not wired up yet** — the endpoints exist but require an authenticated session to inspect the schema, and the nested-product shape is non-trivial. Planned for a follow-up PR.
-- **tolarie cart endpoint is not implemented** — the URL pattern can't be confirmed without logging in, so this PR ships login only. The search adapter does already capture each row's product id into `Offer.shop_ref` so the follow-up implementation only has to wire the cart HTTP calls.
+- **tolarie / cernyrytir / rishada cart endpoints are not implemented.** All three render their cart UI only inside a logged-in session, so the cart POST shape can't be reverse-engineered without a real account. Login is implemented so a future PR can verify each cart flow against captured browser requests and flip the `supports_cart` flag.
 - **No checkout.** The server stops at "items are in your cart"; finalizing the order, choosing shipping, paying — all still happens manually on the shop's website. By design.
 
 ---
@@ -466,8 +474,12 @@ Sessions live in-process for the lifetime of the MCP server. If the cached token
 | `CZ_MTG_DISABLED_SHOPS`       | Comma-separated, case-insensitive list of shop IDs to drop at startup (e.g. `blacklotus,untap`) | unset |
 | `CZ_MTG_MAX_UNIQUE_CARDS`     | Hard cap on unique cards per `optimize_decklist` call (one HTTP request per unique card per shop). Invalid / non-positive values are ignored | `100` |
 | `CZ_MTG_CONSOLIDATE_TOLERANCE_PCT` | How much extra (in %) the `fewest_shops` strategy may pay vs. the cheapest-split total in exchange for consolidating into fewer shops. Integer percent; invalid / non-positive values are ignored | `10` |
-| `CZ_MTG_NAJADA_USER` / `CZ_MTG_NAJADA_PASS`   | Najada (`wizardshop.cz`) account credentials for login + cart. Literal or `op://...` 1Password reference. See [Account features](#optional-account-features-login--cart) | unset (login disabled for najada) |
-| `CZ_MTG_TOLARIE_USER` / `CZ_MTG_TOLARIE_PASS` | Tolarie account credentials. Literal or `op://...` 1Password reference. Currently only powers `shop_login`; cart endpoints not yet implemented | unset (login disabled for tolarie) |
+| `CZ_MTG_NAJADA_USER` / `CZ_MTG_NAJADA_PASS`         | Najada (`wizardshop.cz`) account credentials for login + cart. Literal or `op://...` 1Password reference. See [Account features](#optional-account-features-login--cart) | unset (login disabled for najada) |
+| `CZ_MTG_BLACKLOTUS_USER` / `CZ_MTG_BLACKLOTUS_PASS` | Blacklotus account credentials for login + cart | unset (login disabled for blacklotus) |
+| `CZ_MTG_UNTAP_USER` / `CZ_MTG_UNTAP_PASS`           | Untap (Prestashop) account credentials for login + cart | unset (login disabled for untap) |
+| `CZ_MTG_TOLARIE_USER` / `CZ_MTG_TOLARIE_PASS`       | Tolarie account credentials. Currently only powers `shop_login`; cart endpoint not yet implemented | unset (login disabled for tolarie) |
+| `CZ_MTG_CERNYRYTIR_USER` / `CZ_MTG_CERNYRYTIR_PASS` | Černý rytíř account credentials. Currently only powers `shop_login`; cart endpoint not yet implemented | unset (login disabled for cernyrytir) |
+| `CZ_MTG_RISHADA_USER` / `CZ_MTG_RISHADA_PASS`       | Rishada account credentials. Currently only powers `shop_login`; cart endpoint not yet implemented | unset (login disabled for rishada) |
 
 ### Disabling individual shops
 
@@ -604,7 +616,7 @@ Claude will pass the flag through automatically.
 - **Cardmarket per-seller offers** require a paid Trader-tier API key, not yet wired up. Free tier surfaces priceGuide aggregates only.
 - **Decklist size capped at 100 cards total AND 100 unique cards.** Commander format is the largest legal format. The unique-cards limit is what actually drives the request count (one search per unique card per shop = up to 600 requests at 100/6) and exists to keep a single tool call from spawning runaway traffic. Override via `CZ_MTG_MAX_UNIQUE_CARDS` if you genuinely need a bigger list.
 - **No price history.** Each query is a fresh snapshot. Track prices yourself if you need it (or open an issue requesting it).
-- **Account features cover two shops today.** `najada` has login + cart wired up against its self-documenting DRF API; `tolarie` has login only. The other five shops report `supports_login=False` from `shop_account_capabilities`. Each shop is added in its own follow-up PR because the auth + cart flows have to be reverse-engineered separately.
+- **Account features cover six of seven shops, with three of them fully cartable.** Full login + cart: `najada` (Djoser/DRF API), `blacklotus` (Shoptet), `untap` (Prestashop). Login only (cart endpoint hidden behind their own login wall): `tolarie`, `cernyrytir`, `rishada`. Cardmarket has no per-user cart on the free tier and stays out of scope. The login-only shops are tracked for follow-up cart support — they just need a verified post-login cart POST shape.
 - **No automated checkout.** The cart tools stop at "items are in the cart" — finalizing the order, shipping, and payment still happen manually on the shop's website. This is intentional.
 
 ---
