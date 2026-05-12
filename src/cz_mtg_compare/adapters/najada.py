@@ -164,10 +164,15 @@ class NajadaAdapter(ShopAdapter):
 
     # --- Account features ---------------------------------------------------
 
-    def _bearer_headers(self, token: str) -> dict[str, str]:
+    def _auth_headers(self, token: str) -> dict[str, str]:
+        # najada.games' own SPA sends ``Authorization: Token <key>`` (legacy
+        # DRF TokenAuthentication scheme). The unauthenticated WWW-Authenticate
+        # header advertises ``Bearer`` but that scheme is not actually accepted
+        # on the account endpoints — using it returns 401 even with a valid
+        # token. Don't change this without re-verifying against the Nuxt bundle.
         return {
             "Accept": "application/json",
-            "Authorization": f"Bearer {token}",
+            "Authorization": f"Token {token}",
             "Origin": SHOP_BASE,
             "Referer": f"{SHOP_BASE}/",
         }
@@ -217,7 +222,7 @@ class NajadaAdapter(ShopAdapter):
             return
         client = await get_client()
         async with host_slot("wizardshop.cz"):
-            resp = await client.post(AUTH_LOGOUT_URL, headers=self._bearer_headers(token))
+            resp = await client.post(AUTH_LOGOUT_URL, headers=self._auth_headers(token))
         self._auth_token = None
         if resp.status_code not in (200, 204):
             resp.raise_for_status()
@@ -234,7 +239,7 @@ class NajadaAdapter(ShopAdapter):
         client = await get_client()
         for attempt in range(2):
             token = await self._ensure_auth()
-            headers = self._bearer_headers(token)
+            headers = self._auth_headers(token)
             async with host_slot("wizardshop.cz"):
                 if method == "GET":
                     resp = await client.get(url, headers=headers)

@@ -162,7 +162,9 @@ async def test_najada_add_to_cart_posts_article_and_count(monkeypatch: pytest.Mo
     assert result == {"id": 1, "article": article_uuid, "count": 2}
     assert captured["body"] == {"article": article_uuid, "count": 2}
     headers = captured["headers"]
-    assert headers["authorization"] == "Bearer tok-xyz"
+    # najada uses DRF's legacy TokenAuthentication scheme — Authorization
+    # must be ``Token <key>`` (not ``Bearer``); see _auth_headers comment.
+    assert headers["authorization"] == "Token tok-xyz"
 
 
 @pytest.mark.asyncio
@@ -189,7 +191,7 @@ async def test_najada_add_to_cart_retries_once_on_401(monkeypatch: pytest.Monkey
     seen_tokens: list[str] = []
 
     def _cart(request: httpx.Request) -> httpx.Response:
-        token = request.headers.get("authorization", "").removeprefix("Bearer ")
+        token = request.headers.get("authorization", "").removeprefix("Token ")
         seen_tokens.append(token)
         if token == "tok-stale":
             return httpx.Response(401, json={"detail": "expired"})
@@ -224,7 +226,7 @@ async def test_najada_view_cart_uses_bearer_token(monkeypatch: pytest.MonkeyPatc
 
     assert result == cart_body
     auth_header = cart_route.calls.last.request.headers.get("authorization")
-    assert auth_header == "Bearer tok-abc"
+    assert auth_header == "Token tok-abc"
 
 
 @pytest.mark.asyncio
