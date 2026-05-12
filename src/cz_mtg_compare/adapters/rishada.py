@@ -189,12 +189,19 @@ class RishadaAdapter(ShopAdapter):
             raise CredentialError(
                 f"rishada login failed (status {resp.status_code})"
             )
+        # The home page renders ``<form action="/" method="post" id="login-form">``
+        # for anonymous visitors; once logged in that form is replaced by user
+        # info. The original "Uživatel: neznámý" check was unreliable because
+        # the rendered HTML is ``Uživatel: <span>...</span>`` so a substring
+        # match against "neznámý" never actually fired against the right
+        # element — checking the absence of the login form is the cleanest
+        # post-auth signal that the site itself exposes.
         async with host_slot("rishada.cz"):
             check = await client.get(BASE + "/")
-        if "Uživatel: neznámý" in check.text or "neznámý" in check.text:
+        if 'id="login-form"' in check.text:
             self._authenticated = False
             raise CredentialError(
-                "rishada login: server still reports user as anonymous "
+                "rishada login: login form still rendered on the home page "
                 "after submit — check CZ_MTG_RISHADA_* credentials"
             )
         self._authenticated = True

@@ -412,9 +412,11 @@ async def test_rishada_login_confirms_via_user_label(monkeypatch: pytest.MonkeyP
 
     async with respx.mock(assert_all_called=True) as mock:
         mock.post(RI_LOGIN_URL).mock(side_effect=_login)
-        # Post-login home page no longer shows "neznámý".
+        # Post-login home page no longer renders the login form.
         mock.get(re.compile(r"^https://www\.rishada\.cz/$")).mock(
-            return_value=httpx.Response(200, text="<html>Uživatel: carol</html>")
+            return_value=httpx.Response(
+                200, text="<html><body>Vítejte zpět, carol</body></html>"
+            )
         )
         await adapter.login()
 
@@ -431,8 +433,13 @@ async def test_rishada_login_failure_still_anonymous(monkeypatch: pytest.MonkeyP
 
     async with respx.mock(assert_all_called=True) as mock:
         mock.post(RI_LOGIN_URL).mock(return_value=httpx.Response(200, text="ok"))
+        # Login failure: the home page still renders the login form (id="login-form").
         mock.get(re.compile(r"^https://www\.rishada\.cz/$")).mock(
-            return_value=httpx.Response(200, text="<html>Uživatel: neznámý</html>")
+            return_value=httpx.Response(
+                200,
+                text='<html><form action="/" method="post" id="login-form">'
+                '<input name="login-name"></form></html>',
+            )
         )
-        with pytest.raises(credentials.CredentialError, match="still reports user as anonymous"):
+        with pytest.raises(credentials.CredentialError, match="login form still rendered"):
             await adapter.login()
