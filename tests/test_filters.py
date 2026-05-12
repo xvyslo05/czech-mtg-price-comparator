@@ -3,20 +3,12 @@ from __future__ import annotations
 import pytest
 
 from cz_mtg_compare.filters import filter_playable, is_non_playable
-from cz_mtg_compare.models import Condition, Offer
+
+from ._factories import make_offer
 
 
-def _o(name: str, edition: str | None = None) -> Offer:
-    return Offer(
-        shop="najada",
-        card_name=name,
-        edition=edition,
-        condition=Condition.NM,
-        foil=False,
-        price_czk=10,
-        stock_qty=1,
-        url="https://example.com/x",
-    )
+def _o(name, edition=None):
+    return make_offer(shop="najada", name=name, price=10, edition=edition)
 
 
 @pytest.mark.parametrize("name", [

@@ -1,41 +1,24 @@
 from __future__ import annotations
 
-import asyncio
-
 import pytest
 
-from cz_mtg_compare.adapters.base import ShopAdapter
 from cz_mtg_compare.aggregator import Aggregator
-from cz_mtg_compare.models import Condition, Offer, SearchQuery, ShopId
+from cz_mtg_compare.models import Condition
 from cz_mtg_compare.optimizer import MAX_CONCURRENT_CARDS, DecklistOptimizer
 
-
-class _StubAdapter(ShopAdapter):
-    """Adapter that returns a precomputed `card_name -> [offers]` map."""
-
-    def __init__(self, shop_id: ShopId, table: dict[str, list[Offer]]):
-        self.shop_id = shop_id
-        self.base_url = f"https://example.com/{shop_id}"
-        self._table = {k.lower(): v for k, v in table.items()}
-
-    async def search(self, query: SearchQuery) -> list[Offer]:
-        offers = self._table.get(query.name.lower(), [])
-        if query.in_stock_only:
-            offers = [o for o in offers if o.stock_qty > 0]
-        return list(offers)
+from ._factories import StubAdapter as _BaseStubAdapter
+from ._factories import make_offer
 
 
-def _o(shop: ShopId, name: str, price: int, *, qty: int = 1, cond: Condition = Condition.NM, foil: bool = False) -> Offer:
-    return Offer(
-        shop=shop,
-        card_name=name,
-        edition="X",
-        condition=cond,
-        foil=foil,
-        price_czk=price,
-        stock_qty=qty,
-        url=f"https://example.com/{shop}",
-    )
+def _o(shop, name, price, *, qty=1, cond=Condition.NM, foil=False):
+    return make_offer(shop=shop, name=name, price=price, stock_qty=qty, condition=cond, foil=foil)
+
+
+def _StubAdapter(shop_id, table):
+    """Thin local alias preserving this file's table-mode call style:
+    ``_StubAdapter("shop", {"card name": [offer, ...]})``.
+    """
+    return _BaseStubAdapter(shop_id, table=table)
 
 
 @pytest.mark.asyncio
@@ -190,35 +173,17 @@ async def test_shopping_plan_skips_missing_cards():
     assert {l.name for l in only.lines} == {"Lightning Bolt"}
 
 
-class _ConcurrencyTrackingAdapter(ShopAdapter):
-    """Stub adapter that records the maximum number of concurrent search calls."""
-
-    def __init__(self, shop_id: ShopId, delay_s: float = 0.05):
-        self.shop_id = shop_id
-        self.base_url = f"https://example.com/{shop_id}"
-        self._delay = delay_s
-        self._in_flight = 0
-        self.peak_concurrency = 0
-        self._lock = asyncio.Lock()
-
-    async def search(self, query: SearchQuery) -> list[Offer]:
-        async with self._lock:
-            self._in_flight += 1
-            self.peak_concurrency = max(self.peak_concurrency, self._in_flight)
-        try:
-            await asyncio.sleep(self._delay)
-            return [_o(self.shop_id, query.name, 50)]
-        finally:
-            async with self._lock:
-                self._in_flight -= 1
-
-
 @pytest.mark.asyncio
 async def test_optimizer_outer_fanout_is_capped():
     """A 30-card decklist must not let more than MAX_CONCURRENT_CARDS aggregator
     searches run at once — otherwise the per-host queue inside the aggregator
     blows past its timeout (real-world bug observed on Commander decks)."""
-    tracker = _ConcurrencyTrackingAdapter("tolarie", delay_s=0.02)
+    tracker = _BaseStubAdapter(
+        "tolarie",
+        offers=[_o("tolarie", "stub", 50)],
+        delay_s=0.02,
+        track_concurrency=True,
+    )
     agg = Aggregator([tracker])
     optimizer = DecklistOptimizer(agg)
 

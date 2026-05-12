@@ -3,40 +3,23 @@ from __future__ import annotations
 
 import pytest
 
-from cz_mtg_compare.adapters.base import ShopAdapter
 from cz_mtg_compare.aggregator import Aggregator
-from cz_mtg_compare.models import Condition, Offer, SearchQuery, ShopId
 from cz_mtg_compare.optimizer import (
     CONSOLIDATE_TOLERANCE_ENV,
     DEFAULT_CONSOLIDATE_TOLERANCE_PCT,
     DecklistOptimizer,
 )
 
-
-class _StubAdapter(ShopAdapter):
-    def __init__(self, shop_id: ShopId, table: dict[str, list[Offer]]):
-        self.shop_id = shop_id
-        self.base_url = f"https://example.com/{shop_id}"
-        self._table = {k.lower(): v for k, v in table.items()}
-
-    async def search(self, query: SearchQuery) -> list[Offer]:
-        offers = self._table.get(query.name.lower(), [])
-        if query.in_stock_only:
-            offers = [o for o in offers if o.stock_qty > 0]
-        return list(offers)
+from ._factories import StubAdapter as _BaseStubAdapter
+from ._factories import make_offer
 
 
-def _o(shop: ShopId, name: str, price: int) -> Offer:
-    return Offer(
-        shop=shop,
-        card_name=name,
-        edition="X",
-        condition=Condition.NM,
-        foil=False,
-        price_czk=price,
-        stock_qty=1,
-        url=f"https://example.com/{shop}",
-    )
+def _o(shop, name, price):
+    return make_offer(shop=shop, name=name, price=price)
+
+
+def _StubAdapter(shop_id, table):
+    return _BaseStubAdapter(shop_id, table=table)
 
 
 def _agg() -> Aggregator:

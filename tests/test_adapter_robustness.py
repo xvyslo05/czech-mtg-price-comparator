@@ -54,6 +54,15 @@ async def test_najada_adapter_handles_missing_results_key():
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("body", ["", "   ", "not json {{{", '"not a dict"', "[]", "null"])
+async def test_najada_adapter_handles_empty_or_malformed_body(body):
+    """Empty / non-JSON / non-dict root must yield [] instead of raising."""
+    adapter = NajadaAdapter()
+    offers = await adapter.parse(body, SearchQuery(name="Lightning Bolt"))
+    assert offers == []
+
+
+@pytest.mark.asyncio
 async def test_najada_adapter_skips_articles_without_price():
     adapter = NajadaAdapter()
     payload = {

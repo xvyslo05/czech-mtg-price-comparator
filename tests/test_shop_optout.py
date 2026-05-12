@@ -4,37 +4,12 @@ from __future__ import annotations
 import pytest
 
 from cz_mtg_compare.adapters import build_default_adapters
-from cz_mtg_compare.adapters.base import ShopAdapter
 from cz_mtg_compare.aggregator import Aggregator
-from cz_mtg_compare.models import Condition, Offer, SearchQuery, ShopId
+from cz_mtg_compare.models import SearchQuery
 from cz_mtg_compare.optimizer import DecklistOptimizer
 
-
-# ---------------------------------------------------------------------------
-# Helpers
-
-
-class _StubAdapter(ShopAdapter):
-    def __init__(self, shop_id: ShopId, offers: list[Offer]):
-        self.shop_id = shop_id
-        self.base_url = f"https://example.com/{shop_id}"
-        self._offers = offers
-
-    async def search(self, query: SearchQuery) -> list[Offer]:
-        return list(self._offers)
-
-
-def _o(shop: ShopId, name: str, price: int = 50) -> Offer:
-    return Offer(
-        shop=shop,
-        card_name=name,
-        edition="X",
-        condition=Condition.NM,
-        foil=False,
-        price_czk=price,
-        stock_qty=1,
-        url=f"https://example.com/{shop}",
-    )
+from ._factories import StubAdapter as _StubAdapter
+from ._factories import make_offer as _o
 
 
 # ---------------------------------------------------------------------------

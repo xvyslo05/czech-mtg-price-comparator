@@ -2,44 +2,22 @@ from __future__ import annotations
 
 import pytest
 
-from cz_mtg_compare.adapters.base import ShopAdapter
 from cz_mtg_compare.aggregator import Aggregator
-from cz_mtg_compare.models import Condition, Offer, SearchQuery, ShopId
+from cz_mtg_compare.models import SearchQuery
 
-
-class _StubAdapter(ShopAdapter):
-    def __init__(self, shop_id: ShopId, offers: list[Offer]):
-        self.shop_id = shop_id
-        self.base_url = f"https://example.com/{shop_id}"
-        self._offers = offers
-
-    async def search(self, query: SearchQuery) -> list[Offer]:
-        return list(self._offers)
-
-
-def _o(shop: ShopId, name: str, *, price: int = 50, edition: str | None = None) -> Offer:
-    return Offer(
-        shop=shop,
-        card_name=name,
-        edition=edition,
-        condition=Condition.NM,
-        foil=False,
-        price_czk=price,
-        stock_qty=1,
-        url="https://example.com/x",
-    )
+from ._factories import StubAdapter, make_offer
 
 
 @pytest.mark.asyncio
 async def test_aggregator_excludes_non_playable_by_default():
     agg = Aggregator(
         [
-            _StubAdapter(
+            StubAdapter(
                 "najada",
                 [
-                    _o("najada", "Lightning Bolt", price=50, edition="M10"),
-                    _o("najada", "Art Series: Lightning Bolt (V.2 - signed)", price=200),
-                    _o("najada", "Lightning Bolt (Borderless)", price=70, edition="2X2"),
+                    make_offer("najada", "Lightning Bolt", 50, edition="M10"),
+                    make_offer("najada", "Art Series: Lightning Bolt (V.2 - signed)", 200, edition=None),
+                    make_offer("najada", "Lightning Bolt (Borderless)", 70, edition="2X2"),
                 ],
             ),
         ]
@@ -54,11 +32,11 @@ async def test_aggregator_excludes_non_playable_by_default():
 async def test_aggregator_keeps_non_playable_when_opted_in():
     agg = Aggregator(
         [
-            _StubAdapter(
+            StubAdapter(
                 "najada",
                 [
-                    _o("najada", "Lightning Bolt", price=50),
-                    _o("najada", "Art Series: Lightning Bolt", price=200),
+                    make_offer("najada", "Lightning Bolt", 50),
+                    make_offer("najada", "Art Series: Lightning Bolt", 200),
                 ],
             ),
         ]

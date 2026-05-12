@@ -3,35 +3,14 @@ from __future__ import annotations
 
 import pytest
 
-from cz_mtg_compare.adapters.base import ShopAdapter
 from cz_mtg_compare.aggregator import Aggregator
-from cz_mtg_compare.models import Condition, Offer, SearchQuery, ShopId
 from cz_mtg_compare.optimizer import (
     DEFAULT_MAX_UNIQUE_CARDS,
     MAX_UNIQUE_CARDS_ENV,
     DecklistOptimizer,
 )
 
-
-class _StubAdapter(ShopAdapter):
-    def __init__(self, shop_id: ShopId, offers: list[Offer]):
-        self.shop_id = shop_id
-        self.base_url = f"https://example.com/{shop_id}"
-        self._offers = offers
-
-    async def search(self, query: SearchQuery) -> list[Offer]:
-        return [
-            Offer(
-                shop=self.shop_id,
-                card_name=query.name,
-                edition="X",
-                condition=Condition.NM,
-                foil=False,
-                price_czk=10,
-                stock_qty=1,
-                url="https://example.com",
-            )
-        ]
+from ._factories import StubAdapter
 
 
 def _decklist(unique: int) -> str:
@@ -40,7 +19,9 @@ def _decklist(unique: int) -> str:
 
 
 def _agg() -> Aggregator:
-    return Aggregator([_StubAdapter("tolarie", [])])
+    # These tests only care about how the optimizer enforces caps, not about
+    # offer content, so an empty-offers stub is fine.
+    return Aggregator([StubAdapter("tolarie", [])])
 
 
 @pytest.mark.asyncio

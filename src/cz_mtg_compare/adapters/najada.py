@@ -40,11 +40,17 @@ class NajadaAdapter(ShopAdapter):
                 },
             )
         resp.raise_for_status()
-        return self._parse_payload(resp.json(), query)
+        return await self.parse(resp.text, query)
 
     async def parse(self, html: str, query: SearchQuery) -> list[Offer]:
         # For tests using saved JSON fixture (we re-use the parse() ABC slot for any payload).
-        return self._parse_payload(json.loads(html), query)
+        if not html or not html.strip():
+            return []
+        try:
+            payload = json.loads(html)
+        except json.JSONDecodeError:
+            return []
+        return self._parse_payload(payload, query)
 
     def _parse_payload(self, payload: dict[str, Any], query: SearchQuery) -> list[Offer]:
         offers: list[Offer] = []
