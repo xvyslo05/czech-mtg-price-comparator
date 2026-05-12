@@ -707,3 +707,222 @@ async def test_rishada_clear_cart_visits_remove_link_per_item(
     assert result == {"removed_items": 2}
     assert del_a.called and del_b.called
     assert adapter.base_url == RISHADA_BASE
+
+
+# --- cernyrytir cart ---------------------------------------------------------
+
+
+from cz_mtg_compare.adapters.cernyrytir import (  # noqa: E402
+    BASE as CR_BASE,
+    CART_ADD_URL as CR_CART_ADD_URL,
+    CART_URL as CR_CART_URL,
+    CernyRytirAdapter,
+)
+
+# cernyrytir serves windows-1250 bytes; the adapter forces that encoding
+# when decoding responses. To keep our test fixtures readable as Python
+# string literals we author them in UTF-8 here and re-encode to cp1250
+# before stuffing them into the mocked Response.
+def _cr_response(text: str, status: int = 200) -> httpx.Response:
+    return httpx.Response(status, content=text.encode("windows-1250"))
+
+
+# Minimal logged-in cernyrytir homepage: contains an "Odhlásit" link, which
+# is what ``_login_locked`` looks for to confirm authentication.
+_CR_LOGGED_IN_HOME = (
+    "<html><body><a href='index.php3?akce=0&odhlasse=1'>Odhlásit</a></body></html>"
+)
+# Sidebar fragment returned by an add-to-cart POST — same div the live site
+# uses, so ``_parse_cart_summary`` parses it via the sidebar branch.
+_CR_SIDEBAR_AFTER_ADD = (
+    "<html><body>"
+    "<div class='lista-kosik-polozka'>"
+    "<span class='kosikbold'>V košíku máte </span>2 "
+    "<span class='kosikbold'>položky</span> "
+    "<span class='kosikbold'>za </span> 974 "
+    "<span class='kosikbold'>Kč</span>"
+    "</div></body></html>"
+)
+
+
+@pytest.mark.asyncio
+async def test_cernyrytir_logged_in_fixture_captures_carovy_kod(load_fixture) -> None:
+    """Logged-in result rows carry a per-product ``<form>`` with
+    ``nakupzbozi=Pridat`` and a hidden ``carovy_kod``. The parser must lift
+    that id into ``Offer.shop_ref`` — and NOT lift it from neighbouring
+    out-of-stock rows whose form posts ``Hlidat`` (watchlist) against the
+    same input shape."""
+    adapter = CernyRytirAdapter()
+    html = load_fixture("cernyrytir_counterspell_logged_in.html")
+    offers = await adapter.parse(html, SearchQuery(name="Counterspell", in_stock_only=False))
+    with_ref = [o for o in offers if o.shop_ref]
+    assert with_ref, "expected at least one in-stock offer with a captured carovy_kod"
+    for o in with_ref:
+        assert o.shop_ref is not None and o.shop_ref.isdigit()
+        # The fixture's in-stock SLD-R Counterspell row carries carovy_kod=426555.
+        # Use it as a positive smoke test that we picked the Pridat form,
+        # not a Hlidat one (Hlidat would yield a different id from the
+        # out-of-stock 332684 row in the same fixture).
+    assert any(o.shop_ref == "426555" for o in with_ref), (
+        "expected to lift the in-stock SLD-R Counterspell carovy_kod (Pridat form), "
+        "not a watchlist sku"
+    )
+
+
+def _dispatch_cernyrytir_post(capture_add):
+    """Route POST /index.php3?akce=3. Login uses ``uzivjmeno`` field; cart
+    uses ``nakupzbozi``. Direct each to its own response."""
+
+    def _route(request: httpx.Request) -> httpx.Response:
+        body = request.content.decode()
+        if "uzivjmeno=" in body:
+            return _cr_response(_CR_LOGGED_IN_HOME)
+        return capture_add(request)
+
+    return _route
+
+
+@pytest.mark.asyncio
+async def test_cernyrytir_add_to_cart_posts_form_payload(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The cernyrytir cart-add POST mimics the per-row "Vložit do košíku"
+    form: ``databaze=kusovkymagic``, ``carovy_kod=<id>``,
+    ``nakupzbozi=Pridat``, ``kusu=<count>``. Reverse-engineered against the
+    live site — verify the adapter wires up the exact payload + reads the
+    sidebar ``V košíku máte ... za <Total> Kč`` from the response."""
+    monkeypatch.setenv("CZ_MTG_CERNYRYTIR_USER", "bob")
+    monkeypatch.setenv("CZ_MTG_CERNYRYTIR_PASS", "bobpass")
+    adapter = CernyRytirAdapter()
+
+    captured: dict[str, str] = {}
+
+    def _capture_add(request: httpx.Request) -> httpx.Response:
+        captured["url"] = str(request.url)
+        captured["body"] = request.content.decode()
+        return _cr_response(_CR_SIDEBAR_AFTER_ADD)
+
+    async with respx.mock(assert_all_called=True) as mock:
+        # Login POST + the followup GET that _login_locked does to verify.
+        mock.post(re.compile(r"^https://www\.cernyrytir\.cz/index\.php3\?akce=0")).mock(
+            return_value=_cr_response(_CR_LOGGED_IN_HOME)
+        )
+        mock.get(re.compile(r"^https://www\.cernyrytir\.cz/index\.php3\?akce=0")).mock(
+            return_value=_cr_response(_CR_LOGGED_IN_HOME)
+        )
+        mock.post(re.compile(r"^https://www\.cernyrytir\.cz/index\.php3\?akce=3$")).mock(
+            side_effect=_dispatch_cernyrytir_post(_capture_add)
+        )
+        result = await adapter.add_to_cart("426555", count=2)
+
+    assert captured["url"] == CR_CART_ADD_URL
+    body = captured["body"]
+    assert "databaze=kusovkymagic" in body
+    assert "carovy_kod=426555" in body
+    assert "nakupzbozi=Pridat" in body
+    assert "kusu=2" in body
+    assert result["carovy_kod"] == "426555"
+    assert result["count"] == 2
+    assert result["cart_total_czk"] == 974
+    assert result["cart_item_count"] == 2
+
+
+@pytest.mark.asyncio
+async def test_cernyrytir_add_to_cart_rejects_invalid_inputs() -> None:
+    adapter = CernyRytirAdapter()
+    with pytest.raises(ValueError, match="shop_ref is required"):
+        await adapter.add_to_cart("")
+    with pytest.raises(ValueError, match="numeric carovy_kod"):
+        await adapter.add_to_cart("abc")
+    with pytest.raises(ValueError, match="count must be >= 1"):
+        await adapter.add_to_cart("123", count=0)
+
+
+@pytest.mark.asyncio
+async def test_cernyrytir_view_cart_parses_items_and_total(
+    load_fixture, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The cart-page fixture has one line item rendered with per-unit price,
+    a visible quantity input, a line-total cell, and a delete form. The
+    cart page also renders a ``Cena celkem`` row with the grand total
+    (incl. shipping). ``view_cart`` should surface both."""
+    monkeypatch.setenv("CZ_MTG_CERNYRYTIR_USER", "bob")
+    monkeypatch.setenv("CZ_MTG_CERNYRYTIR_PASS", "bobpass")
+    adapter = CernyRytirAdapter()
+    adapter._authenticated = True
+
+    cart_html = load_fixture("cernyrytir_cart_one_item.html")
+    async with respx.mock(assert_all_called=True) as mock:
+        mock.get(CR_CART_URL).mock(return_value=_cr_response(cart_html))
+        cart = await adapter.view_cart()
+
+    assert cart["url"] == CR_CART_URL
+    # cart-page has no native item-count display, falls back to len(items)
+    assert cart["item_count"] == 1
+    assert cart["total_czk"] is not None and cart["total_czk"] > 0
+    assert len(cart["items"]) == 1
+    item = cart["items"][0]
+    assert item["carovy_kod"] == "426555"
+    assert item["name"] and "counter" in item["name"].lower()
+    assert item["qty"] == 1
+    assert item["price_czk"] == 399
+    assert item["line_total_czk"] == 399
+
+
+@pytest.mark.asyncio
+async def test_cernyrytir_clear_cart_posts_upravit_kusu_zero_per_item(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """cernyrytir has no dedicated "delete item" endpoint — instead the cart
+    page renders a second form per row with ``Upravit`` + hidden ``kusu=0``,
+    which the server treats as "remove this line". ``clear_cart`` must POST
+    that payload for each item in the cart."""
+    monkeypatch.setenv("CZ_MTG_CERNYRYTIR_USER", "bob")
+    monkeypatch.setenv("CZ_MTG_CERNYRYTIR_PASS", "bobpass")
+    adapter = CernyRytirAdapter()
+    adapter._authenticated = True
+
+    # Cart-page-shaped HTML with two items — enough that we exercise the
+    # block_re's repetition and the per-item POST loop.
+    cart_html = (
+        "<html><body>"
+        "<table><tr><td>Card A</td><td>25</td>"
+        "<form action='index.php3?akce=3&kosicek=1' method='POST'>"
+        "<td><input name='kusu' size='3' maxlength='5' value='1'></td>"
+        "<td>25 Kč</td>"
+        "<td><input type=HIDDEN name='databaze' value='kusovkymagic'>"
+        "<input type=HIDDEN name='carovy_kod' value='111'>"
+        "<input type=HIDDEN name='nakupzbozi' value='Upravit'>"
+        "</td></form></tr>"
+        "<tr><td>Card B</td><td>50</td>"
+        "<form action='index.php3?akce=3&kosicek=1' method='POST'>"
+        "<td><input name='kusu' size='3' maxlength='5' value='2'></td>"
+        "<td>100 Kč</td>"
+        "<td><input type=HIDDEN name='databaze' value='kusovkymagic'>"
+        "<input type=HIDDEN name='carovy_kod' value='222'>"
+        "<input type=HIDDEN name='nakupzbozi' value='Upravit'>"
+        "</td></form></tr>"
+        "<tr><td>Cena celkem</td><td>125 Kč</td></tr>"
+        "</table></body></html>"
+    )
+
+    captured_bodies: list[str] = []
+
+    def _capture_delete(request: httpx.Request) -> httpx.Response:
+        captured_bodies.append(request.content.decode())
+        return httpx.Response(200)
+
+    async with respx.mock(assert_all_called=True) as mock:
+        mock.get(CR_CART_URL).mock(return_value=_cr_response(cart_html))
+        mock.post(re.compile(r"\?akce=3&kosicek=1")).mock(side_effect=_capture_delete)
+        result = await adapter.clear_cart()
+
+    assert result == {"removed_items": 2}
+    assert len(captured_bodies) == 2
+    # Both POSTs must carry the Upravit kusu=0 payload, one per carovy_kod.
+    codes = {re.search(r"carovy_kod=(\d+)", b).group(1) for b in captured_bodies}
+    assert codes == {"111", "222"}
+    for body in captured_bodies:
+        assert "nakupzbozi=Upravit" in body
+        assert "kusu=0" in body
+    assert adapter.base_url == CR_BASE
