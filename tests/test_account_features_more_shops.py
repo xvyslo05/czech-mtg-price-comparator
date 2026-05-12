@@ -1,9 +1,9 @@
 """Account-feature tests for the four shops added on top of the najada/tolarie
 PR: blacklotus, cernyrytir, rishada, untap. Login is implemented for all four;
-add_to_cart / view_cart / clear_cart are wired for blacklotus + untap only
-(cernyrytir and rishada gate their cart UI behind the login wall, so the cart
-POST shape couldn't be mapped without a real account — capability flag stays
-False and the default NotSupported impls take over)."""
+add_to_cart / view_cart / clear_cart are wired for blacklotus + rishada
+(cernyrytir still gates its cart UI behind a login-wall stub that we haven't
+mapped, so it stays NotSupported; untap implements cart against the API but
+sessions don't persist, so the capability flag is deliberately False)."""
 
 from __future__ import annotations
 
@@ -52,9 +52,9 @@ def _isolated_creds(monkeypatch: pytest.MonkeyPatch):
 
 def test_capability_flags_per_shop() -> None:
     """The four new adapters expose the right capability flags. blacklotus
-    supports cart; untap / cernyrytir / rishada are login-only. untap's cart
-    implementation works against the API but is intentionally disabled at
-    the capability layer because each adapter login starts a fresh
+    and rishada support cart; untap and cernyrytir are login-only. untap's
+    cart implementation works against the API but is intentionally disabled
+    at the capability layer because each adapter login starts a fresh
     Prestashop checkout, so cart items don't persist across sessions and
     the feature would silently confuse users."""
     bl = BlackLotusAdapter(enrich_detail=False)
@@ -67,19 +67,19 @@ def test_capability_flags_per_shop() -> None:
     assert (cr.supports_login, cr.supports_cart, cr.supports_watchlist) == (True, False, False)
 
     ri = RishadaAdapter()
-    assert (ri.supports_login, ri.supports_cart, ri.supports_watchlist) == (True, False, False)
+    assert (ri.supports_login, ri.supports_cart, ri.supports_watchlist) == (True, True, False)
 
 
 @pytest.mark.asyncio
 async def test_login_only_adapters_refuse_cart() -> None:
-    """cernyrytir / rishada must surface NotSupported for cart ops — the
-    default impl on ShopAdapter handles this, but we verify it isn't
-    overridden anywhere by accident."""
-    for adapter in (CernyRytirAdapter(), RishadaAdapter()):
-        with pytest.raises(AccountFeatureNotSupported):
-            await adapter.add_to_cart("any-id")
-        with pytest.raises(AccountFeatureNotSupported):
-            await adapter.view_cart()
+    """cernyrytir must surface NotSupported for cart ops — the default impl
+    on ShopAdapter handles this, but we verify it isn't overridden anywhere
+    by accident. (rishada now implements cart; covered separately.)"""
+    adapter = CernyRytirAdapter()
+    with pytest.raises(AccountFeatureNotSupported):
+        await adapter.add_to_cart("any-id")
+    with pytest.raises(AccountFeatureNotSupported):
+        await adapter.view_cart()
 
 
 # --- blacklotus -------------------------------------------------------------
