@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import logging
+from typing import Any
 
 from mcp.server.fastmcp import FastMCP
 
+from .adapters.base import AccountFeatureNotSupported
 from .aggregator import Aggregator
+from .credentials import CredentialError, has_credentials
 from .http_client import close_client
 from .models import Offer, SearchQuery, ShopId, ShopStatus
 from .optimizer import DecklistOptimization, DecklistOptimizer, Strategy
@@ -150,6 +153,108 @@ async def optimize_decklist(
         exclude_shops=exclude_shops,
         strategy=strategy,
     )
+
+
+def _require_adapter(shop: ShopId):
+    adapter = _aggregator.get_adapter(shop)
+    if adapter is None:
+        raise ValueError(
+            f"shop '{shop}' is not enabled "
+            "(check `list_shops`; the shop may be disabled via CZ_MTG_DISABLED_SHOPS)"
+        )
+    return adapter
+
+
+@mcp.tool()
+def shop_account_capabilities() -> list[dict[str, Any]]:
+    """Per-shop account-feature support and credential status.
+
+    Returns one entry per enabled shop with:
+    - ``shop``: shop id
+    - ``supports_login`` / ``supports_cart`` / ``supports_watchlist``: capability flags
+    - ``credentials_configured``: whether ``CZ_MTG_<SHOP>_USER`` and
+      ``CZ_MTG_<SHOP>_PASS`` env vars are both set (does NOT resolve
+      ``op://...`` 1Password references — just a presence check).
+
+    Use this to tell the user which shops they can actually log into and which
+    account actions are available before attempting them.
+    """
+    out: list[dict[str, Any]] = []
+    for adapter in _aggregator.adapters:
+        out.append(
+            {
+                "shop": adapter.shop_id,
+                "supports_login": adapter.supports_login,
+                "supports_cart": adapter.supports_cart,
+                "supports_watchlist": adapter.supports_watchlist,
+                "credentials_configured": has_credentials(adapter.shop_id),
+            }
+        )
+    return out
+
+
+@mcp.tool()
+async def shop_login(shop: ShopId) -> dict[str, Any]:
+    """Authenticate against a shop using its CZ_MTG_<SHOP>_USER / _PASS credentials.
+
+    The credentials may be literal strings or 1Password secret references of the
+    form ``op://Vault/Item/Field`` — the latter is resolved via the ``op`` CLI
+    on first use. Login sessions are kept in-process for as long as the MCP
+    server runs and are reused automatically by ``add_to_cart`` / ``view_cart``.
+
+    Returns ``{"shop": ..., "ok": true}`` on success. Raises with a clear message
+    if the shop doesn't support login, credentials are missing/invalid, or the
+    1Password reference can't be resolved.
+    """
+    adapter = _require_adapter(shop)
+    await adapter.login()
+    return {"shop": shop, "ok": True}
+
+
+@mcp.tool()
+async def add_to_cart(shop: ShopId, offer: Offer, count: int = 1) -> dict[str, Any]:
+    """Add a previously-found Offer to the shop's online cart.
+
+    ``offer`` must come from ``search_card`` / ``optimize_decklist`` on the SAME
+    server run so that the per-shop ``shop_ref`` (product/article id) is
+    populated. Logs in automatically on first call if not already authenticated.
+
+    Returns the shop's raw response (e.g. updated cart item record). Raises if
+    the shop doesn't support cart operations, the offer is missing ``shop_ref``,
+    or credentials are misconfigured.
+    """
+    adapter = _require_adapter(shop)
+    return await adapter.add_to_cart(offer, count=count)
+
+
+@mcp.tool()
+async def view_cart(shop: ShopId) -> dict[str, Any]:
+    """Return the current contents of the shop's online cart for the
+    authenticated user. Logs in automatically if needed.
+    """
+    adapter = _require_adapter(shop)
+    return await adapter.view_cart()
+
+
+@mcp.tool()
+async def clear_cart(shop: ShopId) -> dict[str, Any]:
+    """Remove every item from the shop's online cart for the authenticated user.
+
+    Returns ``{"removed_items": <int>}``. Destructive — confirm with the user
+    before calling.
+    """
+    adapter = _require_adapter(shop)
+    return await adapter.clear_cart()
+
+
+@mcp.tool()
+async def add_to_watchlist(shop: ShopId, offer: Offer) -> dict[str, Any]:
+    """Add an Offer to the shop's wishlist / watchlist / wantlist if the shop
+    supports it. Raises with a clear message otherwise — check
+    ``shop_account_capabilities`` first.
+    """
+    adapter = _require_adapter(shop)
+    return await adapter.add_to_watchlist(offer)
 
 
 def main() -> None:

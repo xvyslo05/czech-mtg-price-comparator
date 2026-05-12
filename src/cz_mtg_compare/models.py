@@ -57,6 +57,9 @@ class Offer(BaseModel):
     price_czk: int
     stock_qty: int = 0
     url: str
+    # Opaque per-shop identifier used by account features (add_to_cart, watchlist).
+    # Populated by adapters that capture it during search; remains None otherwise.
+    shop_ref: str | None = None
     fetched_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 

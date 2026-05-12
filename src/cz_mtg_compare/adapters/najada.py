@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import urllib.parse
 from typing import Any
 
+from ..credentials import CredentialError, credentials_for
 from ..http_client import get_client, host_slot
 from ..models import Condition, Offer, SearchQuery
 from ..normalize import normalize_condition
@@ -14,10 +16,24 @@ SHOP_BASE = "https://najada.games"
 ENDPOINT = f"{API_BASE}/najada2/catalog/mtg-singles/"
 PAGE_LIMIT = 100  # API supports up to 100; covers most queries.
 
+AUTH_LOGIN_URL = f"{API_BASE}/auth/token/login/"
+AUTH_LOGOUT_URL = f"{API_BASE}/auth/token/logout/"
+CART_ITEMS_URL = f"{API_BASE}/najada2/own-cart-items/"
+
 
 class NajadaAdapter(ShopAdapter):
     shop_id = "najada"
     base_url = SHOP_BASE
+    supports_login = True
+    supports_cart = True
+    # Watchlist endpoint exists (own-wantlist-items / own-shopping-list-items)
+    # but its full schema is gated behind authenticated OPTIONS, so we don't
+    # ship a watchlist client yet — left for a follow-up PR.
+    supports_watchlist = False
+
+    def __init__(self) -> None:
+        self._auth_token: str | None = None
+        self._auth_lock = asyncio.Lock()
 
     def _request_url(self, query: SearchQuery) -> tuple[str, dict[str, Any]]:
         params: dict[str, Any] = {"q": query.name, "limit": PAGE_LIMIT}
@@ -127,6 +143,9 @@ class NajadaAdapter(ShopAdapter):
 
         language = (article.get("language_code") or "").strip() or None
 
+        article_id = article.get("id")
+        shop_ref = str(article_id) if article_id is not None else None
+
         return Offer(
             shop="najada",
             card_name=card_name,
@@ -138,4 +157,127 @@ class NajadaAdapter(ShopAdapter):
             price_czk=price_czk,
             stock_qty=stock_qty,
             url=url,
+            shop_ref=shop_ref,
         )
+
+    # --- Account features ---------------------------------------------------
+
+    def _bearer_headers(self, token: str) -> dict[str, str]:
+        return {
+            "Accept": "application/json",
+            "Authorization": f"Bearer {token}",
+            "Origin": SHOP_BASE,
+            "Referer": f"{SHOP_BASE}/",
+        }
+
+    async def _ensure_auth(self) -> str:
+        if self._auth_token is not None:
+            return self._auth_token
+        async with self._auth_lock:
+            if self._auth_token is not None:
+                return self._auth_token
+            await self._login_locked()
+            assert self._auth_token is not None
+            return self._auth_token
+
+    async def login(self) -> None:
+        async with self._auth_lock:
+            await self._login_locked()
+
+    async def _login_locked(self) -> None:
+        creds = credentials_for("najada")
+        if creds is None:
+            raise CredentialError(
+                "najada credentials not configured "
+                "(set CZ_MTG_NAJADA_USER and CZ_MTG_NAJADA_PASS)"
+            )
+        client = await get_client()
+        async with host_slot("wizardshop.cz"):
+            resp = await client.post(
+                AUTH_LOGIN_URL,
+                json={"email": creds.username, "password": creds.password},
+                headers={"Accept": "application/json", "Origin": SHOP_BASE},
+            )
+        if resp.status_code == 400:
+            self._auth_token = None
+            raise CredentialError(
+                "najada login rejected: invalid credentials"
+            )
+        resp.raise_for_status()
+        token = (resp.json() or {}).get("auth_token")
+        if not token:
+            raise CredentialError("najada login response missing auth_token")
+        self._auth_token = token
+
+    async def logout(self) -> None:
+        token = self._auth_token
+        if token is None:
+            return
+        client = await get_client()
+        async with host_slot("wizardshop.cz"):
+            resp = await client.post(AUTH_LOGOUT_URL, headers=self._bearer_headers(token))
+        self._auth_token = None
+        if resp.status_code not in (200, 204):
+            resp.raise_for_status()
+
+    async def add_to_cart(self, offer: Offer, count: int = 1) -> dict[str, Any]:
+        if offer.shop != self.shop_id:
+            raise ValueError(f"offer.shop={offer.shop!r} cannot be added to najada cart")
+        if not offer.shop_ref:
+            raise ValueError(
+                "offer is missing shop_ref (najada article id) — re-run search_card "
+                "so adapters populate it"
+            )
+        if count < 1:
+            raise ValueError("count must be >= 1")
+        # Najada article ids are UUIDs (e.g. ``d762c438-...``); the API accepts
+        # them verbatim as the ``article`` field.
+        article_id = offer.shop_ref
+        token = await self._ensure_auth()
+        client = await get_client()
+        async with host_slot("wizardshop.cz"):
+            resp = await client.post(
+                CART_ITEMS_URL,
+                json={"article": article_id, "count": count},
+                headers=self._bearer_headers(token),
+            )
+        if resp.status_code == 401:
+            self._auth_token = None
+            raise CredentialError("najada session rejected — retry to re-login")
+        resp.raise_for_status()
+        return resp.json()
+
+    async def view_cart(self) -> dict[str, Any]:
+        token = await self._ensure_auth()
+        client = await get_client()
+        async with host_slot("wizardshop.cz"):
+            resp = await client.get(CART_ITEMS_URL, headers=self._bearer_headers(token))
+        if resp.status_code == 401:
+            self._auth_token = None
+            raise CredentialError("najada session rejected — retry to re-login")
+        resp.raise_for_status()
+        return resp.json()
+
+    async def clear_cart(self) -> dict[str, Any]:
+        token = await self._ensure_auth()
+        cart = await self.view_cart()
+        items = cart.get("items", []) if isinstance(cart, dict) else []
+        client = await get_client()
+        removed = 0
+        for item in items:
+            item_id = item.get("id")
+            if item_id is None:
+                continue
+            async with host_slot("wizardshop.cz"):
+                resp = await client.delete(
+                    f"{CART_ITEMS_URL}{item_id}/",
+                    headers=self._bearer_headers(token),
+                )
+            if resp.status_code in (200, 204):
+                removed += 1
+                continue
+            if resp.status_code == 401:
+                self._auth_token = None
+                raise CredentialError("najada session rejected — retry to re-login")
+            resp.raise_for_status()
+        return {"removed_items": removed}
