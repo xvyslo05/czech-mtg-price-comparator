@@ -42,7 +42,7 @@ This is an MCP server. MCP is the protocol Claude Desktop (and other clients) us
 - **Optimize a Commander/Standard/Modern decklist** — paste the list in chat, get back either the cheapest cross-shop split (default) or a plan that consolidates into the fewest distinct shops (`strategy="fewest_shops"`, within a 10% price tolerance), plus each shop's solo total.
 - **Resolve card names** through Scryfall (canonical name, set/collector#, oracle text, multilingual printed names).
 - **Fall back to Cardmarket** for European pricing when CZ shops don't carry a card (optional, requires API credentials).
-- **(Optional) Log into a shop and manage your cart** for shops where account features are implemented. Currently: `najada` / `blacklotus` / `tolarie` / `rishada` (full — login + add/view/clear cart) and `untap` / `cernyrytir` (login only). See [Account features](#optional-account-features-login--cart). Credentials may be plain strings *or* `op://...` 1Password references.
+- **(Optional) Log into a shop and manage your cart** for shops where account features are implemented. Currently: `najada` / `blacklotus` / `tolarie` / `rishada` / `cernyrytir` (full — login + add/view/clear cart) and `untap` (login only). See [Account features](#optional-account-features-login--cart). Credentials may be plain strings *or* `op://...` 1Password references.
 
 It does **not** place orders or send notifications — cart contents must still be checked out manually on each shop's website.
 
@@ -366,7 +366,7 @@ This is **opt-in per shop**. The server has no credentials by default and never 
 | `blacklotus`  | ✅    | ✅                        | ❌        |
 | `tolarie`     | ✅    | ✅                        | ❌ (planned) |
 | `untap`       | ✅    | ⛔ disabled (each login starts a fresh checkout — items don't persist) | ❌ |
-| `cernyrytir`  | ✅    | ❌ (cart trigger is JS-injected post-login) | ❌        |
+| `cernyrytir`  | ✅    | ✅                        | ❌        |
 | `rishada`     | ✅    | ✅                        | ❌        |
 | `cardmarket`  | ❌    | ❌                        | ❌        |
 
@@ -445,7 +445,7 @@ Under the hood Claude calls:
 
 - `shop_account_capabilities()` — discover what's supported and what's configured
 - `shop_login(shop="najada")` — eager-login if needed; otherwise the cart tools log in lazily
-- `add_to_cart(shop, shop_ref, count=N)` — `shop_ref` is the per-shop product/article id that appears on every `Offer` returned by `search_card` / `optimize_decklist`. Pass it through verbatim (it's a UUID for najada, a numeric id for tolarie / rishada). If you don't have a `shop_ref` yet, run `search_card` first. For rishada, `count` is clamped to the row's available stock by the server, so a request for more than is available silently adds the maximum the shop has.
+- `add_to_cart(shop, shop_ref, count=N)` — `shop_ref` is the per-shop product/article id that appears on every `Offer` returned by `search_card` / `optimize_decklist`. Pass it through verbatim (it's a UUID for najada, a numeric id for tolarie / rishada / cernyrytir). If you don't have a `shop_ref` yet, run `search_card` first. For rishada and cernyrytir, `count` is clamped to the row's available stock by the server, so a request for more than is available silently adds the maximum the shop has.
 - `view_cart(shop)` — return the shop's current cart contents
 - `clear_cart(shop)` — delete every item from the shop's cart (returns `{"removed_items": N}`)
 - `add_to_watchlist(shop, shop_ref)` — only on shops that support it (none today; placeholder for follow-up PRs)
@@ -455,7 +455,6 @@ Sessions live in-process for the lifetime of the MCP server. If the cached token
 ### Known limitations
 
 - **najada watchlist (`own-wantlist-items` / `own-shopping-list-items`) is not wired up yet** — the endpoints exist but require an authenticated session to inspect the schema, and the nested-product shape is non-trivial. Planned for a follow-up PR.
-- **cernyrytir cart endpoint is not implemented.** cernyrytir's row markup post-login doesn't expose a cart link in plain HTML — the trigger is injected by a JS bundle that still needs to be mapped. Login works; the cart shape will come in a follow-up PR. Tracking: [issue #6](https://github.com/xvyslo05/czech-mtg-price-comparator/issues/6).
 - **untap cart is disabled even though it works.** untap's Prestashop install starts a brand-new checkout on every login. Items added by this MCP server during a Claude Desktop session disappear the moment the user logs in again (whether through this server or in a browser). The cart code is kept around so a future PR can flip `supports_cart` back on if untap migrates to a session-spanning cart, but exposing it today would just confuse users — the cart-add API call returns success but the cards never materialise on the user's account.
 - **No checkout.** The server stops at "items are in your cart"; finalizing the order, choosing shipping, paying — all still happens manually on the shop's website. By design.
 
@@ -479,7 +478,7 @@ Sessions live in-process for the lifetime of the MCP server. If the cached token
 | `CZ_MTG_BLACKLOTUS_USER` / `CZ_MTG_BLACKLOTUS_PASS` | Blacklotus account credentials for login + cart | unset (login disabled for blacklotus) |
 | `CZ_MTG_UNTAP_USER` / `CZ_MTG_UNTAP_PASS`           | Untap (Prestashop) account credentials for login + cart | unset (login disabled for untap) |
 | `CZ_MTG_TOLARIE_USER` / `CZ_MTG_TOLARIE_PASS`       | Tolarie account credentials for login + cart | unset (login disabled for tolarie) |
-| `CZ_MTG_CERNYRYTIR_USER` / `CZ_MTG_CERNYRYTIR_PASS` | Černý rytíř account credentials. Currently only powers `shop_login`; cart endpoint not yet implemented | unset (login disabled for cernyrytir) |
+| `CZ_MTG_CERNYRYTIR_USER` / `CZ_MTG_CERNYRYTIR_PASS` | Černý rytíř account credentials for login + cart | unset (login disabled for cernyrytir) |
 | `CZ_MTG_RISHADA_USER` / `CZ_MTG_RISHADA_PASS`       | Rishada account credentials for login + cart | unset (login disabled for rishada) |
 
 ### Disabling individual shops
@@ -617,7 +616,7 @@ Claude will pass the flag through automatically.
 - **Cardmarket per-seller offers** require a paid Trader-tier API key, not yet wired up. Free tier surfaces priceGuide aggregates only.
 - **Decklist size capped at 100 cards total AND 100 unique cards.** Commander format is the largest legal format. The unique-cards limit is what actually drives the request count (one search per unique card per shop = up to 600 requests at 100/6) and exists to keep a single tool call from spawning runaway traffic. Override via `CZ_MTG_MAX_UNIQUE_CARDS` if you genuinely need a bigger list.
 - **No price history.** Each query is a fresh snapshot. Track prices yourself if you need it (or open an issue requesting it).
-- **Account features cover six of seven shops, with four of them fully cartable.** Full login + cart: `najada` (Djoser/DRF API), `blacklotus` (Shoptet), `tolarie` (Django + jQuery `getJSON` per-product URLs), `rishada` (custom-PHP form POST — `act=20005` against `/`). Login only: `untap` (cart works against Prestashop but doesn't persist between logins — see Known limitations) and `cernyrytir` (cart trigger is JS-injected from a bundle that still needs mapping). Cardmarket has no per-user cart on the free tier and stays out of scope. cernyrytir cart support is tracked in [issue #6](https://github.com/xvyslo05/czech-mtg-price-comparator/issues/6).
+- **Account features cover six of seven shops, with five of them fully cartable.** Full login + cart: `najada` (Djoser/DRF API), `blacklotus` (Shoptet), `tolarie` (Django + jQuery `getJSON` per-product URLs), `rishada` (custom-PHP form POST — `act=20005` against `/`), `cernyrytir` (custom-PHP form POST — `nakupzbozi=Pridat` + `carovy_kod`). Login only: `untap` — cart works against Prestashop but doesn't persist between logins (see Known limitations). Cardmarket has no per-user cart on the free tier and stays out of scope.
 - **No automated checkout.** The cart tools stop at "items are in the cart" — finalizing the order, shipping, and payment still happen manually on the shop's website. This is intentional.
 
 ---
