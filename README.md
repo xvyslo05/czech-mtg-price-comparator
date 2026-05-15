@@ -28,6 +28,7 @@ Claude: (calls search_card)
 - [Configuration reference](#configuration-reference)
 - [Troubleshooting](#troubleshooting)
 - [How it works under the hood](#how-it-works-under-the-hood)
+- [HTTP API (experimental)](#http-api-experimental)
 - [Limitations](#limitations)
 - [Development](#development)
 - [Repo layout](#repo-layout)
@@ -609,6 +610,35 @@ If you specifically want them — e.g. you're price-checking an art print or a c
 
 Claude will pass the flag through automatically.
 
+## HTTP API (experimental)
+
+A FastAPI surface ships alongside the MCP server for the upcoming web-app work tracked in issue #9. **Read-only and unauthenticated for now** — cart and login endpoints will land with the credential vault (workstream C); per-user API keys + rate limiting land with G1/G2. Run anywhere you'd run the MCP server.
+
+```bash
+pip install "cz-mtg-compare-mcp[web]"
+cz-mtg-compare-web --host 0.0.0.0 --port 8080
+# OpenAPI docs at http://localhost:8080/docs
+```
+
+Available endpoints (v1):
+
+| Method | Path                       | Notes                                                          |
+|--------|----------------------------|----------------------------------------------------------------|
+| GET    | `/v1/health`               | Liveness probe                                                 |
+| GET    | `/v1/shops`                | Configured shops + last-call status (mirrors `list_shops`)     |
+| GET    | `/v1/shops/capabilities`   | Per-shop login/cart/watchlist flags + credential presence      |
+| GET    | `/v1/cards/search`         | `?name=&edition=&in_stock_only=&shops=...&exclude_shops=...`   |
+| GET    | `/v1/cards/lookup`         | `?name=&exact=` (Scryfall)                                     |
+| POST   | `/v1/decklists/optimize`   | JSON body — `{decklist, strategy, shops, exclude_shops, ...}`  |
+
+The MCP server (`cz-mtg-compare-mcp`) and the HTTP server (`cz-mtg-compare-web`) share the same in-process service layer (`cz_mtg_compare.service.CardCompareService`); behaviour is identical across surfaces.
+
+Caveats:
+- `/v1/decklists/optimize` runs inline in the handler today. A 100-card list can fan out to ~600 upstream HTTP requests and take several seconds. Moving to a background job queue is tracked as A4 in issue #9.
+- No auth. Don't expose the port publicly until B1 ships.
+
+---
+
 ## Limitations
 
 - **Shipping cost isn't modelled explicitly.** The `cheapest` strategy minimizes card prices only and ignores per-shop shipping fees. Use `strategy="fewest_shops"` to consolidate into fewer orders (within 10% of the cheapest-split total by default, configurable via `CZ_MTG_CONSOLIDATE_TOLERANCE_PCT`). Per-shop totals still let you eyeball trade-offs manually.
@@ -689,8 +719,12 @@ src/cz_mtg_compare/
                        (shop_account_capabilities / shop_login /
                        add_to_cart / view_cart / clear_cart / add_to_watchlist)
   service.py           Transport-agnostic core (CardCompareService). All tool
-                       logic lives here — MCP, future FastAPI / hosted MCP,
+                       logic lives here — MCP, FastAPI, future hosted MCP,
                        and tests all forward to this.
+  web/                 FastAPI delivery surface (optional `[web]` extra).
+    app.py             Route definitions, exception handlers.
+    schemas.py         Request bodies (responses reuse core pydantic models).
+    main.py            `cz-mtg-compare-web` console-script entry point.
   models.py            Offer / Condition / SearchQuery / ShopId
   aggregator.py        async fan-out + per-shop timeouts + cache + get_adapter()
   optimizer.py         decklist optimization (multi-shop split + per-shop bundles)
