@@ -57,6 +57,9 @@ Changelog = "https://github.com/xvyslo05/czech-mtg-price-comparator/releases"
 web = [
     "fastapi>=0.110",
     "uvicorn[standard]>=0.27",
+    "sqlalchemy[asyncio]>=2.0",
+    "asyncpg>=0.29",
+    "alembic>=1.13",
 ]
 dev = [
     "pytest>=8.0",
@@ -65,6 +68,9 @@ dev = [
     "build>=1.2",
     "twine>=5.0",
     "fastapi>=0.110",
+    "sqlalchemy[asyncio]>=2.0",
+    "alembic>=1.13",
+    "aiosqlite>=0.19",
 ]
 
 [project.scripts]
@@ -78,6 +84,8 @@ packages = ["src/cz_mtg_compare"]
 include = [
     "/src",
     "/tests",
+    "/migrations",
+    "/alembic.ini",
     "/README.md",
     "/LICENSE",
     "/pyproject.toml",

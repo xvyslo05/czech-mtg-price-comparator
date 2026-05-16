@@ -481,6 +481,8 @@ Sessions live in-process for the lifetime of the MCP server. If the cached token
 | `CZ_MTG_TOLARIE_USER` / `CZ_MTG_TOLARIE_PASS`       | Tolarie account credentials for login + cart | unset (login disabled for tolarie) |
 | `CZ_MTG_CERNYRYTIR_USER` / `CZ_MTG_CERNYRYTIR_PASS` | Černý rytíř account credentials for login + cart | unset (login disabled for cernyrytir) |
 | `CZ_MTG_RISHADA_USER` / `CZ_MTG_RISHADA_PASS`       | Rishada account credentials for login + cart | unset (login disabled for rishada) |
+| `CZ_MTG_DATABASE_URL`         | SQLAlchemy URL for the web app's database. Required for the upcoming auth / vault work (issue #9 → B/C). Example: `postgresql+asyncpg://user:pass@host/dbname`. The MCP server doesn't use this | `sqlite+aiosqlite:///:memory:` (dev / tests only) |
+| `CZ_MTG_DATABASE_ECHO`        | Log all SQL emitted by the web app's engine (debug) | `false` |
 
 ### Disabling individual shops
 
@@ -633,6 +635,23 @@ Available endpoints (v1):
 
 The MCP server (`cz-mtg-compare-mcp`) and the HTTP server (`cz-mtg-compare-web`) share the same in-process service layer (`cz_mtg_compare.service.CardCompareService`); behaviour is identical across surfaces.
 
+### Database
+
+The web app owns a database — required once auth (B1) and the credential vault (C) start landing. Today's read-only surface doesn't touch it, so a fresh checkout still runs without setup, but you should configure one before stacking later PRs:
+
+```bash
+# 1. Point the app at your database
+export CZ_MTG_DATABASE_URL="postgresql+asyncpg://user:pass@host/dbname"
+
+# 2. Apply migrations (creates the users table)
+alembic upgrade head
+
+# 3. Start the server
+cz-mtg-compare-web --host 0.0.0.0 --port 8080
+```
+
+Without `CZ_MTG_DATABASE_URL` the engine falls back to in-memory SQLite — fine for poking around, not for anything persistent. The MCP server does not use this DB at all; only the HTTP / web surface does.
+
 Caveats:
 - `/v1/decklists/optimize` runs inline in the handler today. A 100-card list can fan out to ~600 upstream HTTP requests and take several seconds. Moving to a background job queue is tracked as A4 in issue #9.
 - No auth. Don't expose the port publicly until B1 ships.
@@ -722,9 +741,13 @@ src/cz_mtg_compare/
                        logic lives here — MCP, FastAPI, future hosted MCP,
                        and tests all forward to this.
   web/                 FastAPI delivery surface (optional `[web]` extra).
-    app.py             Route definitions, exception handlers.
+    app.py             Route definitions, exception handlers, lifespan.
     schemas.py         Request bodies (responses reuse core pydantic models).
     main.py            `cz-mtg-compare-web` console-script entry point.
+  db/                  Database layer (optional `[web]` extra).
+    config.py          DatabaseSettings (reads CZ_MTG_DATABASE_URL).
+    engine.py          Async engine + session factory + get_session dep.
+    models.py          ORM models (Base, User, ...).
   models.py            Offer / Condition / SearchQuery / ShopId
   aggregator.py        async fan-out + per-shop timeouts + cache + get_adapter()
   optimizer.py         decklist optimization (multi-shop split + per-shop bundles)
