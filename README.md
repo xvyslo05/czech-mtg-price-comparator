@@ -483,6 +483,12 @@ Sessions live in-process for the lifetime of the MCP server. If the cached token
 | `CZ_MTG_RISHADA_USER` / `CZ_MTG_RISHADA_PASS`       | Rishada account credentials for login + cart | unset (login disabled for rishada) |
 | `CZ_MTG_DATABASE_URL`         | SQLAlchemy URL for the web app's database. Required for the upcoming auth / vault work (issue #9 → B/C). Example: `postgresql+asyncpg://user:pass@host/dbname`. The MCP server doesn't use this | `sqlite+aiosqlite:///:memory:` (dev / tests only) |
 | `CZ_MTG_DATABASE_ECHO`        | Log all SQL emitted by the web app's engine (debug) | `false` |
+| `CZ_MTG_SESSION_COOKIE_NAME`  | Cookie name carrying the opaque server-side session id           | `cz_session` |
+| `CZ_MTG_CSRF_COOKIE_NAME`     | Cookie name carrying the CSRF token (readable by JS by design)   | `cz_csrf` |
+| `CZ_MTG_SESSION_TTL_SECONDS`  | Session lifetime in seconds; invalid / non-positive values fall back to the default | `2592000` (30 days) |
+| `CZ_MTG_COOKIE_SECURE`        | Whether session/CSRF cookies require HTTPS. Set to `false` for local dev over plain HTTP | `true` |
+| `CZ_MTG_COOKIE_SAMESITE`      | SameSite flag for both cookies. One of `lax`, `strict`, `none`   | `lax` |
+| `CZ_MTG_COOKIE_DOMAIN`        | Cookie Domain attribute. Leave unset for host-only cookies       | unset |
 
 ### Disabling individual shops
 
@@ -632,6 +638,8 @@ Available endpoints (v1):
 | GET    | `/v1/cards/search`         | `?name=&edition=&in_stock_only=&shops=...&exclude_shops=...`   |
 | GET    | `/v1/cards/lookup`         | `?name=&exact=` (Scryfall)                                     |
 | POST   | `/v1/decklists/optimize`   | JSON body — `{decklist, strategy, shops, exclude_shops, ...}`  |
+| GET    | `/v1/auth/csrf`            | Mint or refresh the CSRF token; sets the session + CSRF cookies |
+| GET    | `/v1/auth/whoami`          | Returns `{authenticated, user_id}` for the current session     |
 
 The MCP server (`cz-mtg-compare-mcp`) and the HTTP server (`cz-mtg-compare-web`) share the same in-process service layer (`cz_mtg_compare.service.CardCompareService`); behaviour is identical across surfaces.
 
@@ -652,9 +660,18 @@ cz-mtg-compare-web --host 0.0.0.0 --port 8080
 
 Without `CZ_MTG_DATABASE_URL` the engine falls back to in-memory SQLite — fine for poking around, not for anything persistent. The MCP server does not use this DB at all; only the HTTP / web surface does.
 
+### CSRF
+
+State-changing requests (`POST` / `PUT` / `PATCH` / `DELETE`) are gated by a double-submit CSRF check **when the request carries a session cookie**. Unsessioned anonymous requests aren't gated — there's no escalation to defend against. Once login (B1 PR3) is wired up, every authenticated request must:
+
+1. Have called `GET /v1/auth/csrf` at least once (sets the `cz_session` and `cz_csrf` cookies).
+2. Mirror the CSRF cookie value into the `X-CSRF-Token` request header.
+
+Server-side the middleware also checks the header against the session row's stored `csrf_token`, so revoking a session immediately kills its CSRF token — not just the cookie pair on whichever browser still has it cached.
+
 Caveats:
 - `/v1/decklists/optimize` runs inline in the handler today. A 100-card list can fan out to ~600 upstream HTTP requests and take several seconds. Moving to a background job queue is tracked as A4 in issue #9.
-- No auth. Don't expose the port publicly until B1 ships.
+- No login endpoint yet (B1 PR3). `whoami` always reports `authenticated: false` unless you've inserted a session row manually.
 
 ---
 
@@ -741,9 +758,12 @@ src/cz_mtg_compare/
                        logic lives here — MCP, FastAPI, future hosted MCP,
                        and tests all forward to this.
   web/                 FastAPI delivery surface (optional `[web]` extra).
-    app.py             Route definitions, exception handlers, lifespan.
+    app.py             Route definitions, exception handlers, lifespan, middleware.
     schemas.py         Request bodies (responses reuse core pydantic models).
     main.py            `cz-mtg-compare-web` console-script entry point.
+    auth_config.py     Cookie names, session TTL, Secure / SameSite knobs.
+    middleware.py      SessionLoader + CSRF middlewares.
+    sessions.py        Session create / load / cookie-attach helpers.
   db/                  Database layer (optional `[web]` extra).
     config.py          DatabaseSettings (reads CZ_MTG_DATABASE_URL).
     engine.py          Async engine + session factory + get_session dep.

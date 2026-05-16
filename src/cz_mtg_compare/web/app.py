@@ -37,15 +37,20 @@ from ..models import Offer, ShopId, ShopStatus
 from ..optimizer import DecklistOptimization
 from ..scryfall import CardInfo
 from ..service import CardCompareService, default_service
+from .auth_config import AuthCookieSettings
+from .middleware import CSRFMiddleware, SessionLoaderMiddleware
 from .schemas import OptimizeDecklistRequest
+from .sessions import attach_cookies, create_session
 
 
 def create_app(
     service: CardCompareService | None = None,
     db_settings: DatabaseSettings | None = None,
+    auth_settings: AuthCookieSettings | None = None,
 ) -> FastAPI:
     svc = service or default_service
     settings = db_settings or DatabaseSettings.from_env()
+    auth = auth_settings or AuthCookieSettings.from_env()
 
     @asynccontextmanager
     async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
@@ -67,6 +72,11 @@ def create_app(
         ),
         lifespan=_lifespan,
     )
+
+    # Middleware is applied bottom-up at request time: CSRF is added
+    # AFTER SessionLoader so the CSRF check can read request.state.session.
+    app.add_middleware(CSRFMiddleware, settings=auth)
+    app.add_middleware(SessionLoaderMiddleware, settings=auth)
 
     @app.exception_handler(ValueError)
     async def _value_error_handler(_request: Request, exc: ValueError) -> JSONResponse:
@@ -136,6 +146,42 @@ def create_app(
             exclude_shops=payload.exclude_shops,
             strategy=payload.strategy,
         )
+
+    @app.get("/v1/auth/csrf", tags=["auth"])
+    async def issue_csrf(request: Request) -> JSONResponse:
+        """Mint or refresh a CSRF token. Creates an anonymous session if
+        the request has none. Returns the token in the body AND sets
+        both the session and CSRF cookies on the response.
+
+        Exempt from CSRF verification (see CSRF_EXEMPT_PATHS) because
+        unauthenticated clients have no token to send yet."""
+        factory = request.app.state.session_factory
+        session = request.state.session
+
+        async with factory() as db:
+            if session is None:
+                session = await create_session(db, auth, user_id=None)
+                await db.commit()
+
+            payload = {"csrf_token": session.csrf_token}
+            response = JSONResponse(content=payload)
+            attach_cookies(
+                response,
+                auth,
+                session_id=session.id,
+                csrf_token=session.csrf_token,
+            )
+            return response
+
+    @app.get("/v1/auth/whoami", tags=["auth"])
+    async def whoami(request: Request) -> dict[str, Any]:
+        """Report the caller's auth state. Returns
+        ``{"authenticated": false}`` for anonymous and missing sessions —
+        callers shouldn't have to distinguish those two cases."""
+        session = request.state.session
+        if session is None or session.user_id is None:
+            return {"authenticated": False, "user_id": None}
+        return {"authenticated": True, "user_id": session.user_id}
 
     return app
 

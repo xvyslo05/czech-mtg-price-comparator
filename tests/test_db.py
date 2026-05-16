@@ -181,6 +181,7 @@ def test_alembic_migration_matches_orm_metadata(tmp_path):
         conn.close()
 
     assert "users" in tables
+    assert "sessions" in tables
     assert cols == {
         "id",
         "email",
@@ -192,6 +193,21 @@ def test_alembic_migration_matches_orm_metadata(tmp_path):
     # And the ORM Base declares exactly the same columns — drift guard.
     orm_cols = {c.name for c in Base.metadata.tables["users"].columns}
     assert orm_cols == cols
+
+    # Same drift check for sessions.
+    session_cols = {
+        row[1] for row in sqlite3.connect(str(db_path)).execute("PRAGMA table_info(sessions)")
+    }
+    orm_session_cols = {c.name for c in Base.metadata.tables["sessions"].columns}
+    assert session_cols == orm_session_cols
+    assert session_cols == {
+        "id",
+        "user_id",
+        "csrf_token",
+        "created_at",
+        "last_seen_at",
+        "expires_at",
+    }
 
 
 def test_alembic_downgrade_clean(tmp_path):
@@ -233,8 +249,9 @@ def test_alembic_downgrade_clean(tmp_path):
         }
     finally:
         conn.close()
-    # alembic_version remains; users must be gone.
+    # alembic_version remains; users + sessions must be gone.
     assert "users" not in tables
+    assert "sessions" not in tables
 
 
 async def test_email_verified_defaults_to_false_at_db_level(engine, session_factory):
