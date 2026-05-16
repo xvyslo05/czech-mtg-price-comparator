@@ -23,21 +23,40 @@ What's deliberately not here yet:
 
 from __future__ import annotations
 
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from typing import Any
 
-from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi import FastAPI, Query, Request
 from fastapi.responses import JSONResponse
 
 from ..adapters.base import AccountFeatureNotSupported
+from ..db.config import DatabaseSettings
+from ..db.engine import create_engine_from_settings, session_factory_from_engine
 from ..models import Offer, ShopId, ShopStatus
-from ..optimizer import DecklistOptimization, Strategy
+from ..optimizer import DecklistOptimization
 from ..scryfall import CardInfo
 from ..service import CardCompareService, default_service
 from .schemas import OptimizeDecklistRequest
 
 
-def create_app(service: CardCompareService | None = None) -> FastAPI:
+def create_app(
+    service: CardCompareService | None = None,
+    db_settings: DatabaseSettings | None = None,
+) -> FastAPI:
     svc = service or default_service
+    settings = db_settings or DatabaseSettings.from_env()
+
+    @asynccontextmanager
+    async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
+        engine = create_engine_from_settings(settings)
+        app.state.db_engine = engine
+        app.state.session_factory = session_factory_from_engine(engine)
+        try:
+            yield
+        finally:
+            await engine.dispose()
+
     app = FastAPI(
         title="cz-mtg-compare",
         version="0.6.0",
@@ -46,6 +65,7 @@ def create_app(service: CardCompareService | None = None) -> FastAPI:
             "engine that powers the MCP server (search_card, optimize_decklist, "
             "lookup_card, list_shops). See issue #9 for the roadmap."
         ),
+        lifespan=_lifespan,
     )
 
     @app.exception_handler(ValueError)
