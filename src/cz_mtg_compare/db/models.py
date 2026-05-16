@@ -61,6 +61,42 @@ class User(Base):
         return f"User(id={self.id!r}, email={self.email!r}, verified={self.email_verified})"
 
 
+class EmailVerificationToken(Base):
+    """One-time token proving the user controls the inbox they signed up
+    with. The plaintext token is sent in the verification email; only the
+    SHA-256 hash lives in the DB so a backup leak doesn't expose live
+    tokens. Single-use: ``used_at`` is set on confirm and rejected on
+    every subsequent attempt.
+    """
+
+    __tablename__ = "email_verification_tokens"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_new_uuid)
+    user_id: Mapped[str] = mapped_column(
+        String(36),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True, nullable=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_utcnow, nullable=False
+    )
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    def is_expired(self, *, now: datetime | None = None) -> bool:
+        # Same tzinfo normalization as Session.is_expired — SQLite drops
+        # the offset on round-trip and we want one comparison contract.
+        expires = self.expires_at
+        if expires.tzinfo is None:
+            expires = expires.replace(tzinfo=timezone.utc)
+        current = now or _utcnow()
+        if current.tzinfo is None:
+            current = current.replace(tzinfo=timezone.utc)
+        return current >= expires
+
+
 class Session(Base):
     """Server-side session.
 

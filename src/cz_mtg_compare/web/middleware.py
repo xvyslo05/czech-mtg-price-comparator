@@ -20,10 +20,13 @@ from .sessions import load_session
 SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
 
 # Routes that intentionally bypass CSRF (they have no side effects, or
-# they're the very endpoints clients call to *get* the CSRF token).
+# they're the very endpoints clients call to *get* the CSRF token, or
+# they carry their own bearer-style proof — e.g. an email-verification
+# token — that an attacker would have to steal anyway).
 CSRF_EXEMPT_PATHS: frozenset[str] = frozenset(
     {
         "/v1/auth/csrf",
+        "/v1/auth/verify/confirm",
     }
 )
 

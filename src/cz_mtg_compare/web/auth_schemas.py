@@ -30,3 +30,7 @@ class AuthenticatedUser(BaseModel):
     user_id: str
     email: str
     email_verified: bool
+
+
+class VerifyConfirmRequest(BaseModel):
+    token: str = Field(min_length=1, max_length=512)
