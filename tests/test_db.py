@@ -183,6 +183,7 @@ def test_alembic_migration_matches_orm_metadata(tmp_path):
     assert "users" in tables
     assert "sessions" in tables
     assert "email_verification_tokens" in tables
+    assert "oauth_identities" in tables
     assert cols == {
         "id",
         "email",
@@ -212,6 +213,32 @@ def test_alembic_migration_matches_orm_metadata(tmp_path):
         "used_at",
     }
 
+    # Pin oauth_identities shape — drift guard.
+    oauth_cols = {
+        row[1]
+        for row in sqlite3.connect(str(db_path)).execute(
+            "PRAGMA table_info(oauth_identities)"
+        )
+    }
+    orm_oauth_cols = {c.name for c in Base.metadata.tables["oauth_identities"].columns}
+    assert oauth_cols == orm_oauth_cols
+    assert oauth_cols == {
+        "id",
+        "provider",
+        "provider_user_id",
+        "user_id",
+        "email",
+        "created_at",
+        "updated_at",
+    }
+
+    # sessions.oauth_state was added in 0005 — confirm it's present.
+    session_cols_check = {
+        row[1]
+        for row in sqlite3.connect(str(db_path)).execute("PRAGMA table_info(sessions)")
+    }
+    assert "oauth_state" in session_cols_check
+
     # And the ORM Base declares exactly the same columns — drift guard.
     orm_cols = {c.name for c in Base.metadata.tables["users"].columns}
     assert orm_cols == cols
@@ -229,6 +256,7 @@ def test_alembic_migration_matches_orm_metadata(tmp_path):
         "created_at",
         "last_seen_at",
         "expires_at",
+        "oauth_state",
     }
 
 
@@ -275,6 +303,7 @@ def test_alembic_downgrade_clean(tmp_path):
     assert "users" not in tables
     assert "sessions" not in tables
     assert "email_verification_tokens" not in tables
+    assert "oauth_identities" not in tables
 
 
 async def test_email_verified_defaults_to_false_at_db_level(engine, session_factory):

@@ -490,7 +490,10 @@ Sessions live in-process for the lifetime of the MCP server. If the cached token
 | `CZ_MTG_COOKIE_SAMESITE`      | SameSite flag for both cookies. One of `lax`, `strict`, `none`   | `lax` |
 | `CZ_MTG_COOKIE_DOMAIN`        | Cookie Domain attribute. Leave unset for host-only cookies       | unset |
 | `CZ_MTG_EMAIL_VERIFY_TTL_SECONDS` | Email-verification token lifetime in seconds. Invalid / non-positive values fall back to the default | `86400` (24h) |
-| `CZ_MTG_PUBLIC_BASE_URL`      | Origin used when building links in outbound mail (e.g. the verification URL) | `http://localhost:8080` |
+| `CZ_MTG_PUBLIC_BASE_URL`      | Origin used when building links in outbound mail and Google's OAuth redirect URI | `http://localhost:8080` |
+| `CZ_MTG_OAUTH_GOOGLE_CLIENT_ID`     | OAuth 2.0 client id from Google Cloud Console. When unset, `/v1/auth/oauth/google/start` returns `503` instead of crashing | unset (Google sign-in disabled) |
+| `CZ_MTG_OAUTH_GOOGLE_CLIENT_SECRET` | OAuth 2.0 client secret matching the client id above | unset |
+| `CZ_MTG_OAUTH_GOOGLE_REDIRECT_URI`  | Override the callback URL (must match a redirect URI registered in the console) | `{PUBLIC_BASE_URL}/v1/auth/oauth/google/callback` |
 
 ### Disabling individual shops
 
@@ -647,6 +650,8 @@ Available endpoints (v1):
 | POST   | `/v1/auth/logout`          | Delete the current session, clear cookies (204 always)         |
 | POST   | `/v1/auth/verify/request`  | Re-send verification email for the logged-in user (`202`)      |
 | POST   | `/v1/auth/verify/confirm`  | `{token}` → mark email verified (CSRF-exempt; token is bearer) |
+| GET    | `/v1/auth/oauth/google/start`    | Redirect to Google's consent screen (`503` if not configured) |
+| GET    | `/v1/auth/oauth/google/callback` | Google → us. Exchanges code, creates/links user, redirects back |
 
 The MCP server (`cz-mtg-compare-mcp`) and the HTTP server (`cz-mtg-compare-web`) share the same in-process service layer (`cz_mtg_compare.service.CardCompareService`); behaviour is identical across surfaces.
 
@@ -697,10 +702,36 @@ app = create_app(mailer=MyResendMailer())
 
 Set `CZ_MTG_PUBLIC_BASE_URL` to your deployed origin (e.g. `https://card-compare.cz`) so the link in the email points at the right host. Defaults to `http://localhost:8080`.
 
+### Google OAuth
+
+Users can sign in with Google in addition to email + password. The flow is the standard server-side OAuth 2.0 / OpenID Connect dance:
+
+1. Browser → `GET /v1/auth/oauth/google/start` → 302 to Google's consent screen.
+2. Google → `GET /v1/auth/oauth/google/callback?code=...&state=...`.
+3. Server exchanges the code, validates Google's ID token signature against Google's JWKS, then:
+   - **Already linked** (matching `oauth_identities(provider="google", provider_user_id=sub)` row) → log the same user back in.
+   - **No link, but `User.email == google.email` AND Google says `email_verified: true`** → attach a new `oauth_identities` row; flip `user.email_verified` if it wasn't already.
+   - **No link, email matches but Google says `email_verified: false`** → reject with a specific 400 (the user must log in with password first and link Google from settings). This is the only non-generic auth error in the codebase, on purpose — the alternative (silent reject) is worse UX, and the one bit of information leaked ("an account with this email exists") is the same bit `POST /v1/auth/signup` already returns via 409.
+   - **No link, no email match** → create a fresh user (`password_hash=null`, `email_verified` inherited from Google's claim) + identity row.
+4. Server rotates the session (drops the anonymous pre-flow row, mints an authenticated one), sets cookies, redirects back to `CZ_MTG_PUBLIC_BASE_URL`.
+
+The `state` parameter is single-use: the server clears it the moment the callback fires, regardless of outcome. A replay (correct state or not) lands on a fresh 400.
+
+#### Google Cloud Console — one-time setup
+
+1. Open [Google Cloud Console](https://console.cloud.google.com/), pick or create a project.
+2. **APIs & Services → OAuth consent screen**: User type `External`, app name, your support / developer emails, scopes `openid email profile` (built-in, no review). Add yourself as a test user while the app is in `Testing` mode.
+3. **APIs & Services → Credentials → Create credentials → OAuth client ID**: type `Web application`. Under **Authorized redirect URIs**, register every environment you'll run from:
+   - `http://localhost:8080/v1/auth/oauth/google/callback` (local dev)
+   - `https://<staging-host>/v1/auth/oauth/google/callback`
+   - `https://<prod-host>/v1/auth/oauth/google/callback`
+4. Copy the **Client ID** and **Client secret** into your deployment's env (`CZ_MTG_OAUTH_GOOGLE_CLIENT_ID`, `CZ_MTG_OAUTH_GOOGLE_CLIENT_SECRET`). Set `CZ_MTG_PUBLIC_BASE_URL` to the matching origin.
+
 Caveats:
 - `/v1/decklists/optimize` runs inline in the handler today. A 100-card list can fan out to ~600 upstream HTTP requests and take several seconds. Moving to a background job queue is tracked as A4 in issue #9.
 - No rate limiting on the auth endpoints yet — that lands with G2.
-- No OAuth yet (B1 PR5/6).
+- GitHub OAuth is **not** wired yet — that's B1 PR6, and most of the schema (`oauth_identities` keyed by `(provider, provider_user_id)`) is reused verbatim.
+- No "unlink Google" endpoint yet — that needs the settings page (B2). Workaround for now: delete the row from `oauth_identities` directly.
 
 ---
 
@@ -795,6 +826,8 @@ src/cz_mtg_compare/
     email_verification.py Token issue/consume + verification URL builder.
     mailer.py          Mailer protocol + LoggingMailer default.
     middleware.py      SessionLoader + CSRF middlewares.
+    oauth_config.py    GoogleOAuthSettings (client id/secret/redirect URI).
+    oauth_google.py    GoogleOAuthClient protocol + authlib-backed default.
     passwords.py       argon2id hashing wrapper.
     sessions.py        Session create / load / cookie-attach helpers.
   db/                  Database layer (optional `[web]` extra).

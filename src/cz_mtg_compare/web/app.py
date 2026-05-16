@@ -27,15 +27,18 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import Any
 
+import secrets
+from urllib.parse import urlsplit
+
 from fastapi import FastAPI, Query, Request, Response
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 
 from sqlalchemy import select
 
 from ..adapters.base import AccountFeatureNotSupported
 from ..db.config import DatabaseSettings
 from ..db.engine import create_engine_from_settings, session_factory_from_engine
-from ..db.models import User
+from ..db.models import OAuthIdentity, User
 from ..models import Offer, ShopId, ShopStatus
 from ..optimizer import DecklistOptimization
 from ..scryfall import CardInfo
@@ -54,6 +57,13 @@ from .email_verification import (
 )
 from .mailer import LoggingMailer, Mailer
 from .middleware import CSRFMiddleware, SessionLoaderMiddleware
+from .oauth_config import GoogleOAuthSettings
+from .oauth_google import (
+    AuthlibGoogleOAuthClient,
+    GoogleOAuthClient,
+    GoogleUserInfo,
+    OAuthExchangeError,
+)
 from .passwords import hash_password, needs_rehash, verify_password
 from .schemas import OptimizeDecklistRequest
 from .sessions import attach_cookies, clear_cookies, create_session, delete_session
@@ -64,11 +74,21 @@ def create_app(
     db_settings: DatabaseSettings | None = None,
     auth_settings: AuthCookieSettings | None = None,
     mailer: Mailer | None = None,
+    google_oauth_settings: GoogleOAuthSettings | None = None,
+    google_oauth_client: GoogleOAuthClient | None = None,
 ) -> FastAPI:
     svc = service or default_service
     settings = db_settings or DatabaseSettings.from_env()
     auth = auth_settings or AuthCookieSettings.from_env()
     mailer_instance: Mailer = mailer or LoggingMailer()
+    google_settings = google_oauth_settings or GoogleOAuthSettings.from_env()
+    # Only construct the real client when fully configured; tests inject
+    # their own. When the deployment hasn't set credentials, leave the
+    # client at None and let the endpoints surface a 503.
+    google_client: GoogleOAuthClient | None = google_oauth_client
+    if google_client is None and google_settings.is_configured:
+        google_client = AuthlibGoogleOAuthClient(google_settings)
+    public_base_url = urlsplit(google_settings.redirect_uri)._replace(path="").geturl().rstrip("/")
 
     @asynccontextmanager
     async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
@@ -378,6 +398,169 @@ def create_app(
                 user_id=user.id, email=user.email, email_verified=user.email_verified
             ).model_dump()
             return JSONResponse(content=body)
+
+    @app.get("/v1/auth/oauth/google/start", tags=["auth"])
+    async def oauth_google_start(request: Request) -> Response:
+        """Begin a Google OAuth flow. Creates an anonymous session (or
+        reuses the caller's) to hold the random ``state`` that protects
+        the callback, then 302s to Google. CSRF doesn't gate GET, so the
+        only protection on this endpoint is the state we plant — and
+        verify on /callback.
+        """
+        if google_client is None:
+            return JSONResponse(
+                status_code=503,
+                content={"detail": "google oauth not configured"},
+            )
+
+        factory = request.app.state.session_factory
+        existing = request.state.session
+        state_token = secrets.token_urlsafe(32)
+
+        async with factory() as db:
+            if existing is None:
+                session = await create_session(db, auth, user_id=None)
+            else:
+                session = await db.get(type(existing), existing.id)
+                if session is None:  # raced with expiry
+                    session = await create_session(db, auth, user_id=None)
+            session.oauth_state = state_token
+            await db.commit()
+            session_id = session.id
+            csrf_token = session.csrf_token
+
+        auth_url = google_client.authorization_url(
+            state=state_token, redirect_uri=google_settings.redirect_uri
+        )
+        response = RedirectResponse(url=auth_url, status_code=302)
+        attach_cookies(response, auth, session_id=session_id, csrf_token=csrf_token)
+        return response
+
+    @app.get("/v1/auth/oauth/google/callback", tags=["auth"])
+    async def oauth_google_callback(
+        request: Request,
+        code: str | None = Query(default=None),
+        state: str | None = Query(default=None),
+        error: str | None = Query(default=None),
+    ) -> Response:
+        """Finish a Google OAuth flow. Verifies the state, exchanges the
+        code for an ID token, then either creates a new local user,
+        attaches the identity to an existing email/password account
+        (only when Google reports ``email_verified``), or logs in an
+        already-linked user."""
+        if google_client is None:
+            return JSONResponse(
+                status_code=503,
+                content={"detail": "google oauth not configured"},
+            )
+
+        generic_invalid = JSONResponse(
+            status_code=400,
+            content={"detail": "invalid oauth callback"},
+        )
+
+        if error is not None or not code or not state:
+            return generic_invalid
+
+        cur_session = request.state.session
+        if cur_session is None or not cur_session.oauth_state:
+            return generic_invalid
+
+        factory = request.app.state.session_factory
+
+        # Single-use: snapshot the expected state and clear the row
+        # BEFORE comparing. Even a failed attempt burns the slot, so an
+        # attacker who can replay the callback URL or brute-force the
+        # state value can't keep trying.
+        expected_state = cur_session.oauth_state
+        async with factory() as db:
+            row = await db.get(type(cur_session), cur_session.id)
+            if row is not None:
+                row.oauth_state = None
+                await db.commit()
+
+        # Constant-time compare mirrors the CSRF middleware's pattern.
+        import hmac as _hmac
+
+        if not _hmac.compare_digest(expected_state, state):
+            return generic_invalid
+
+        try:
+            info: GoogleUserInfo = await google_client.exchange_code(
+                code=code, redirect_uri=google_settings.redirect_uri
+            )
+        except OAuthExchangeError:
+            return generic_invalid
+
+        async with factory() as db:
+            # 1) existing oauth_identities row?
+            identity_q = await db.execute(
+                select(OAuthIdentity).where(
+                    OAuthIdentity.provider == "google",
+                    OAuthIdentity.provider_user_id == info.provider_user_id,
+                )
+            )
+            identity = identity_q.scalar_one_or_none()
+
+            if identity is not None:
+                user = await db.get(User, identity.user_id)
+                if user is None:  # orphaned — shouldn't happen with FK cascade
+                    return generic_invalid
+            else:
+                # 2) match by email?
+                user_q = await db.execute(
+                    select(User).where(User.email == info.email)
+                )
+                user = user_q.scalar_one_or_none()
+
+                if user is not None and not info.email_verified:
+                    return JSONResponse(
+                        status_code=400,
+                        content={
+                            "detail": (
+                                "email already registered; sign in with your "
+                                "password first to link Google"
+                            )
+                        },
+                    )
+
+                if user is None:
+                    # 3) brand new user.
+                    user = User(
+                        email=info.email,
+                        email_verified=info.email_verified,
+                        password_hash=None,
+                    )
+                    db.add(user)
+                    await db.flush()
+                elif info.email_verified and not user.email_verified:
+                    user.email_verified = True
+
+                db.add(
+                    OAuthIdentity(
+                        provider="google",
+                        provider_user_id=info.provider_user_id,
+                        user_id=user.id,
+                        email=info.email,
+                    )
+                )
+                await db.flush()
+
+            # Rotate session: drop the old anon row, mint a fresh one
+            # bound to this user. Same pattern as the email/password
+            # login endpoint.
+            old = await db.get(type(cur_session), cur_session.id)
+            if old is not None:
+                await delete_session(db, old)
+            new_session = await create_session(db, auth, user_id=user.id)
+            await db.commit()
+
+            session_id = new_session.id
+            csrf_token = new_session.csrf_token
+
+        response = RedirectResponse(url=f"{public_base_url}/", status_code=302)
+        attach_cookies(response, auth, session_id=session_id, csrf_token=csrf_token)
+        return response
 
     @app.post("/v1/auth/logout", status_code=204, tags=["auth"])
     async def logout(request: Request) -> Response:
