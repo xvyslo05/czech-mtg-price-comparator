@@ -5,20 +5,15 @@ from typing import Any
 
 from mcp.server.fastmcp import FastMCP
 
-from .adapters.base import AccountFeatureNotSupported
-from .aggregator import Aggregator
-from .credentials import CredentialError, has_credentials
 from .http_client import close_client
-from .models import Offer, SearchQuery, ShopId, ShopStatus
-from .optimizer import DecklistOptimization, DecklistOptimizer, Strategy
-from .scryfall import CardInfo, ScryfallClient
+from .models import Offer, ShopId, ShopStatus
+from .optimizer import DecklistOptimization, Strategy
+from .scryfall import CardInfo
+from .service import default_service
 
 log = logging.getLogger("cz_mtg_compare")
 
 mcp = FastMCP("cz-mtg-compare")
-_aggregator = Aggregator()
-_optimizer = DecklistOptimizer(_aggregator)
-_scryfall = ScryfallClient()
 
 
 @mcp.tool()
@@ -45,19 +40,20 @@ async def search_card(
     Magic formats. Pass `include_non_playable=True` if you specifically want them
     (e.g. for a collector / art print query).
     """
-    query = SearchQuery(
+    return await default_service.search_card(
         name=name,
         edition=edition,
         in_stock_only=in_stock_only,
+        shops=shops,
+        exclude_shops=exclude_shops,
         include_non_playable=include_non_playable,
     )
-    return await _aggregator.search(query, shops=shops, exclude_shops=exclude_shops)
 
 
 @mcp.tool()
 def list_shops() -> list[ShopStatus]:
     """List configured shops with their last-call status."""
-    return _aggregator.status()
+    return default_service.list_shops()
 
 
 @mcp.tool()
@@ -71,7 +67,7 @@ async def lookup_card(name: str, exact: bool = False) -> CardInfo | None:
     Set `exact=True` to require an exact name match; default is fuzzy.
     Returns null if no card matches.
     """
-    return await _scryfall.resolve(name, exact=exact)
+    return await default_service.lookup_card(name, exact=exact)
 
 
 @mcp.tool()
@@ -145,7 +141,7 @@ async def optimize_decklist(
     Excluded shops also disappear from `per_shop_bundles` so the chart only
     shows the shops the user actually wants to see.
     """
-    return await _optimizer.optimize(
+    return await default_service.optimize_decklist(
         decklist,
         in_stock_only=in_stock_only,
         include_non_playable=include_non_playable,
@@ -153,28 +149,6 @@ async def optimize_decklist(
         exclude_shops=exclude_shops,
         strategy=strategy,
     )
-
-
-def _require_adapter(shop: ShopId):
-    adapter = _aggregator.get_adapter(shop)
-    if adapter is None:
-        raise ValueError(
-            f"shop '{shop}' is not enabled "
-            "(check `list_shops`; the shop may be disabled via CZ_MTG_DISABLED_SHOPS)"
-        )
-    return adapter
-
-
-def _require_capability(adapter, feature: str):
-    """Refuse a cart/watchlist call at the MCP layer when the shop's capability
-    flag is False, even if the underlying adapter happens to implement the
-    method. Some adapters keep their implementation around (e.g. untap, whose
-    cart works against the API but doesn't persist across sessions) but the
-    capability flag is the source of truth for what's exposed to Claude.
-    """
-    flag = f"supports_{feature}"
-    if not getattr(adapter, flag, False):
-        raise AccountFeatureNotSupported(adapter.shop_id, feature)
 
 
 @mcp.tool()
@@ -191,23 +165,7 @@ def shop_account_capabilities() -> list[dict[str, Any]]:
     Use this to tell the user which shops they can actually log into and which
     account actions are available before attempting them.
     """
-    out: list[dict[str, Any]] = []
-    for adapter in _aggregator.adapters:
-        out.append(
-            {
-                "shop": adapter.shop_id,
-                "supports_login": adapter.supports_login,
-                "supports_cart": adapter.supports_cart,
-                "supports_watchlist": adapter.supports_watchlist,
-                "credentials_configured": has_credentials(adapter.shop_id),
-            }
-        )
-    return out
-
-
-def _require_login(adapter):
-    if not getattr(adapter, "supports_login", False):
-        raise AccountFeatureNotSupported(adapter.shop_id, "login")
+    return default_service.shop_account_capabilities()
 
 
 @mcp.tool()
@@ -223,10 +181,7 @@ async def shop_login(shop: ShopId) -> dict[str, Any]:
     if the shop doesn't support login, credentials are missing/invalid, or the
     1Password reference can't be resolved.
     """
-    adapter = _require_adapter(shop)
-    _require_login(adapter)
-    await adapter.login()
-    return {"shop": shop, "ok": True}
+    return await default_service.shop_login(shop)
 
 
 @mcp.tool()
@@ -244,9 +199,7 @@ async def add_to_cart(shop: ShopId, shop_ref: str, count: int = 1) -> dict[str, 
     cached token expires. Returns the shop's raw response (e.g. the updated
     cart-item record).
     """
-    adapter = _require_adapter(shop)
-    _require_capability(adapter, "cart")
-    return await adapter.add_to_cart(shop_ref, count=count)
+    return await default_service.add_to_cart(shop, shop_ref, count=count)
 
 
 @mcp.tool()
@@ -254,9 +207,7 @@ async def view_cart(shop: ShopId) -> dict[str, Any]:
     """Return the current contents of the shop's online cart for the
     authenticated user. Logs in automatically if needed.
     """
-    adapter = _require_adapter(shop)
-    _require_capability(adapter, "cart")
-    return await adapter.view_cart()
+    return await default_service.view_cart(shop)
 
 
 @mcp.tool()
@@ -266,9 +217,7 @@ async def clear_cart(shop: ShopId) -> dict[str, Any]:
     Returns ``{"removed_items": <int>}``. Destructive — confirm with the user
     before calling.
     """
-    adapter = _require_adapter(shop)
-    _require_capability(adapter, "cart")
-    return await adapter.clear_cart()
+    return await default_service.clear_cart(shop)
 
 
 @mcp.tool()
@@ -278,9 +227,7 @@ async def add_to_watchlist(shop: ShopId, shop_ref: str) -> dict[str, Any]:
     used by ``add_to_cart``. Raises ``AccountFeatureNotSupported`` if the shop
     has no watchlist concept — check ``shop_account_capabilities`` first.
     """
-    adapter = _require_adapter(shop)
-    _require_capability(adapter, "watchlist")
-    return await adapter.add_to_watchlist(shop_ref)
+    return await default_service.add_to_watchlist(shop, shop_ref)
 
 
 def main() -> None:

@@ -590,7 +590,7 @@ Each `Offer` includes a `url` you can click through to the shop. Offers from sho
 
 The login + cart tools live in `adapters/base.py` (capability flags + `AccountFeatureNotSupported` default impls), `credentials.py` (env-var and 1Password resolution), and each adapter that opts in. The pipeline for an `add_to_cart` call:
 
-1. `server.py` looks up the right adapter by `shop_id`.
+1. `server.py` forwards the call to `service.CardCompareService`, which looks up the right adapter by `shop_id`.
 2. The adapter checks for an existing auth token / session. If absent, it pulls credentials via `credentials_for(shop_id)` (resolving any `op://` references through the 1Password CLI on first use), hits the shop's login endpoint, and stores the resulting bearer token or session cookie on the adapter instance.
 3. It POSTs the cart-add request using the offer's `shop_ref`. On 401 it clears the cached session so the next call triggers a fresh login.
 4. The raw shop response (or an error with a clear message) is returned to Claude.
@@ -683,10 +683,14 @@ python -m twine upload dist/*    # prompts for PyPI API token
 
 ```
 src/cz_mtg_compare/
-  server.py            MCP entrypoint; registers search_card / optimize_decklist /
+  server.py            MCP entrypoint; thin FastMCP wrappers around the
+                       service layer. Registers search_card / optimize_decklist /
                        lookup_card / list_shops + account-feature tools
                        (shop_account_capabilities / shop_login /
                        add_to_cart / view_cart / clear_cart / add_to_watchlist)
+  service.py           Transport-agnostic core (CardCompareService). All tool
+                       logic lives here — MCP, future FastAPI / hosted MCP,
+                       and tests all forward to this.
   models.py            Offer / Condition / SearchQuery / ShopId
   aggregator.py        async fan-out + per-shop timeouts + cache + get_adapter()
   optimizer.py         decklist optimization (multi-shop split + per-shop bundles)

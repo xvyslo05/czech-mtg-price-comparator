@@ -1,8 +1,9 @@
-"""Server-level tests for the MCP cart/watchlist tools: when a shop adapter
+"""Service-level tests for the cart/watchlist tools: when a shop adapter
 keeps an implementation around but its capability flag is False (e.g. untap,
 whose cart works against Prestashop but doesn't persist across logins), the
-MCP-layer wrappers in ``server.py`` must refuse the call with
-``AccountFeatureNotSupported`` rather than dispatching to the live adapter."""
+service layer must refuse the call with ``AccountFeatureNotSupported`` rather
+than dispatching to the live adapter. The MCP server (and any future
+transport) inherits this behaviour by delegating to the service."""
 
 from __future__ import annotations
 
@@ -11,18 +12,17 @@ import pytest
 from cz_mtg_compare.adapters.base import AccountFeatureNotSupported
 from cz_mtg_compare.adapters.untap import UntapAdapter
 from cz_mtg_compare.server import (
-    _aggregator,
-    _require_capability,
     add_to_cart,
     clear_cart,
     shop_account_capabilities,
     view_cart,
 )
+from cz_mtg_compare.service import default_service, require_capability
 
 
 def test_untap_cart_capability_is_false() -> None:
     """Sanity check: untap's adapter ships with cart code but flags it off."""
-    untap = _aggregator.get_adapter("untap")
+    untap = default_service.aggregator.get_adapter("untap")
     assert untap is not None
     assert untap.supports_login is True
     assert untap.supports_cart is False
@@ -62,14 +62,14 @@ async def test_mcp_clear_cart_refuses_untap() -> None:
 
 
 def test_require_capability_helper_uses_flag_not_method_presence() -> None:
-    """``_require_capability`` reads the supports_<feature> flag, not whether
+    """``require_capability`` reads the supports_<feature> flag, not whether
     the adapter overrides the method. UntapAdapter overrides add_to_cart
     (its implementation works); the helper must still refuse."""
     adapter = UntapAdapter()
     assert adapter.supports_cart is False
     with pytest.raises(AccountFeatureNotSupported) as exc:
-        _require_capability(adapter, "cart")
+        require_capability(adapter, "cart")
     assert exc.value.feature == "cart"
 
     # Login is supported — must NOT raise.
-    _require_capability(adapter, "login")
+    require_capability(adapter, "login")
