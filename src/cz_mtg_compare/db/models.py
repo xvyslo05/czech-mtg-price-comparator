@@ -11,7 +11,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, DateTime, String
+from sqlalchemy import Boolean, DateTime, String, text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -32,7 +32,9 @@ class User(Base):
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_new_uuid)
     email: Mapped[str] = mapped_column(String(320), unique=True, nullable=False, index=True)
-    email_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    email_verified: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default=text("0"), nullable=False
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=_utcnow, nullable=False
     )

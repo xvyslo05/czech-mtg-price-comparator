@@ -194,6 +194,89 @@ def test_alembic_migration_matches_orm_metadata(tmp_path):
     assert orm_cols == cols
 
 
+def test_alembic_downgrade_clean(tmp_path):
+    """Upgrade then downgrade to base — the users table must disappear.
+    Catches the common mistake of writing upgrade() but botching
+    downgrade(), which only surfaces when a bad migration ships to prod
+    and someone tries to roll back."""
+    db_path = tmp_path / "downgrade.sqlite"
+    url = f"sqlite+aiosqlite:///{db_path}"
+    env = {**__import__("os").environ, "CZ_MTG_DATABASE_URL": url}
+
+    up = subprocess.run(
+        [sys.executable, "-m", "alembic", "upgrade", "head"],
+        cwd=REPO_ROOT,
+        env=env,
+        capture_output=True,
+        text=True,
+    )
+    assert up.returncode == 0, up.stderr
+
+    down = subprocess.run(
+        [sys.executable, "-m", "alembic", "downgrade", "base"],
+        cwd=REPO_ROOT,
+        env=env,
+        capture_output=True,
+        text=True,
+    )
+    assert down.returncode == 0, (
+        f"downgrade failed:\nstdout={down.stdout}\nstderr={down.stderr}"
+    )
+
+    conn = sqlite3.connect(str(db_path))
+    try:
+        tables = {
+            row[0]
+            for row in conn.execute(
+                "SELECT name FROM sqlite_master WHERE type='table'"
+            )
+        }
+    finally:
+        conn.close()
+    # alembic_version remains; users must be gone.
+    assert "users" not in tables
+
+
+async def test_email_verified_defaults_to_false_at_db_level(engine, session_factory):
+    """The migration sets ``server_default=text('0')`` on email_verified so
+    a raw INSERT (one that doesn't go through the ORM default) still gets
+    a sensible value. Exercise that path directly with raw SQL."""
+    from sqlalchemy import text
+
+    async with engine.begin() as conn:
+        await conn.execute(
+            text(
+                "INSERT INTO users (id, email, created_at, updated_at) "
+                "VALUES ('raw-id', 'raw@example.com', '2026-01-01', '2026-01-01')"
+            )
+        )
+
+    async with session_factory() as session:
+        fetched = (
+            await session.execute(select(User).where(User.id == "raw-id"))
+        ).scalar_one()
+        assert fetched.email_verified is False
+
+
+async def test_updated_at_advances_on_update(session_factory):
+    """``onupdate=_utcnow`` must actually fire on UPDATE — locks the
+    semantic in place so a later refactor (e.g. switching to
+    server_onupdate) doesn't silently lose it."""
+    async with session_factory() as session:
+        user = User(email="touch@example.com")
+        session.add(user)
+        await session.commit()
+        original_updated = user.updated_at
+
+    async with session_factory() as session:
+        fetched = (
+            await session.execute(select(User).where(User.email == "touch@example.com"))
+        ).scalar_one()
+        fetched.email_verified = True
+        await session.commit()
+        assert fetched.updated_at > original_updated
+
+
 # --- FastAPI lifespan ---------------------------------------------------
 
 
