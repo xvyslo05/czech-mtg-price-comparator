@@ -640,6 +640,9 @@ Available endpoints (v1):
 | POST   | `/v1/decklists/optimize`   | JSON body — `{decklist, strategy, shops, exclude_shops, ...}`  |
 | GET    | `/v1/auth/csrf`            | Mint or refresh the CSRF token; sets the session + CSRF cookies |
 | GET    | `/v1/auth/whoami`          | Returns `{authenticated, user_id}` for the current session     |
+| POST   | `/v1/auth/signup`          | `{email, password}` → create account + log in (sets cookies)   |
+| POST   | `/v1/auth/login`           | `{email, password}` → mint a fresh session                     |
+| POST   | `/v1/auth/logout`          | Delete the current session, clear cookies (204 always)         |
 
 The MCP server (`cz-mtg-compare-mcp`) and the HTTP server (`cz-mtg-compare-web`) share the same in-process service layer (`cz_mtg_compare.service.CardCompareService`); behaviour is identical across surfaces.
 
@@ -669,9 +672,18 @@ State-changing requests (`POST` / `PUT` / `PATCH` / `DELETE`) are gated by a dou
 
 Server-side the middleware also checks the header against the session row's stored `csrf_token`, so revoking a session immediately kills its CSRF token — not just the cookie pair on whichever browser still has it cached.
 
+### Email / password auth
+
+- Passwords are hashed with **argon2id** (library defaults — time_cost=2, memory_cost=64 MiB, parallelism=1). Plaintext never touches the DB or logs. Hashes are re-upgraded on successful login when argon2's recommended parameters move forward.
+- Emails are normalised to lowercase before storage AND lookup, so `Alice@Example.com` and `alice@example.com` can't both register.
+- The login endpoint returns a **single** generic 401 for both "unknown email" and "wrong password" — it is not a user-enumeration oracle.
+- Sessions are rotated on every successful login (the old session row is left untouched; explicit `POST /v1/auth/logout` revokes it).
+- Email verification is **not** a hard gate yet — accounts are usable right after signup. Verification is tracked as B1 PR4 and will gate specific routes when it lands.
+
 Caveats:
 - `/v1/decklists/optimize` runs inline in the handler today. A 100-card list can fan out to ~600 upstream HTTP requests and take several seconds. Moving to a background job queue is tracked as A4 in issue #9.
-- No login endpoint yet (B1 PR3). `whoami` always reports `authenticated: false` unless you've inserted a session row manually.
+- No rate limiting on the auth endpoints yet — that lands with G2.
+- No OAuth yet (B1 PR5/6).
 
 ---
 
@@ -762,7 +774,9 @@ src/cz_mtg_compare/
     schemas.py         Request bodies (responses reuse core pydantic models).
     main.py            `cz-mtg-compare-web` console-script entry point.
     auth_config.py     Cookie names, session TTL, Secure / SameSite knobs.
+    auth_schemas.py    Pydantic request bodies for signup / login.
     middleware.py      SessionLoader + CSRF middlewares.
+    passwords.py       argon2id hashing wrapper.
     sessions.py        Session create / load / cookie-attach helpers.
   db/                  Database layer (optional `[web]` extra).
     config.py          DatabaseSettings (reads CZ_MTG_DATABASE_URL).

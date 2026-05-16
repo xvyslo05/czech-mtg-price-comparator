@@ -47,6 +47,9 @@ class User(Base):
     email_verified: Mapped[bool] = mapped_column(
         Boolean, default=False, server_default=text("0"), nullable=False
     )
+    # Nullable so OAuth-only accounts (PR5/6) can coexist. Email/password
+    # signups always populate it; the signup endpoint enforces that.
+    password_hash: Mapped[str | None] = mapped_column(String(255), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=_utcnow, nullable=False
     )

@@ -186,6 +186,7 @@ def test_alembic_migration_matches_orm_metadata(tmp_path):
         "id",
         "email",
         "email_verified",
+        "password_hash",
         "created_at",
         "updated_at",
     }
