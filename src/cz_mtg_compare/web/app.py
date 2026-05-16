@@ -27,20 +27,25 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import Any
 
-from fastapi import FastAPI, Query, Request
+from fastapi import FastAPI, Query, Request, Response
 from fastapi.responses import JSONResponse
+
+from sqlalchemy import select
 
 from ..adapters.base import AccountFeatureNotSupported
 from ..db.config import DatabaseSettings
 from ..db.engine import create_engine_from_settings, session_factory_from_engine
+from ..db.models import User
 from ..models import Offer, ShopId, ShopStatus
 from ..optimizer import DecklistOptimization
 from ..scryfall import CardInfo
 from ..service import CardCompareService, default_service
 from .auth_config import AuthCookieSettings
+from .auth_schemas import AuthenticatedUser, LoginRequest, SignupRequest
 from .middleware import CSRFMiddleware, SessionLoaderMiddleware
+from .passwords import hash_password, needs_rehash, verify_password
 from .schemas import OptimizeDecklistRequest
-from .sessions import attach_cookies, create_session
+from .sessions import attach_cookies, clear_cookies, create_session, delete_session
 
 
 def create_app(
@@ -182,6 +187,131 @@ def create_app(
         if session is None or session.user_id is None:
             return {"authenticated": False, "user_id": None}
         return {"authenticated": True, "user_id": session.user_id}
+
+    @app.post(
+        "/v1/auth/signup",
+        response_model=AuthenticatedUser,
+        status_code=201,
+        tags=["auth"],
+    )
+    async def signup(payload: SignupRequest, request: Request) -> JSONResponse:
+        """Create a new email/password account and log the user in.
+
+        Email is stored lowercase to avoid duplicate accounts like
+        Alice@Example.com vs alice@example.com. The password is hashed
+        with argon2id; the plaintext is never logged or persisted.
+
+        A session is minted and the cookies are set on the response, so
+        the client is immediately authenticated — same as a fresh
+        login. The session has full privileges before email verification
+        (PR4); that's intentional for v1 so users can use the product
+        right away. Verification gates land with PR4 if a route needs
+        them.
+        """
+        email = payload.email.lower()
+        factory = request.app.state.session_factory
+
+        async with factory() as db:
+            existing = await db.execute(select(User).where(User.email == email))
+            if existing.scalar_one_or_none() is not None:
+                return JSONResponse(
+                    status_code=409,
+                    content={"detail": "email already registered"},
+                )
+
+            user = User(email=email, password_hash=hash_password(payload.password))
+            db.add(user)
+            await db.flush()
+
+            session = await create_session(db, auth, user_id=user.id)
+            await db.commit()
+
+            body = AuthenticatedUser(
+                user_id=user.id, email=user.email, email_verified=user.email_verified
+            ).model_dump()
+            response = JSONResponse(status_code=201, content=body)
+            attach_cookies(
+                response,
+                auth,
+                session_id=session.id,
+                csrf_token=session.csrf_token,
+            )
+            return response
+
+    @app.post(
+        "/v1/auth/login",
+        response_model=AuthenticatedUser,
+        tags=["auth"],
+    )
+    async def login(payload: LoginRequest, request: Request) -> JSONResponse:
+        """Verify credentials and mint a fresh session.
+
+        Always returns the same error on bad email AND bad password so
+        the response can't be used as a user-enumeration oracle. On
+        successful login a new session row is created (the old one, if
+        any, is left in place — logout is the explicit revocation
+        path).
+        """
+        email = payload.email.lower()
+        factory = request.app.state.session_factory
+
+        invalid_credentials = JSONResponse(
+            status_code=401,
+            content={"detail": "invalid email or password"},
+        )
+
+        async with factory() as db:
+            result = await db.execute(select(User).where(User.email == email))
+            user = result.scalar_one_or_none()
+            if user is None or user.password_hash is None:
+                return invalid_credentials
+            if not verify_password(user.password_hash, payload.password):
+                return invalid_credentials
+
+            # Upgrade the hash if argon2's defaults have moved on since
+            # the row was last written. Safe to do here because we
+            # already have the plaintext in hand and have just
+            # validated it.
+            if needs_rehash(user.password_hash):
+                user.password_hash = hash_password(payload.password)
+
+            session = await create_session(db, auth, user_id=user.id)
+            await db.commit()
+
+            body = AuthenticatedUser(
+                user_id=user.id, email=user.email, email_verified=user.email_verified
+            ).model_dump()
+            response = JSONResponse(content=body)
+            attach_cookies(
+                response,
+                auth,
+                session_id=session.id,
+                csrf_token=session.csrf_token,
+            )
+            return response
+
+    @app.post("/v1/auth/logout", status_code=204, tags=["auth"])
+    async def logout(request: Request) -> Response:
+        """Delete the current session (if any) and clear cookies.
+
+        Returns 204 regardless of whether a session was present — the
+        client should treat it as "you are now logged out" either way.
+        """
+        session = request.state.session
+        factory = request.app.state.session_factory
+        if session is not None:
+            async with factory() as db:
+                # Reattach the session row to this DB session so we can
+                # delete it — SessionLoaderMiddleware expunged it after
+                # loading.
+                row = await db.get(type(session), session.id)
+                if row is not None:
+                    await delete_session(db, row)
+                    await db.commit()
+
+        response = Response(status_code=204)
+        clear_cookies(response, auth)
+        return response
 
     return app
 
