@@ -16,9 +16,11 @@ from dataclasses import dataclass
 from typing import Any, Protocol
 
 from authlib.integrations.httpx_client import AsyncOAuth2Client
-from authlib.jose import JsonWebToken, JsonWebKey
-from authlib.jose.errors import JoseError
 import httpx
+from joserfc import jwt
+from joserfc.errors import JoseError
+from joserfc.jwk import KeySet
+from joserfc.jwt import JWTClaimsRegistry
 
 from .oauth_config import GoogleOAuthSettings
 
@@ -70,7 +72,13 @@ class AuthlibGoogleOAuthClient:
         if not settings.is_configured:
             raise ValueError("Google OAuth client requires both client_id and client_secret")
         self._settings = settings
-        self._jwt = JsonWebToken(["RS256"])
+        # ``aud`` must equal our client_id; ``iss`` must come from Google.
+        # Expiry / not-before checks happen inside ``validate`` based on
+        # standard registered claims.
+        self._claims_registry = JWTClaimsRegistry(
+            aud={"essential": True, "value": settings.client_id},
+            iss={"essential": True, "values": list(GOOGLE_ISSUERS)},
+        )
 
     def authorization_url(self, *, state: str, redirect_uri: str) -> str:
         client = AsyncOAuth2Client(
@@ -110,22 +118,15 @@ class AuthlibGoogleOAuthClient:
                 resp.raise_for_status()
             except httpx.HTTPError as exc:
                 raise OAuthExchangeError("could not load Google JWKS") from exc
-            jwks = JsonWebKey.import_key_set(resp.json())
+            jwks = KeySet.import_key_set(resp.json())
 
         try:
-            claims = self._jwt.decode(
-                id_token,
-                jwks,
-                claims_options={
-                    "aud": {"essential": True, "value": self._settings.client_id},
-                    "iss": {"essential": True, "values": list(GOOGLE_ISSUERS)},
-                },
-            )
-            claims.validate()
+            token = jwt.decode(id_token, jwks, algorithms=["RS256"])
+            self._claims_registry.validate(token.claims)
         except JoseError as exc:
             raise OAuthExchangeError("id_token validation failed") from exc
 
-        return dict(claims)
+        return dict(token.claims)
 
 
 def _claims_to_user(claims: dict[str, Any]) -> GoogleUserInfo:
