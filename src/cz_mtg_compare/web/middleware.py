@@ -27,6 +27,12 @@ CSRF_EXEMPT_PATHS: frozenset[str] = frozenset(
     {
         "/v1/auth/csrf",
         "/v1/auth/verify/confirm",
+        # OAuth callback is a top-level browser navigation from the
+        # provider — the browser cannot attach our X-CSRF-Token header
+        # and JS on a foreign origin can't read our session cookie. The
+        # ``state`` parameter handed to the provider on /start is the
+        # equivalent defense; the callback handler verifies it.
+        "/v1/auth/oauth/google/callback",
     }
 )
 

@@ -12,7 +12,7 @@ import secrets
 import uuid
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, String, text
+from sqlalchemy import Boolean, DateTime, ForeignKey, String, UniqueConstraint, text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 SESSION_ID_BYTES = 32
@@ -59,6 +59,49 @@ class User(Base):
 
     def __repr__(self) -> str:
         return f"User(id={self.id!r}, email={self.email!r}, verified={self.email_verified})"
+
+
+class OAuthIdentity(Base):
+    """A link from a third-party identity (Google, GitHub, ...) to a local
+    ``User``. The ``(provider, provider_user_id)`` pair is the stable
+    identity key the upstream issuer provides — emails can change but
+    the subject id can't. ``(provider, user_id)`` is unique so a single
+    local user can hold at most one identity per provider; that keeps
+    audit logs comprehensible and matches typical product UX.
+
+    ``email`` is the snapshot of the provider's email at link time. It's
+    advisory — ``User.email`` is the source of truth for delivery and
+    lookup; this column survives changes upstream and powers UI like
+    "you linked Google as alice@example.com".
+    """
+
+    __tablename__ = "oauth_identities"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_new_uuid)
+    provider: Mapped[str] = mapped_column(String(32), nullable=False)
+    provider_user_id: Mapped[str] = mapped_column(String(255), nullable=False)
+    user_id: Mapped[str] = mapped_column(
+        String(36),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    email: Mapped[str] = mapped_column(String(320), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_utcnow, nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, nullable=False
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "provider", "provider_user_id", name="uq_oauth_identities_provider_subject"
+        ),
+        UniqueConstraint(
+            "provider", "user_id", name="uq_oauth_identities_provider_user"
+        ),
+    )
 
 
 class EmailVerificationToken(Base):
@@ -124,6 +167,10 @@ class Session(Base):
     expires_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )
+    # Per-flow OAuth state token, set on /oauth/<provider>/start and
+    # cleared on a successful matching /oauth/<provider>/callback.
+    # Nullable so non-OAuth sessions don't carry dead data.
+    oauth_state: Mapped[str | None] = mapped_column(String(64), nullable=True)
 
     def is_expired(self, *, now: datetime | None = None) -> bool:
         # SQLite strips tzinfo on round-trip. Treat naive values as UTC so
