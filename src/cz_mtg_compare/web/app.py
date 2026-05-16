@@ -41,7 +41,18 @@ from ..optimizer import DecklistOptimization
 from ..scryfall import CardInfo
 from ..service import CardCompareService, default_service
 from .auth_config import AuthCookieSettings
-from .auth_schemas import AuthenticatedUser, LoginRequest, SignupRequest
+from .auth_schemas import (
+    AuthenticatedUser,
+    LoginRequest,
+    SignupRequest,
+    VerifyConfirmRequest,
+)
+from .email_verification import (
+    consume_token,
+    issue_token,
+    send_verification_email,
+)
+from .mailer import LoggingMailer, Mailer
 from .middleware import CSRFMiddleware, SessionLoaderMiddleware
 from .passwords import hash_password, needs_rehash, verify_password
 from .schemas import OptimizeDecklistRequest
@@ -52,10 +63,12 @@ def create_app(
     service: CardCompareService | None = None,
     db_settings: DatabaseSettings | None = None,
     auth_settings: AuthCookieSettings | None = None,
+    mailer: Mailer | None = None,
 ) -> FastAPI:
     svc = service or default_service
     settings = db_settings or DatabaseSettings.from_env()
     auth = auth_settings or AuthCookieSettings.from_env()
+    mailer_instance: Mailer = mailer or LoggingMailer()
 
     @asynccontextmanager
     async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
@@ -224,7 +237,21 @@ def create_app(
             await db.flush()
 
             session = await create_session(db, auth, user_id=user.id)
+            raw_token = await issue_token(db, user)
             await db.commit()
+
+            # Send AFTER commit so a delivery error doesn't leave the
+            # user with no DB row but a delivered email pointing at a
+            # ghost. Mailer failures are caught below — signup still
+            # succeeds; the user can request a resend from settings.
+            try:
+                await send_verification_email(
+                    mailer_instance,
+                    to=user.email,
+                    raw_token=raw_token,
+                )
+            except Exception:  # noqa: BLE001 — best-effort delivery
+                pass
 
             body = AuthenticatedUser(
                 user_id=user.id, email=user.email, email_verified=user.email_verified
@@ -289,6 +316,68 @@ def create_app(
                 csrf_token=session.csrf_token,
             )
             return response
+
+    @app.post("/v1/auth/verify/request", status_code=202, tags=["auth"])
+    async def verify_request(request: Request) -> JSONResponse:
+        """Re-issue a verification token for the logged-in user and
+        re-send the email. No-op (still 202) when the user is already
+        verified — keeps the client side dumb."""
+        session = request.state.session
+        if session is None or session.user_id is None:
+            return JSONResponse(
+                status_code=401,
+                content={"detail": "authentication required"},
+            )
+
+        factory = request.app.state.session_factory
+        async with factory() as db:
+            user = await db.get(User, session.user_id)
+            if user is None:
+                return JSONResponse(
+                    status_code=401,
+                    content={"detail": "authentication required"},
+                )
+            if user.email_verified:
+                return JSONResponse(status_code=202, content={"sent": False})
+
+            raw_token = await issue_token(db, user)
+            await db.commit()
+
+            try:
+                await send_verification_email(
+                    mailer_instance,
+                    to=user.email,
+                    raw_token=raw_token,
+                )
+            except Exception:  # noqa: BLE001
+                pass
+
+            return JSONResponse(status_code=202, content={"sent": True})
+
+    @app.post("/v1/auth/verify/confirm", tags=["auth"])
+    async def verify_confirm(
+        payload: VerifyConfirmRequest, request: Request
+    ) -> JSONResponse:
+        """Spend a verification token. The token itself is the bearer
+        credential — no session required (the typical UX is "user clicks
+        a link on a device that isn't logged in"). Returns a generic
+        error for any failure mode so the endpoint can't be probed for
+        which tokens are valid vs already used vs expired."""
+        factory = request.app.state.session_factory
+        invalid = JSONResponse(
+            status_code=400,
+            content={"detail": "invalid or expired token"},
+        )
+
+        async with factory() as db:
+            user = await consume_token(db, payload.token)
+            if user is None:
+                return invalid
+            await db.commit()
+            body = AuthenticatedUser(
+                user_id=user.id, email=user.email, email_verified=user.email_verified
+            ).model_dump()
+            return JSONResponse(content=body)
 
     @app.post("/v1/auth/logout", status_code=204, tags=["auth"])
     async def logout(request: Request) -> Response:

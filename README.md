@@ -489,6 +489,8 @@ Sessions live in-process for the lifetime of the MCP server. If the cached token
 | `CZ_MTG_COOKIE_SECURE`        | Whether session/CSRF cookies require HTTPS. Set to `false` for local dev over plain HTTP | `true` |
 | `CZ_MTG_COOKIE_SAMESITE`      | SameSite flag for both cookies. One of `lax`, `strict`, `none`   | `lax` |
 | `CZ_MTG_COOKIE_DOMAIN`        | Cookie Domain attribute. Leave unset for host-only cookies       | unset |
+| `CZ_MTG_EMAIL_VERIFY_TTL_SECONDS` | Email-verification token lifetime in seconds. Invalid / non-positive values fall back to the default | `86400` (24h) |
+| `CZ_MTG_PUBLIC_BASE_URL`      | Origin used when building links in outbound mail (e.g. the verification URL) | `http://localhost:8080` |
 
 ### Disabling individual shops
 
@@ -640,9 +642,11 @@ Available endpoints (v1):
 | POST   | `/v1/decklists/optimize`   | JSON body — `{decklist, strategy, shops, exclude_shops, ...}`  |
 | GET    | `/v1/auth/csrf`            | Mint or refresh the CSRF token; sets the session + CSRF cookies |
 | GET    | `/v1/auth/whoami`          | Returns `{authenticated, user_id}` for the current session     |
-| POST   | `/v1/auth/signup`          | `{email, password}` → create account + log in (sets cookies)   |
+| POST   | `/v1/auth/signup`          | `{email, password}` → create account + log in (sets cookies) + send verification email |
 | POST   | `/v1/auth/login`           | `{email, password}` → mint a fresh session                     |
 | POST   | `/v1/auth/logout`          | Delete the current session, clear cookies (204 always)         |
+| POST   | `/v1/auth/verify/request`  | Re-send verification email for the logged-in user (`202`)      |
+| POST   | `/v1/auth/verify/confirm`  | `{token}` → mark email verified (CSRF-exempt; token is bearer) |
 
 The MCP server (`cz-mtg-compare-mcp`) and the HTTP server (`cz-mtg-compare-web`) share the same in-process service layer (`cz_mtg_compare.service.CardCompareService`); behaviour is identical across surfaces.
 
@@ -678,7 +682,20 @@ Server-side the middleware also checks the header against the session row's stor
 - Emails are normalised to lowercase before storage AND lookup, so `Alice@Example.com` and `alice@example.com` can't both register.
 - The login endpoint returns a **single** generic 401 for both "unknown email" and "wrong password" — it is not a user-enumeration oracle.
 - Sessions are rotated on every successful login (the old session row is left untouched; explicit `POST /v1/auth/logout` revokes it).
-- Email verification is **not** a hard gate yet — accounts are usable right after signup. Verification is tracked as B1 PR4 and will gate specific routes when it lands.
+- A verification email is sent on signup; the user can re-trigger it via `POST /v1/auth/verify/request`. Tokens are single-use, short-lived (24h default — override with `CZ_MTG_EMAIL_VERIFY_TTL_SECONDS`), and stored as SHA-256 hashes only.
+- Email verification is **not** a hard gate yet — accounts are usable right after signup, and `email_verified` just flips when the user clicks the link. Routes that should require verification will get explicit guards in a follow-up PR.
+
+### Mail delivery
+
+The web app sends verification emails through a pluggable `Mailer` (`cz_mtg_compare.web.mailer`). The default is a `LoggingMailer` that writes the URL to the logger at INFO — good for dev, no SMTP setup needed. Production deployments swap in a real implementation by passing it to `create_app(mailer=...)`:
+
+```python
+from cz_mtg_compare.web.app import create_app
+
+app = create_app(mailer=MyResendMailer())
+```
+
+Set `CZ_MTG_PUBLIC_BASE_URL` to your deployed origin (e.g. `https://card-compare.cz`) so the link in the email points at the right host. Defaults to `http://localhost:8080`.
 
 Caveats:
 - `/v1/decklists/optimize` runs inline in the handler today. A 100-card list can fan out to ~600 upstream HTTP requests and take several seconds. Moving to a background job queue is tracked as A4 in issue #9.
@@ -774,7 +791,9 @@ src/cz_mtg_compare/
     schemas.py         Request bodies (responses reuse core pydantic models).
     main.py            `cz-mtg-compare-web` console-script entry point.
     auth_config.py     Cookie names, session TTL, Secure / SameSite knobs.
-    auth_schemas.py    Pydantic request bodies for signup / login.
+    auth_schemas.py    Pydantic request bodies for signup / login / verify.
+    email_verification.py Token issue/consume + verification URL builder.
+    mailer.py          Mailer protocol + LoggingMailer default.
     middleware.py      SessionLoader + CSRF middlewares.
     passwords.py       argon2id hashing wrapper.
     sessions.py        Session create / load / cookie-attach helpers.
