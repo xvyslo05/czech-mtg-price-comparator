@@ -1,0 +1,2355 @@
+<!DOCTYPE html>
+<html lang="fr" class="h-full">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="54oHGfe4GvkDKbrBiBgIo6wtBgaXE2ZmSDy4BhTC">
+    <link rel="icon" type="image/svg+xml" href="/images/favicon.svg">
+    <title>Recherche « Lightning Bolt » - Magic Corporation</title>
+    <meta name="description" content="Cartes Magic The Gathering à l&#039;unité, produits scellés, accessoires. La boutique Magic de référence depuis 2000.">
+
+    <link rel="preload" as="style" href="https://boutique.magiccorporation.com/build/assets/app-Cos05wj6.css" /><link rel="modulepreload" href="https://boutique.magiccorporation.com/build/assets/app-CQ2voP87.js" /><link rel="stylesheet" href="https://boutique.magiccorporation.com/build/assets/app-Cos05wj6.css" /><script type="module" src="https://boutique.magiccorporation.com/build/assets/app-CQ2voP87.js"></script>
+    <link rel="preconnect" href="https://fonts.bunny.net">
+    <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800|space-grotesk:400,500,600,700&display=swap" rel="stylesheet" />
+
+    
+    </head>
+<body class="h-full theme-dark font-sans antialiased" x-data="{ mobileMenu: false }">
+    
+    <header class="glass-nav sticky top-0 z-50">
+        <nav class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div class="flex h-14 sm:h-16 items-center justify-between gap-4">
+                
+                <a href="https://boutique.magiccorporation.com" class="flex items-center shrink-0">
+                    <img src="/images/logo.svg" alt="MagicCorporation" class="theme-icon-sun h-12 sm:h-14 w-auto">
+                    <img src="/images/logo-light.svg" alt="MagicCorporation" class="theme-icon-moon h-12 sm:h-14 w-auto">
+                </a>
+
+                
+                
+                <div class="hidden xl:flex items-center gap-0.5 shrink-0">
+                    <a href="https://boutique.magiccorporation.com/scelles" class="whitespace-nowrap text-gray-300 hover:text-cyan-400 px-2 py-2 text-sm font-medium transition">Scellés</a>
+                    <a href="https://boutique.magiccorporation.com/cartes" class="whitespace-nowrap text-gray-300 hover:text-cyan-400 px-2 py-2 text-sm font-medium transition">Cartes à l&#039;unité</a>
+                    <a href="https://boutique.magiccorporation.com/cartes-rares" class="whitespace-nowrap text-amber-300/90 hover:text-amber-200 px-2 py-2 text-sm font-medium transition">Cartes rares</a>
+                    <a href="https://boutique.magiccorporation.com/accessoires" class="whitespace-nowrap text-gray-300 hover:text-cyan-400 px-2 py-2 text-sm font-medium transition">Accessoires</a>
+                    <a href="https://boutique.magiccorporation.com/promotions" class="whitespace-nowrap text-gray-300 hover:text-cyan-400 px-2 py-2 text-sm font-medium transition">Promos</a>
+                                        <a href="https://boutique.magiccorporation.com/precommandes" class="whitespace-nowrap text-gray-300 hover:text-cyan-400 px-2 py-2 text-sm font-medium transition">Précos</a>
+                                    </div>
+
+                
+                <div class="hidden md:block flex-1 min-w-40 max-w-md">
+                    <div x-data="{
+        q: '',
+        open: false,
+        loading: false,
+        cartes: [],
+        produits: [],
+        timer: null,
+        search() {
+            clearTimeout(this.timer);
+            if (this.q.trim().length < 3) { this.open = false; this.cartes = []; this.produits = []; return; }
+            this.timer = setTimeout(() => this.fetch(), 250);
+        },
+        async fetch() {
+            this.loading = true;
+            try {
+                const r = await window.api.get('https://boutique.magiccorporation.com/api/recherche/suggestions?q=' + encodeURIComponent(this.q.trim()));
+                this.cartes = r.cartes || [];
+                this.produits = r.produits || [];
+                this.open = this.cartes.length > 0 || this.produits.length > 0;
+            } catch (e) { this.open = false; }
+            this.loading = false;
+        },
+     }"
+     @click.outside="open = false"
+     @keydown.escape.window="open = false"
+     class="relative ">
+    <form action="https://boutique.magiccorporation.com/recherche" method="get">
+        <input type="search" name="q" x-model="q" @input="search()" @focus="search()"
+               value="Lightning Bolt"
+               placeholder="Rechercher…" autocomplete="off"
+               class="w-full rounded-xl border-white/15 bg-white/10 text-white text-sm placeholder-gray-500 focus:ring-cyan-400 focus:border-cyan-400">
+    </form>
+
+    
+    
+    <div x-show="open" x-cloak
+         x-transition:enter="transition ease-out duration-150"
+         x-transition:enter-start="opacity-0 -translate-y-1"
+         x-transition:enter-end="opacity-100 translate-y-0"
+         class="absolute right-0 top-full mt-2 z-[90] w-[min(92vw,400px)] rounded-2xl border border-white/15 bg-gray-900/95 backdrop-blur-xl shadow-2xl overflow-hidden">
+        <template x-if="cartes.length">
+            <div>
+                <p class="px-4 pt-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Cartes à l&#039;unité</p>
+                <template x-for="c in cartes" :key="c.url">
+                    <a :href="c.url" class="flex items-center gap-2.5 px-3.5 py-2 hover:bg-white/5 transition">
+                        <img :src="c.image" alt="" class="w-8 h-11 object-cover rounded bg-white/5 shrink-0" loading="lazy" onerror="this.style.visibility='hidden'">
+                        <span class="min-w-0 flex-1">
+                            <span class="block text-sm text-white truncate" x-text="c.nom"></span>
+                            <span class="block text-xs text-gray-500 truncate" x-text="c.edition"></span>
+                        </span>
+                        <span class="text-xs text-cyan-300 font-semibold whitespace-nowrap" x-show="c.prix" x-text="c.prix"></span>
+                    </a>
+                </template>
+            </div>
+        </template>
+        <template x-if="produits.length">
+            <div class="border-t border-white/5">
+                <p class="px-4 pt-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Produits</p>
+                <template x-for="p in produits" :key="p.url">
+                    <a :href="p.url" class="flex items-center gap-2.5 px-3.5 py-2 hover:bg-white/5 transition">
+                        <img :src="p.image" alt="" class="w-9 h-9 object-contain rounded bg-white/5 shrink-0" loading="lazy" onerror="this.style.visibility='hidden'">
+                        <span class="min-w-0 flex-1 text-sm text-white truncate" x-text="p.nom"></span>
+                        <span class="text-xs text-cyan-300 font-semibold whitespace-nowrap" x-text="p.prix"></span>
+                    </a>
+                </template>
+            </div>
+        </template>
+        <a :href="'https://boutique.magiccorporation.com/recherche?q=' + encodeURIComponent(q)"
+           class="block px-4 py-2.5 text-center text-xs text-cyan-400 hover:text-cyan-300 border-t border-white/5 transition">
+            Tous les résultats →
+        </a>
+    </div>
+</div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    
+                    <button type="button" onclick="toggleTheme()" aria-label="Changer de thème"
+                            class="text-gray-400 hover:text-cyan-400 p-2 rounded-xl border border-white/10 hover:border-cyan-400/40 transition">
+                        
+                        <svg class="theme-icon-sun w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z"/></svg>
+                        
+                        <svg class="theme-icon-moon w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z"/></svg>
+                    </button>
+
+                    
+                    <div class="hidden sm:flex items-center gap-2">
+                        <a href="https://boutique.magiccorporation.com/lang/fr" title="Français" aria-label="Français"
+                           class="transition rounded-[3px] opacity-100 ring-2 ring-cyan-400/70">
+                            <img src="/images/flags/fr.svg" alt="" class="h-3.5 w-5 object-cover block rounded-[2px]">
+                        </a>
+                        <a href="https://boutique.magiccorporation.com/lang/en" title="English" aria-label="English"
+                           class="transition rounded-[3px] opacity-50 hover:opacity-100">
+                            <img src="/images/flags/gb.svg" alt="" class="h-3.5 w-5 object-cover block rounded-[2px]">
+                        </a>
+                    </div>
+
+                    
+                                            <a href="https://boutique.magiccorporation.com/connexion" class="hidden sm:block text-gray-300 hover:text-white text-sm font-medium">Connexion</a>
+                    
+                    
+                    <a href="https://boutique.magiccorporation.com/connexion"
+                       class="sm:hidden text-white p-2 rounded-xl border border-white/10 hover:border-cyan-400/40 hover:bg-white/5 transition"
+                       aria-label="Connexion" title="Connexion">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                        </svg>
+                    </a>
+
+                    
+                                        <a href="https://boutique.magiccorporation.com/panier" class="relative text-white p-2 rounded-xl border border-white/10 hover:border-cyan-400/40 hover:bg-white/5 transition" aria-label="Panier">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"/>
+                        </svg>
+                        <span data-cart-badge class="absolute -top-1.5 -right-1.5 min-w-5 h-5 px-1 rounded-full bg-cyan-500 text-white text-xs font-bold flex items-center justify-center hidden"></span>
+                    </a>
+
+                    
+                    <button class="xl:hidden text-gray-300 p-2" @click="mobileMenu = !mobileMenu">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            
+            <div x-show="mobileMenu" x-cloak class="xl:hidden pb-3 space-y-1">
+                <div class="px-3 pb-2 md:hidden">
+                    <div x-data="{
+        q: '',
+        open: false,
+        loading: false,
+        cartes: [],
+        produits: [],
+        timer: null,
+        search() {
+            clearTimeout(this.timer);
+            if (this.q.trim().length < 3) { this.open = false; this.cartes = []; this.produits = []; return; }
+            this.timer = setTimeout(() => this.fetch(), 250);
+        },
+        async fetch() {
+            this.loading = true;
+            try {
+                const r = await window.api.get('https://boutique.magiccorporation.com/api/recherche/suggestions?q=' + encodeURIComponent(this.q.trim()));
+                this.cartes = r.cartes || [];
+                this.produits = r.produits || [];
+                this.open = this.cartes.length > 0 || this.produits.length > 0;
+            } catch (e) { this.open = false; }
+            this.loading = false;
+        },
+     }"
+     @click.outside="open = false"
+     @keydown.escape.window="open = false"
+     class="relative ">
+    <form action="https://boutique.magiccorporation.com/recherche" method="get">
+        <input type="search" name="q" x-model="q" @input="search()" @focus="search()"
+               value="Lightning Bolt"
+               placeholder="Rechercher…" autocomplete="off"
+               class="w-full rounded-xl border-white/15 bg-white/10 text-white text-sm placeholder-gray-500 focus:ring-cyan-400 focus:border-cyan-400">
+    </form>
+
+    
+    
+    <div x-show="open" x-cloak
+         x-transition:enter="transition ease-out duration-150"
+         x-transition:enter-start="opacity-0 -translate-y-1"
+         x-transition:enter-end="opacity-100 translate-y-0"
+         class="absolute right-0 top-full mt-2 z-[90] w-[min(92vw,400px)] rounded-2xl border border-white/15 bg-gray-900/95 backdrop-blur-xl shadow-2xl overflow-hidden">
+        <template x-if="cartes.length">
+            <div>
+                <p class="px-4 pt-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Cartes à l&#039;unité</p>
+                <template x-for="c in cartes" :key="c.url">
+                    <a :href="c.url" class="flex items-center gap-2.5 px-3.5 py-2 hover:bg-white/5 transition">
+                        <img :src="c.image" alt="" class="w-8 h-11 object-cover rounded bg-white/5 shrink-0" loading="lazy" onerror="this.style.visibility='hidden'">
+                        <span class="min-w-0 flex-1">
+                            <span class="block text-sm text-white truncate" x-text="c.nom"></span>
+                            <span class="block text-xs text-gray-500 truncate" x-text="c.edition"></span>
+                        </span>
+                        <span class="text-xs text-cyan-300 font-semibold whitespace-nowrap" x-show="c.prix" x-text="c.prix"></span>
+                    </a>
+                </template>
+            </div>
+        </template>
+        <template x-if="produits.length">
+            <div class="border-t border-white/5">
+                <p class="px-4 pt-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Produits</p>
+                <template x-for="p in produits" :key="p.url">
+                    <a :href="p.url" class="flex items-center gap-2.5 px-3.5 py-2 hover:bg-white/5 transition">
+                        <img :src="p.image" alt="" class="w-9 h-9 object-contain rounded bg-white/5 shrink-0" loading="lazy" onerror="this.style.visibility='hidden'">
+                        <span class="min-w-0 flex-1 text-sm text-white truncate" x-text="p.nom"></span>
+                        <span class="text-xs text-cyan-300 font-semibold whitespace-nowrap" x-text="p.prix"></span>
+                    </a>
+                </template>
+            </div>
+        </template>
+        <a :href="'https://boutique.magiccorporation.com/recherche?q=' + encodeURIComponent(q)"
+           class="block px-4 py-2.5 text-center text-xs text-cyan-400 hover:text-cyan-300 border-t border-white/5 transition">
+            Tous les résultats →
+        </a>
+    </div>
+</div>
+                </div>
+                <a href="https://boutique.magiccorporation.com/scelles" class="block text-gray-300 hover:text-cyan-400 px-3 py-2 text-sm font-medium">Scellés</a>
+                <a href="https://boutique.magiccorporation.com/cartes" class="block text-gray-300 hover:text-cyan-400 px-3 py-2 text-sm font-medium">Cartes à l&#039;unité</a>
+                <a href="https://boutique.magiccorporation.com/cartes-rares" class="block text-amber-300/90 hover:text-amber-200 px-3 py-2 text-sm font-medium">Cartes rares</a>
+                <a href="https://boutique.magiccorporation.com/accessoires" class="block text-gray-300 hover:text-cyan-400 px-3 py-2 text-sm font-medium">Accessoires</a>
+                <a href="https://boutique.magiccorporation.com/promotions" class="block text-gray-300 hover:text-cyan-400 px-3 py-2 text-sm font-medium">Promotions</a>
+                                                <a href="https://boutique.magiccorporation.com/precommandes" class="block text-gray-300 hover:text-cyan-400 px-3 py-2 text-sm font-medium">Précommandes</a>
+                                <a href="https://boutique.magiccorporation.com/nouveautes" class="block text-gray-300 hover:text-cyan-400 px-3 py-2 text-sm font-medium">Nouveautés</a>
+
+                
+                <div class="border-t border-white/10 mt-2 pt-2">
+                                            <a href="https://boutique.magiccorporation.com/connexion" class="block text-cyan-300 hover:text-cyan-200 px-3 py-2 text-sm font-medium">Connexion</a>
+                    
+                    
+                    <div class="flex items-center gap-3 px-3 py-2">
+                        <a href="https://boutique.magiccorporation.com/lang/fr" title="Français" aria-label="Français"
+                           class="transition rounded-[3px] opacity-100 ring-2 ring-cyan-400/70">
+                            <img src="/images/flags/fr.svg" alt="" class="h-4 w-6 object-cover block rounded-[2px]">
+                        </a>
+                        <a href="https://boutique.magiccorporation.com/lang/en" title="English" aria-label="English"
+                           class="transition rounded-[3px] opacity-50">
+                            <img src="/images/flags/gb.svg" alt="" class="h-4 w-6 object-cover block rounded-[2px]">
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    
+    
+    
+    <main>
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+
+    <h1 class="f-grotesk text-3xl font-bold text-white mb-6">Recherche</h1>
+
+    <form method="get" action="https://boutique.magiccorporation.com/recherche" class="mb-10 max-w-xl">
+        <div class="flex gap-2">
+            <input type="search" name="q" value="Lightning Bolt" placeholder="Nom de carte, produit…" autofocus
+                   class="flex-1 rounded-xl border-white/20 bg-white/10 text-white placeholder-gray-500 focus:ring-cyan-400">
+            <button class="px-6 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-semibold transition">
+                Chercher
+            </button>
+        </div>
+    </form>
+
+    
+        
+        <section class="mb-12">
+            <h2 class="f-grotesk text-xl font-semibold text-white mb-4">
+                Produits <span class="text-gray-500 text-base">(0)</span>
+            </h2>
+                            <p class="text-gray-500 text-sm">Aucun produit trouvé.</p>
+                    </section>
+
+        
+        <section id="cartes" class="scroll-mt-24">
+            <h2 class="f-grotesk text-xl font-semibold text-white mb-4">
+                Cartes à l&#039;unité <span class="text-gray-500 text-base">(26)</span>
+            </h2>
+
+            
+                                    <form method="get" action="https://boutique.magiccorporation.com/recherche#cartes" class="flex flex-wrap items-center gap-2 text-sm mb-5">
+                <input type="hidden" name="q" value="Lightning Bolt">
+                                <select name="edition" onchange="this.form.submit()" class="rounded-lg border-white/20 bg-white/10 text-white text-sm py-1.5 focus:ring-cyan-400 max-w-[220px]">
+                    <option value="">Toutes les éditions</option>
+                                            <option value="348" >Marvel Super Heroes : Commander</option>
+                                            <option value="344" >Secrets of Strixhaven</option>
+                                            <option value="338" >Avatar, the last airbender : Eternal legal</option>
+                                            <option value="330" >Final Fantasy : Through the Ages</option>
+                                            <option value="279" >Double Masters 2022</option>
+                                            <option value="277" >Commander Legends: Battle for Baldur&#039;s Gate</option>
+                                            <option value="257" >Strixhaven Mystical Archive</option>
+                                            <option value="245" >Jumpstart</option>
+                                            <option value="204" >Masters 25</option>
+                                            <option value="194" >Archenemy Nicol Bolas Deck</option>
+                                            <option value="158" >Modern Masters 2015</option>
+                                            <option value="115" >Premium Deck Series Fire &amp; Lightning</option>
+                                            <option value="109" >Magic 2011</option>
+                                            <option value="99" >Magic 2010</option>
+                                            <option value="64" >Beatdown</option>
+                                            <option value="66" >Anthologies</option>
+                                            <option value="69" >DCI Judge Gift</option>
+                                            <option value="10" >4th Edition</option>
+                                            <option value="5" >Revised</option>
+                                            <option value="3" >Unlimited</option>
+                                            <option value="2" >Beta</option>
+                                            <option value="1" >Alpha</option>
+                                    </select>
+                                                                <select name="rarete" onchange="this.form.submit()" class="rounded-lg border-white/20 bg-white/10 text-white text-sm py-1.5 focus:ring-cyan-400">
+                    <option value="">Toutes les raretés</option>
+                                            <option value="1" >Commune</option>
+                                            <option value="2" >Peu commune</option>
+                                            <option value="3" >Rare</option>
+                                            <option value="5" >Rare Mythique</option>
+                                    </select>
+                                <select name="tri" onchange="this.form.submit()" class="rounded-lg border-white/20 bg-white/10 text-white text-sm py-1.5 focus:ring-cyan-400">
+                    <option value="" selected>Nom A→Z</option>
+                    <option value="prix_asc" >Prix croissant</option>
+                    <option value="prix_desc" >Prix décroissant</option>
+                    <option value="rarete" >Rareté</option>
+                </select>
+                            </form>
+            
+                            
+                <div class="overflow-x-auto rounded-xl border border-white/10">
+    <table class="w-full text-sm">
+        <thead class="bg-white/5 text-gray-400 text-left">
+            <tr>
+                <th class="px-3 py-3 font-medium">Carte</th>
+                <th class="px-3 py-3 font-medium hidden sm:table-cell">N°</th>
+                                    <th class="px-3 py-3 font-medium hidden md:table-cell">Édition</th>
+                                <th class="px-3 py-3 font-medium hidden md:table-cell">Rareté</th>
+                
+                <th class="px-2 py-3 font-medium text-right sm:hidden">Prix</th>
+                <th class="px-3 py-3 font-medium text-right hidden sm:table-cell" title="VO">
+                    <img src="/images/flags/gb.svg" alt="VO" class="h-3.5 w-5 object-cover rounded-[2px] inline-block">
+                </th>
+                <th class="px-3 py-3 font-medium text-right hidden sm:table-cell" title="VF">
+                    <img src="/images/flags/fr.svg" alt="VF" class="h-3.5 w-5 object-cover rounded-[2px] inline-block">
+                </th>
+                <th class="px-3 py-3 font-medium text-right hidden sm:table-cell">Foil</th>
+                <th class="px-2 py-3 font-medium text-right hidden sm:table-cell">Ajouter au panier</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-white/5">
+                                    <tr class="hover:bg-white/5 transition">
+                <td class="px-3 py-2">
+                    <div class="flex items-center gap-2.5">
+                                                    
+                            <span class="relative group shrink-0">
+                                <a href="https://boutique.magiccorporation.com/carte/95330-emerite-du-conflit-foudre">
+                                    <img src="https://static.magiccorporation.com/scan_maxi/secrets_of_strixhaven/vf/113.webp" alt=""
+                                         class="w-10 h-14 object-cover rounded bg-white/5"
+                                         loading="lazy"
+                                         onerror="this.style.visibility='hidden'">
+                                </a>
+                                                                <span class="pointer-events-none absolute left-12 top-1/2 -translate-y-1/2 z-50 hidden group-hover:block">
+                                    <img src="https://static.magiccorporation.com/scan_maxi/secrets_of_strixhaven/vf/113.webp" alt=""
+                                         class="w-56 rounded-xl shadow-2xl ring-1 ring-white/20"
+                                         loading="lazy"
+                                         onerror="this.parentElement.style.display='none'">
+                                </span>
+                                                            </span>
+                                                <a href="https://boutique.magiccorporation.com/carte/95330-emerite-du-conflit-foudre" class="min-w-0">
+                            <span class="block text-white hover:text-cyan-300 font-medium truncate transition">Émérite du conflit /Foudre</span>
+                                                            <span class="block text-xs text-gray-500 truncate">Emeritus of Conflict /Lightning Bolt</span>
+                                                                                                            </a>
+                    </div>
+                </td>
+                <td class="px-3 py-2 hidden sm:table-cell text-gray-400">113</td>
+                                    <td class="px-3 py-2 hidden md:table-cell">
+                                                                                
+                            <a href="https://boutique.magiccorporation.com/cartes/344-secrets-of-strixhaven"
+                               class="flex items-center gap-1.5 text-gray-400 hover:text-cyan-300 transition" title="Secrets of Strixhaven">
+                                <span class="relative w-3.5 h-3.5 shrink-0 inline-flex items-center justify-center">
+    <span class="hidden absolute inset-0 items-center justify-center rounded-md bg-white/10 text-[7px] font-bold text-gray-400 select-none js-icon-fb">SOS</span>
+            <img src="https://svgs.scryfall.io/sets/sos.svg" alt="" class="edition-logo relative w-3.5 h-3.5"
+             loading="lazy"
+             onerror="this.style.display='none'; var f=this.parentElement.querySelector('.js-icon-fb'); if(f){f.classList.remove('hidden');f.classList.add('flex');}">
+    </span>
+                                <span class="truncate max-w-[12rem]">Secrets of Strixhaven</span>
+                            </a>
+                                            </td>
+                                <td class="px-3 py-2 hidden md:table-cell">
+                                            <span class="inline-block rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap bg-purple-500/20 text-purple-300">
+                            Rare Mythique
+                        </span>
+                                    </td>
+                
+                <td class="px-2 py-2 text-right whitespace-nowrap sm:hidden text-cyan-300">
+                                            3,50 €
+                        <span class="block text-[10px] text-gray-500 uppercase">VF</span>
+                                    </td>
+                
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-gray-700">
+                                            —
+                                    </td>
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-cyan-300">
+                                            3,50 €
+                                    </td>
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-amber-300">
+                                            11,90 €
+                                    </td>
+                
+                
+                <td class="px-2 py-2 text-right hidden sm:table-cell">
+                                        
+                    <form method="post" action="https://boutique.magiccorporation.com/panier/ajouter" class="inline-flex items-center gap-1.5 js-cart-row">
+                        <input type="hidden" name="_token" value="54oHGfe4GvkDKbrBiBgIo6wtBgaXE2ZmSDy4BhTC" autocomplete="off">                        <input type="hidden" name="type" value="carte">
+                        <input type="hidden" name="id" value="95330">
+                        <select name="variant" class="js-variant hidden sm:block w-36 h-7 rounded-lg border-white/20 bg-white/10 text-white text-xs py-0 pl-2 pr-6 focus:ring-cyan-400" aria-label="Version">
+                                                            <option value="vf" data-max="5">VF · 3,50 €</option>
+                                                            <option value="vf_foil" data-max="3">VF Foil · 11,90 €</option>
+                                                    </select>
+                        <select name="qty" class="js-qty hidden sm:block w-14 h-7 rounded-lg border-white/20 bg-white/10 text-white text-xs py-0 pl-2 pr-6 focus:ring-cyan-400" aria-label="Quantité">
+                            <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>                        </select>
+                        <button class="h-7 w-7 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-sm font-bold leading-none transition" title="Ajouter au panier">+</button>
+                    </form>
+                                    </td>
+            </tr>
+                                    <tr class="hover:bg-white/5 transition">
+                <td class="px-3 py-2">
+                    <div class="flex items-center gap-2.5">
+                                                    
+                            <span class="relative group shrink-0">
+                                <a href="https://boutique.magiccorporation.com/carte/95548-etincelles-choregraphiees">
+                                    <img src="https://static.magiccorporation.com/scan_maxi/secrets_of_strixhaven/vf/331.webp" alt=""
+                                         class="w-10 h-14 object-cover rounded bg-white/5"
+                                         loading="lazy"
+                                         onerror="this.style.visibility='hidden'">
+                                </a>
+                                                                <span class="pointer-events-none absolute left-12 top-1/2 -translate-y-1/2 z-50 hidden group-hover:block">
+                                    <img src="https://static.magiccorporation.com/scan_maxi/secrets_of_strixhaven/vf/331.webp" alt=""
+                                         class="w-56 rounded-xl shadow-2xl ring-1 ring-white/20"
+                                         loading="lazy"
+                                         onerror="this.parentElement.style.display='none'">
+                                </span>
+                                                            </span>
+                                                <a href="https://boutique.magiccorporation.com/carte/95548-etincelles-choregraphiees" class="min-w-0">
+                            <span class="block text-white hover:text-cyan-300 font-medium truncate transition">Étincelles chorégraphiées</span>
+                                                            <span class="block text-xs text-gray-500 truncate">Emeritus of Conflict /Lightning Bolt</span>
+                                                                                                            </a>
+                    </div>
+                </td>
+                <td class="px-3 py-2 hidden sm:table-cell text-gray-400">331</td>
+                                    <td class="px-3 py-2 hidden md:table-cell">
+                                                                                
+                            <a href="https://boutique.magiccorporation.com/cartes/344-secrets-of-strixhaven"
+                               class="flex items-center gap-1.5 text-gray-400 hover:text-cyan-300 transition" title="Secrets of Strixhaven">
+                                <span class="relative w-3.5 h-3.5 shrink-0 inline-flex items-center justify-center">
+    <span class="hidden absolute inset-0 items-center justify-center rounded-md bg-white/10 text-[7px] font-bold text-gray-400 select-none js-icon-fb">SOS</span>
+            <img src="https://svgs.scryfall.io/sets/sos.svg" alt="" class="edition-logo relative w-3.5 h-3.5"
+             loading="lazy"
+             onerror="this.style.display='none'; var f=this.parentElement.querySelector('.js-icon-fb'); if(f){f.classList.remove('hidden');f.classList.add('flex');}">
+    </span>
+                                <span class="truncate max-w-[12rem]">Secrets of Strixhaven</span>
+                            </a>
+                                            </td>
+                                <td class="px-3 py-2 hidden md:table-cell">
+                                            <span class="inline-block rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap bg-purple-500/20 text-purple-300">
+                            Rare Mythique
+                        </span>
+                                    </td>
+                
+                <td class="px-2 py-2 text-right whitespace-nowrap sm:hidden text-gray-700">
+                                            —
+                                    </td>
+                
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-gray-700">
+                                            —
+                                    </td>
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-gray-700">
+                                            —
+                                    </td>
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-gray-700">
+                                            —
+                                    </td>
+                
+                
+                <td class="px-2 py-2 text-right hidden sm:table-cell">
+                                            <span class="text-xs text-gray-600">Épuisé</span>
+                                    </td>
+            </tr>
+                                    <tr class="hover:bg-white/5 transition">
+                <td class="px-3 py-2">
+                    <div class="flex items-center gap-2.5">
+                                                    
+                            <span class="relative group shrink-0">
+                                <a href="https://boutique.magiccorporation.com/carte/95549-emerite-du-conflit-foudre">
+                                    <img src="https://static.magiccorporation.com/scan_maxi/secrets_of_strixhaven/vf/332.webp" alt=""
+                                         class="w-10 h-14 object-cover rounded bg-white/5"
+                                         loading="lazy"
+                                         onerror="this.style.visibility='hidden'">
+                                </a>
+                                                                <span class="pointer-events-none absolute left-12 top-1/2 -translate-y-1/2 z-50 hidden group-hover:block">
+                                    <img src="https://static.magiccorporation.com/scan_maxi/secrets_of_strixhaven/vf/332.webp" alt=""
+                                         class="w-56 rounded-xl shadow-2xl ring-1 ring-white/20"
+                                         loading="lazy"
+                                         onerror="this.parentElement.style.display='none'">
+                                </span>
+                                                            </span>
+                                                <a href="https://boutique.magiccorporation.com/carte/95549-emerite-du-conflit-foudre" class="min-w-0">
+                            <span class="block text-white hover:text-cyan-300 font-medium truncate transition">Émérite du conflit /Foudre</span>
+                                                            <span class="block text-xs text-gray-500 truncate">Emeritus of Conflict /Lightning Bolt</span>
+                                                                                                            </a>
+                    </div>
+                </td>
+                <td class="px-3 py-2 hidden sm:table-cell text-gray-400">332</td>
+                                    <td class="px-3 py-2 hidden md:table-cell">
+                                                                                
+                            <a href="https://boutique.magiccorporation.com/cartes/344-secrets-of-strixhaven"
+                               class="flex items-center gap-1.5 text-gray-400 hover:text-cyan-300 transition" title="Secrets of Strixhaven">
+                                <span class="relative w-3.5 h-3.5 shrink-0 inline-flex items-center justify-center">
+    <span class="hidden absolute inset-0 items-center justify-center rounded-md bg-white/10 text-[7px] font-bold text-gray-400 select-none js-icon-fb">SOS</span>
+            <img src="https://svgs.scryfall.io/sets/sos.svg" alt="" class="edition-logo relative w-3.5 h-3.5"
+             loading="lazy"
+             onerror="this.style.display='none'; var f=this.parentElement.querySelector('.js-icon-fb'); if(f){f.classList.remove('hidden');f.classList.add('flex');}">
+    </span>
+                                <span class="truncate max-w-[12rem]">Secrets of Strixhaven</span>
+                            </a>
+                                            </td>
+                                <td class="px-3 py-2 hidden md:table-cell">
+                                            <span class="inline-block rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap bg-purple-500/20 text-purple-300">
+                            Rare Mythique
+                        </span>
+                                    </td>
+                
+                <td class="px-2 py-2 text-right whitespace-nowrap sm:hidden text-gray-700">
+                                            —
+                                    </td>
+                
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-gray-700">
+                                            —
+                                    </td>
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-gray-700">
+                                            —
+                                    </td>
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-gray-700">
+                                            —
+                                    </td>
+                
+                
+                <td class="px-2 py-2 text-right hidden sm:table-cell">
+                                            <span class="text-xs text-gray-600">Épuisé</span>
+                                    </td>
+            </tr>
+                                    <tr class="hover:bg-white/5 transition">
+                <td class="px-3 py-2">
+                    <div class="flex items-center gap-2.5">
+                                                    
+                            <span class="relative group shrink-0">
+                                <a href="https://boutique.magiccorporation.com/carte/189-foudre">
+                                    <img src="https://static.magiccorporation.com/scan_maxi/4th_edition/lightning_bolt.jpg" alt=""
+                                         class="w-10 h-14 object-cover rounded bg-white/5"
+                                         loading="lazy"
+                                         onerror="this.style.visibility='hidden'">
+                                </a>
+                                                                <span class="pointer-events-none absolute left-12 top-1/2 -translate-y-1/2 z-50 hidden group-hover:block">
+                                    <img src="https://static.magiccorporation.com/scan_maxi/4th_edition/lightning_bolt.jpg" alt=""
+                                         class="w-56 rounded-xl shadow-2xl ring-1 ring-white/20"
+                                         loading="lazy"
+                                         onerror="this.parentElement.style.display='none'">
+                                </span>
+                                                            </span>
+                                                <a href="https://boutique.magiccorporation.com/carte/189-foudre" class="min-w-0">
+                            <span class="block text-white hover:text-cyan-300 font-medium truncate transition">Foudre</span>
+                                                            <span class="block text-xs text-gray-500 truncate">Lightning Bolt</span>
+                                                                                        <span class="mt-0.5 inline-flex items-center gap-1 rounded-full bg-amber-500/15 text-amber-300 text-[11px] font-medium px-2 py-0.5 whitespace-nowrap">
+                                    📷 1 exemplaire unique · dès 19,90 €
+                                </span>
+                                                                                </a>
+                    </div>
+                </td>
+                <td class="px-3 py-2 hidden sm:table-cell text-gray-400">208</td>
+                                    <td class="px-3 py-2 hidden md:table-cell">
+                                                                                
+                            <a href="https://boutique.magiccorporation.com/cartes/10-4th-edition"
+                               class="flex items-center gap-1.5 text-gray-400 hover:text-cyan-300 transition" title="4th Edition">
+                                <span class="relative w-3.5 h-3.5 shrink-0 inline-flex items-center justify-center">
+    <span class="hidden absolute inset-0 items-center justify-center rounded-md bg-white/10 text-[7px] font-bold text-gray-400 select-none js-icon-fb">4E</span>
+            <img src="https://svgs.scryfall.io/sets/4ed.svg" alt="" class="edition-logo relative w-3.5 h-3.5"
+             loading="lazy"
+             onerror="this.style.display='none'; var f=this.parentElement.querySelector('.js-icon-fb'); if(f){f.classList.remove('hidden');f.classList.add('flex');}">
+    </span>
+                                <span class="truncate max-w-[12rem]">4th Edition</span>
+                            </a>
+                                            </td>
+                                <td class="px-3 py-2 hidden md:table-cell">
+                                            <span class="inline-block rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap bg-gray-500/20 text-gray-300">
+                            Commune
+                        </span>
+                                    </td>
+                
+                <td class="px-2 py-2 text-right whitespace-nowrap sm:hidden text-cyan-300">
+                                            4,90 €
+                        <span class="block text-[10px] text-gray-500 uppercase">VF</span>
+                                    </td>
+                
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-gray-700">
+                                            —
+                                    </td>
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-cyan-300">
+                                            4,90 €
+                                    </td>
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-gray-700">
+                                            —
+                                    </td>
+                
+                
+                <td class="px-2 py-2 text-right hidden sm:table-cell">
+                                        
+                    <form method="post" action="https://boutique.magiccorporation.com/panier/ajouter" class="inline-flex items-center gap-1.5 js-cart-row">
+                        <input type="hidden" name="_token" value="54oHGfe4GvkDKbrBiBgIo6wtBgaXE2ZmSDy4BhTC" autocomplete="off">                        <input type="hidden" name="type" value="carte">
+                        <input type="hidden" name="id" value="189">
+                        <select name="variant" class="js-variant hidden sm:block w-36 h-7 rounded-lg border-white/20 bg-white/10 text-white text-xs py-0 pl-2 pr-6 focus:ring-cyan-400" aria-label="Version">
+                                                            <option value="vf" data-max="1">VF · 4,90 €</option>
+                                                    </select>
+                        <select name="qty" class="js-qty hidden sm:block w-14 h-7 rounded-lg border-white/20 bg-white/10 text-white text-xs py-0 pl-2 pr-6 focus:ring-cyan-400" aria-label="Quantité">
+                            <option value="1">1</option>                        </select>
+                        <button class="h-7 w-7 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-sm font-bold leading-none transition" title="Ajouter au panier">+</button>
+                    </form>
+                                    </td>
+            </tr>
+                                    <tr class="hover:bg-white/5 transition">
+                <td class="px-3 py-2">
+                    <div class="flex items-center gap-2.5">
+                                                    
+                            <span class="relative group shrink-0">
+                                <a href="https://boutique.magiccorporation.com/carte/1764-lightning-bolt">
+                                    <img src="https://static.magiccorporation.com/scan_maxi/alpha/lightning_bolt.jpg" alt=""
+                                         class="w-10 h-14 object-cover rounded bg-white/5"
+                                         loading="lazy"
+                                         onerror="this.style.visibility='hidden'">
+                                </a>
+                                                                <span class="pointer-events-none absolute left-12 top-1/2 -translate-y-1/2 z-50 hidden group-hover:block">
+                                    <img src="https://static.magiccorporation.com/scan_maxi/alpha/lightning_bolt.jpg" alt=""
+                                         class="w-56 rounded-xl shadow-2xl ring-1 ring-white/20"
+                                         loading="lazy"
+                                         onerror="this.parentElement.style.display='none'">
+                                </span>
+                                                            </span>
+                                                <a href="https://boutique.magiccorporation.com/carte/1764-lightning-bolt" class="min-w-0">
+                            <span class="block text-white hover:text-cyan-300 font-medium truncate transition">Lightning Bolt</span>
+                                                                                                            </a>
+                    </div>
+                </td>
+                <td class="px-3 py-2 hidden sm:table-cell text-gray-400">161</td>
+                                    <td class="px-3 py-2 hidden md:table-cell">
+                                                                                
+                            <a href="https://boutique.magiccorporation.com/cartes/1-alpha"
+                               class="flex items-center gap-1.5 text-gray-400 hover:text-cyan-300 transition" title="Alpha">
+                                <span class="relative w-3.5 h-3.5 shrink-0 inline-flex items-center justify-center">
+    <span class="hidden absolute inset-0 items-center justify-center rounded-md bg-white/10 text-[7px] font-bold text-gray-400 select-none js-icon-fb">A</span>
+            <img src="https://svgs.scryfall.io/sets/lea.svg" alt="" class="edition-logo relative w-3.5 h-3.5"
+             loading="lazy"
+             onerror="this.style.display='none'; var f=this.parentElement.querySelector('.js-icon-fb'); if(f){f.classList.remove('hidden');f.classList.add('flex');}">
+    </span>
+                                <span class="truncate max-w-[12rem]">Alpha</span>
+                            </a>
+                                            </td>
+                                <td class="px-3 py-2 hidden md:table-cell">
+                                            <span class="inline-block rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap bg-gray-500/20 text-gray-300">
+                            Commune
+                        </span>
+                                    </td>
+                
+                <td class="px-2 py-2 text-right whitespace-nowrap sm:hidden text-gray-700">
+                                            —
+                                    </td>
+                
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-gray-700">
+                                            —
+                                    </td>
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-gray-700">
+                                            —
+                                    </td>
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-gray-700">
+                                            —
+                                    </td>
+                
+                
+                <td class="px-2 py-2 text-right hidden sm:table-cell">
+                                            <span class="text-xs text-gray-600">Épuisé</span>
+                                    </td>
+            </tr>
+                                    <tr class="hover:bg-white/5 transition">
+                <td class="px-3 py-2">
+                    <div class="flex items-center gap-2.5">
+                                                    
+                            <span class="relative group shrink-0">
+                                <a href="https://boutique.magiccorporation.com/carte/2371-lightning-bolt">
+                                    <img src="https://static.magiccorporation.com/scan_maxi/beta/lightning_bolt.jpg" alt=""
+                                         class="w-10 h-14 object-cover rounded bg-white/5"
+                                         loading="lazy"
+                                         onerror="this.style.visibility='hidden'">
+                                </a>
+                                                                <span class="pointer-events-none absolute left-12 top-1/2 -translate-y-1/2 z-50 hidden group-hover:block">
+                                    <img src="https://static.magiccorporation.com/scan_maxi/beta/lightning_bolt.jpg" alt=""
+                                         class="w-56 rounded-xl shadow-2xl ring-1 ring-white/20"
+                                         loading="lazy"
+                                         onerror="this.parentElement.style.display='none'">
+                                </span>
+                                                            </span>
+                                                <a href="https://boutique.magiccorporation.com/carte/2371-lightning-bolt" class="min-w-0">
+                            <span class="block text-white hover:text-cyan-300 font-medium truncate transition">Lightning Bolt</span>
+                                                                                                            </a>
+                    </div>
+                </td>
+                <td class="px-3 py-2 hidden sm:table-cell text-gray-400">162</td>
+                                    <td class="px-3 py-2 hidden md:table-cell">
+                                                                                
+                            <a href="https://boutique.magiccorporation.com/cartes/2-beta"
+                               class="flex items-center gap-1.5 text-gray-400 hover:text-cyan-300 transition" title="Beta">
+                                <span class="relative w-3.5 h-3.5 shrink-0 inline-flex items-center justify-center">
+    <span class="hidden absolute inset-0 items-center justify-center rounded-md bg-white/10 text-[7px] font-bold text-gray-400 select-none js-icon-fb">B</span>
+            <img src="https://svgs.scryfall.io/sets/leb.svg" alt="" class="edition-logo relative w-3.5 h-3.5"
+             loading="lazy"
+             onerror="this.style.display='none'; var f=this.parentElement.querySelector('.js-icon-fb'); if(f){f.classList.remove('hidden');f.classList.add('flex');}">
+    </span>
+                                <span class="truncate max-w-[12rem]">Beta</span>
+                            </a>
+                                            </td>
+                                <td class="px-3 py-2 hidden md:table-cell">
+                                            <span class="inline-block rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap bg-gray-500/20 text-gray-300">
+                            Commune
+                        </span>
+                                    </td>
+                
+                <td class="px-2 py-2 text-right whitespace-nowrap sm:hidden text-gray-700">
+                                            —
+                                    </td>
+                
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-cyan-300">
+                                            —
+                                    </td>
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-gray-700">
+                                            —
+                                    </td>
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-gray-700">
+                                            —
+                                    </td>
+                
+                
+                <td class="px-2 py-2 text-right hidden sm:table-cell">
+                                            <span class="text-xs text-gray-600">Épuisé</span>
+                                    </td>
+            </tr>
+                                    <tr class="hover:bg-white/5 transition">
+                <td class="px-3 py-2">
+                    <div class="flex items-center gap-2.5">
+                                                    
+                            <span class="relative group shrink-0">
+                                <a href="https://boutique.magiccorporation.com/carte/6277-foudre">
+                                    <img src="https://static.magiccorporation.com/scan_maxi/revised/lightning_bolt.jpg" alt=""
+                                         class="w-10 h-14 object-cover rounded bg-white/5"
+                                         loading="lazy"
+                                         onerror="this.style.visibility='hidden'">
+                                </a>
+                                                                <span class="pointer-events-none absolute left-12 top-1/2 -translate-y-1/2 z-50 hidden group-hover:block">
+                                    <img src="https://static.magiccorporation.com/scan_maxi/revised/lightning_bolt.jpg" alt=""
+                                         class="w-56 rounded-xl shadow-2xl ring-1 ring-white/20"
+                                         loading="lazy"
+                                         onerror="this.parentElement.style.display='none'">
+                                </span>
+                                                            </span>
+                                                <a href="https://boutique.magiccorporation.com/carte/6277-foudre" class="min-w-0">
+                            <span class="block text-white hover:text-cyan-300 font-medium truncate transition">Foudre</span>
+                                                            <span class="block text-xs text-gray-500 truncate">Lightning Bolt</span>
+                                                                                                            </a>
+                    </div>
+                </td>
+                <td class="px-3 py-2 hidden sm:table-cell text-gray-400">162</td>
+                                    <td class="px-3 py-2 hidden md:table-cell">
+                                                                                
+                            <a href="https://boutique.magiccorporation.com/cartes/5-revised"
+                               class="flex items-center gap-1.5 text-gray-400 hover:text-cyan-300 transition" title="Revised">
+                                <span class="relative w-3.5 h-3.5 shrink-0 inline-flex items-center justify-center">
+    <span class="hidden absolute inset-0 items-center justify-center rounded-md bg-white/10 text-[7px] font-bold text-gray-400 select-none js-icon-fb">R</span>
+            <img src="https://svgs.scryfall.io/sets/3ed.svg" alt="" class="edition-logo relative w-3.5 h-3.5"
+             loading="lazy"
+             onerror="this.style.display='none'; var f=this.parentElement.querySelector('.js-icon-fb'); if(f){f.classList.remove('hidden');f.classList.add('flex');}">
+    </span>
+                                <span class="truncate max-w-[12rem]">Revised</span>
+                            </a>
+                                            </td>
+                                <td class="px-3 py-2 hidden md:table-cell">
+                                            <span class="inline-block rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap bg-gray-500/20 text-gray-300">
+                            Commune
+                        </span>
+                                    </td>
+                
+                <td class="px-2 py-2 text-right whitespace-nowrap sm:hidden text-gray-700">
+                                            —
+                                    </td>
+                
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-gray-700">
+                                            —
+                                    </td>
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-gray-700">
+                                            —
+                                    </td>
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-gray-700">
+                                            —
+                                    </td>
+                
+                
+                <td class="px-2 py-2 text-right hidden sm:table-cell">
+                                            <span class="text-xs text-gray-600">Épuisé</span>
+                                    </td>
+            </tr>
+                                    <tr class="hover:bg-white/5 transition">
+                <td class="px-3 py-2">
+                    <div class="flex items-center gap-2.5">
+                                                    
+                            <span class="relative group shrink-0">
+                                <a href="https://boutique.magiccorporation.com/carte/7410-lightning-bolt">
+                                    <img src="https://static.magiccorporation.com/scan_maxi/unlimited/lightning_bolt.jpg" alt=""
+                                         class="w-10 h-14 object-cover rounded bg-white/5"
+                                         loading="lazy"
+                                         onerror="this.style.visibility='hidden'">
+                                </a>
+                                                                <span class="pointer-events-none absolute left-12 top-1/2 -translate-y-1/2 z-50 hidden group-hover:block">
+                                    <img src="https://static.magiccorporation.com/scan_maxi/unlimited/lightning_bolt.jpg" alt=""
+                                         class="w-56 rounded-xl shadow-2xl ring-1 ring-white/20"
+                                         loading="lazy"
+                                         onerror="this.parentElement.style.display='none'">
+                                </span>
+                                                            </span>
+                                                <a href="https://boutique.magiccorporation.com/carte/7410-lightning-bolt" class="min-w-0">
+                            <span class="block text-white hover:text-cyan-300 font-medium truncate transition">Lightning Bolt</span>
+                                                                                                            </a>
+                    </div>
+                </td>
+                <td class="px-3 py-2 hidden sm:table-cell text-gray-400">162</td>
+                                    <td class="px-3 py-2 hidden md:table-cell">
+                                                                                
+                            <a href="https://boutique.magiccorporation.com/cartes/3-unlimited"
+                               class="flex items-center gap-1.5 text-gray-400 hover:text-cyan-300 transition" title="Unlimited">
+                                <span class="relative w-3.5 h-3.5 shrink-0 inline-flex items-center justify-center">
+    <span class="hidden absolute inset-0 items-center justify-center rounded-md bg-white/10 text-[7px] font-bold text-gray-400 select-none js-icon-fb">U</span>
+            <img src="https://svgs.scryfall.io/sets/2ed.svg" alt="" class="edition-logo relative w-3.5 h-3.5"
+             loading="lazy"
+             onerror="this.style.display='none'; var f=this.parentElement.querySelector('.js-icon-fb'); if(f){f.classList.remove('hidden');f.classList.add('flex');}">
+    </span>
+                                <span class="truncate max-w-[12rem]">Unlimited</span>
+                            </a>
+                                            </td>
+                                <td class="px-3 py-2 hidden md:table-cell">
+                                            <span class="inline-block rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap bg-gray-500/20 text-gray-300">
+                            Commune
+                        </span>
+                                    </td>
+                
+                <td class="px-2 py-2 text-right whitespace-nowrap sm:hidden text-gray-700">
+                                            —
+                                    </td>
+                
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-gray-700">
+                                            —
+                                    </td>
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-gray-700">
+                                            —
+                                    </td>
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-gray-700">
+                                            —
+                                    </td>
+                
+                
+                <td class="px-2 py-2 text-right hidden sm:table-cell">
+                                            <span class="text-xs text-gray-600">Épuisé</span>
+                                    </td>
+            </tr>
+                                    <tr class="hover:bg-white/5 transition">
+                <td class="px-3 py-2">
+                    <div class="flex items-center gap-2.5">
+                                                    
+                            <span class="relative group shrink-0">
+                                <a href="https://boutique.magiccorporation.com/carte/12705-lightning-bolt">
+                                    <img src="https://static.magiccorporation.com/scan_maxi/beatdown/vo/041.jpg" alt=""
+                                         class="w-10 h-14 object-cover rounded bg-white/5"
+                                         loading="lazy"
+                                         onerror="this.style.visibility='hidden'">
+                                </a>
+                                                                <span class="pointer-events-none absolute left-12 top-1/2 -translate-y-1/2 z-50 hidden group-hover:block">
+                                    <img src="https://static.magiccorporation.com/scan_maxi/beatdown/vo/041.jpg" alt=""
+                                         class="w-56 rounded-xl shadow-2xl ring-1 ring-white/20"
+                                         loading="lazy"
+                                         onerror="this.parentElement.style.display='none'">
+                                </span>
+                                                            </span>
+                                                <a href="https://boutique.magiccorporation.com/carte/12705-lightning-bolt" class="min-w-0">
+                            <span class="block text-white hover:text-cyan-300 font-medium truncate transition">Lightning Bolt</span>
+                                                                                                            </a>
+                    </div>
+                </td>
+                <td class="px-3 py-2 hidden sm:table-cell text-gray-400">41</td>
+                                    <td class="px-3 py-2 hidden md:table-cell">
+                                                                                
+                            <a href="https://boutique.magiccorporation.com/cartes/64-beatdown"
+                               class="flex items-center gap-1.5 text-gray-400 hover:text-cyan-300 transition" title="Beatdown">
+                                <span class="relative w-3.5 h-3.5 shrink-0 inline-flex items-center justify-center">
+    <span class="hidden absolute inset-0 items-center justify-center rounded-md bg-white/10 text-[7px] font-bold text-gray-400 select-none js-icon-fb">BD</span>
+            <img src="https://svgs.scryfall.io/sets/bd.svg" alt="" class="edition-logo relative w-3.5 h-3.5"
+             loading="lazy"
+             onerror="this.style.display='none'; var f=this.parentElement.querySelector('.js-icon-fb'); if(f){f.classList.remove('hidden');f.classList.add('flex');}">
+    </span>
+                                <span class="truncate max-w-[12rem]">Beatdown</span>
+                            </a>
+                                            </td>
+                                <td class="px-3 py-2 hidden md:table-cell">
+                                            <span class="inline-block rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap bg-gray-500/20 text-gray-300">
+                            Commune
+                        </span>
+                                    </td>
+                
+                <td class="px-2 py-2 text-right whitespace-nowrap sm:hidden text-gray-700">
+                                            —
+                                    </td>
+                
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-gray-700">
+                                            —
+                                    </td>
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-gray-700">
+                                            —
+                                    </td>
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-gray-700">
+                                            —
+                                    </td>
+                
+                
+                <td class="px-2 py-2 text-right hidden sm:table-cell">
+                                            <span class="text-xs text-gray-600">Épuisé</span>
+                                    </td>
+            </tr>
+                                    <tr class="hover:bg-white/5 transition">
+                <td class="px-3 py-2">
+                    <div class="flex items-center gap-2.5">
+                                                    
+                            <span class="relative group shrink-0">
+                                <a href="https://boutique.magiccorporation.com/carte/12871-lightning-bolt">
+                                    <img src="https://static.magiccorporation.com/scan_maxi/anthologies/lightning_bolt.jpg" alt=""
+                                         class="w-10 h-14 object-cover rounded bg-white/5"
+                                         loading="lazy"
+                                         onerror="this.style.visibility='hidden'">
+                                </a>
+                                                                <span class="pointer-events-none absolute left-12 top-1/2 -translate-y-1/2 z-50 hidden group-hover:block">
+                                    <img src="https://static.magiccorporation.com/scan_maxi/anthologies/lightning_bolt.jpg" alt=""
+                                         class="w-56 rounded-xl shadow-2xl ring-1 ring-white/20"
+                                         loading="lazy"
+                                         onerror="this.parentElement.style.display='none'">
+                                </span>
+                                                            </span>
+                                                <a href="https://boutique.magiccorporation.com/carte/12871-lightning-bolt" class="min-w-0">
+                            <span class="block text-white hover:text-cyan-300 font-medium truncate transition">Lightning Bolt</span>
+                                                                                                            </a>
+                    </div>
+                </td>
+                <td class="px-3 py-2 hidden sm:table-cell text-gray-400">45</td>
+                                    <td class="px-3 py-2 hidden md:table-cell">
+                                                                                
+                            <a href="https://boutique.magiccorporation.com/cartes/66-anthologies"
+                               class="flex items-center gap-1.5 text-gray-400 hover:text-cyan-300 transition" title="Anthologies">
+                                <span class="relative w-3.5 h-3.5 shrink-0 inline-flex items-center justify-center">
+    <span class="hidden absolute inset-0 items-center justify-center rounded-md bg-white/10 text-[7px] font-bold text-gray-400 select-none js-icon-fb">AT</span>
+            <img src="https://svgs.scryfall.io/sets/ath.svg" alt="" class="edition-logo relative w-3.5 h-3.5"
+             loading="lazy"
+             onerror="this.style.display='none'; var f=this.parentElement.querySelector('.js-icon-fb'); if(f){f.classList.remove('hidden');f.classList.add('flex');}">
+    </span>
+                                <span class="truncate max-w-[12rem]">Anthologies</span>
+                            </a>
+                                            </td>
+                                <td class="px-3 py-2 hidden md:table-cell">
+                                            <span class="inline-block rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap bg-gray-500/20 text-gray-300">
+                            Commune
+                        </span>
+                                    </td>
+                
+                <td class="px-2 py-2 text-right whitespace-nowrap sm:hidden text-gray-700">
+                                            —
+                                    </td>
+                
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-gray-700">
+                                            —
+                                    </td>
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-gray-700">
+                                            —
+                                    </td>
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-gray-700">
+                                            —
+                                    </td>
+                
+                
+                <td class="px-2 py-2 text-right hidden sm:table-cell">
+                                            <span class="text-xs text-gray-600">Épuisé</span>
+                                    </td>
+            </tr>
+                                    <tr class="hover:bg-white/5 transition">
+                <td class="px-3 py-2">
+                    <div class="flex items-center gap-2.5">
+                                                    
+                            <span class="relative group shrink-0">
+                                <a href="https://boutique.magiccorporation.com/carte/14202-lightning-bolt">
+                                    <img src="https://static.magiccorporation.com/scan_maxi/dci_judge_gift/vo/001.jpg" alt=""
+                                         class="w-10 h-14 object-cover rounded bg-white/5"
+                                         loading="lazy"
+                                         onerror="this.style.visibility='hidden'">
+                                </a>
+                                                                <span class="pointer-events-none absolute left-12 top-1/2 -translate-y-1/2 z-50 hidden group-hover:block">
+                                    <img src="https://static.magiccorporation.com/scan_maxi/dci_judge_gift/vo/001.jpg" alt=""
+                                         class="w-56 rounded-xl shadow-2xl ring-1 ring-white/20"
+                                         loading="lazy"
+                                         onerror="this.parentElement.style.display='none'">
+                                </span>
+                                                            </span>
+                                                <a href="https://boutique.magiccorporation.com/carte/14202-lightning-bolt" class="min-w-0">
+                            <span class="block text-white hover:text-cyan-300 font-medium truncate transition">Lightning Bolt</span>
+                                                                                                            </a>
+                    </div>
+                </td>
+                <td class="px-3 py-2 hidden sm:table-cell text-gray-400">1</td>
+                                    <td class="px-3 py-2 hidden md:table-cell">
+                                                                                
+                            <a href="https://boutique.magiccorporation.com/cartes/69-dci-judge-gift"
+                               class="flex items-center gap-1.5 text-gray-400 hover:text-cyan-300 transition" title="DCI Judge Gift">
+                                <span class="relative w-3.5 h-3.5 shrink-0 inline-flex items-center justify-center">
+    <span class="hidden absolute inset-0 items-center justify-center rounded-md bg-white/10 text-[7px] font-bold text-gray-400 select-none js-icon-fb">JGC</span>
+            <img src="https://svgs.scryfall.io/sets/jgc.svg" alt="" class="edition-logo relative w-3.5 h-3.5"
+             loading="lazy"
+             onerror="this.style.display='none'; var f=this.parentElement.querySelector('.js-icon-fb'); if(f){f.classList.remove('hidden');f.classList.add('flex');}">
+    </span>
+                                <span class="truncate max-w-[12rem]">DCI Judge Gift</span>
+                            </a>
+                                            </td>
+                                <td class="px-3 py-2 hidden md:table-cell">
+                                            <span class="inline-block rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap bg-amber-500/20 text-amber-300">
+                            Rare
+                        </span>
+                                    </td>
+                
+                <td class="px-2 py-2 text-right whitespace-nowrap sm:hidden text-gray-700">
+                                            —
+                                    </td>
+                
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-gray-700">
+                                            —
+                                    </td>
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-gray-700">
+                                            —
+                                    </td>
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-gray-700">
+                                            —
+                                    </td>
+                
+                
+                <td class="px-2 py-2 text-right hidden sm:table-cell">
+                                            <span class="text-xs text-gray-600">Épuisé</span>
+                                    </td>
+            </tr>
+                                    <tr class="hover:bg-white/5 transition">
+                <td class="px-3 py-2">
+                    <div class="flex items-center gap-2.5">
+                                                    
+                            <span class="relative group shrink-0">
+                                <a href="https://boutique.magiccorporation.com/carte/16621-foudre">
+                                    <img src="https://static.magiccorporation.com/scan_maxi/magic_2010/vo/146.jpg" alt=""
+                                         class="w-10 h-14 object-cover rounded bg-white/5"
+                                         loading="lazy"
+                                         onerror="this.style.visibility='hidden'">
+                                </a>
+                                                                <span class="pointer-events-none absolute left-12 top-1/2 -translate-y-1/2 z-50 hidden group-hover:block">
+                                    <img src="https://static.magiccorporation.com/scan_maxi/magic_2010/vo/146.jpg" alt=""
+                                         class="w-56 rounded-xl shadow-2xl ring-1 ring-white/20"
+                                         loading="lazy"
+                                         onerror="this.parentElement.style.display='none'">
+                                </span>
+                                                            </span>
+                                                <a href="https://boutique.magiccorporation.com/carte/16621-foudre" class="min-w-0">
+                            <span class="block text-white hover:text-cyan-300 font-medium truncate transition">Foudre</span>
+                                                            <span class="block text-xs text-gray-500 truncate">Lightning Bolt</span>
+                                                                                                            </a>
+                    </div>
+                </td>
+                <td class="px-3 py-2 hidden sm:table-cell text-gray-400">146</td>
+                                    <td class="px-3 py-2 hidden md:table-cell">
+                                                                                
+                            <a href="https://boutique.magiccorporation.com/cartes/99-magic-2010"
+                               class="flex items-center gap-1.5 text-gray-400 hover:text-cyan-300 transition" title="Magic 2010">
+                                <span class="relative w-3.5 h-3.5 shrink-0 inline-flex items-center justify-center">
+    <span class="hidden absolute inset-0 items-center justify-center rounded-md bg-white/10 text-[7px] font-bold text-gray-400 select-none js-icon-fb">M10</span>
+            <img src="https://svgs.scryfall.io/sets/m10.svg" alt="" class="edition-logo relative w-3.5 h-3.5"
+             loading="lazy"
+             onerror="this.style.display='none'; var f=this.parentElement.querySelector('.js-icon-fb'); if(f){f.classList.remove('hidden');f.classList.add('flex');}">
+    </span>
+                                <span class="truncate max-w-[12rem]">Magic 2010</span>
+                            </a>
+                                            </td>
+                                <td class="px-3 py-2 hidden md:table-cell">
+                                            <span class="inline-block rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap bg-gray-500/20 text-gray-300">
+                            Commune
+                        </span>
+                                    </td>
+                
+                <td class="px-2 py-2 text-right whitespace-nowrap sm:hidden text-cyan-300">
+                                            3,90 €
+                        <span class="block text-[10px] text-gray-500 uppercase">VO</span>
+                                    </td>
+                
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-cyan-300">
+                                            3,90 €
+                                    </td>
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-cyan-300">
+                                            3,90 €
+                                    </td>
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-gray-700">
+                                            —
+                                    </td>
+                
+                
+                <td class="px-2 py-2 text-right hidden sm:table-cell">
+                                        
+                    <form method="post" action="https://boutique.magiccorporation.com/panier/ajouter" class="inline-flex items-center gap-1.5 js-cart-row">
+                        <input type="hidden" name="_token" value="54oHGfe4GvkDKbrBiBgIo6wtBgaXE2ZmSDy4BhTC" autocomplete="off">                        <input type="hidden" name="type" value="carte">
+                        <input type="hidden" name="id" value="16621">
+                        <select name="variant" class="js-variant hidden sm:block w-36 h-7 rounded-lg border-white/20 bg-white/10 text-white text-xs py-0 pl-2 pr-6 focus:ring-cyan-400" aria-label="Version">
+                                                            <option value="vo" data-max="5">VO · 3,90 €</option>
+                                                            <option value="vf" data-max="2">VF · 3,90 €</option>
+                                                    </select>
+                        <select name="qty" class="js-qty hidden sm:block w-14 h-7 rounded-lg border-white/20 bg-white/10 text-white text-xs py-0 pl-2 pr-6 focus:ring-cyan-400" aria-label="Quantité">
+                            <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>                        </select>
+                        <button class="h-7 w-7 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-sm font-bold leading-none transition" title="Ajouter au panier">+</button>
+                    </form>
+                                    </td>
+            </tr>
+                                    <tr class="hover:bg-white/5 transition">
+                <td class="px-3 py-2">
+                    <div class="flex items-center gap-2.5">
+                                                    
+                            <span class="relative group shrink-0">
+                                <a href="https://boutique.magiccorporation.com/carte/18003-foudre">
+                                    <img src="https://static.magiccorporation.com/scan_maxi/magic_2011/vo/149.jpg" alt=""
+                                         class="w-10 h-14 object-cover rounded bg-white/5"
+                                         loading="lazy"
+                                         onerror="this.style.visibility='hidden'">
+                                </a>
+                                                                <span class="pointer-events-none absolute left-12 top-1/2 -translate-y-1/2 z-50 hidden group-hover:block">
+                                    <img src="https://static.magiccorporation.com/scan_maxi/magic_2011/vo/149.jpg" alt=""
+                                         class="w-56 rounded-xl shadow-2xl ring-1 ring-white/20"
+                                         loading="lazy"
+                                         onerror="this.parentElement.style.display='none'">
+                                </span>
+                                                            </span>
+                                                <a href="https://boutique.magiccorporation.com/carte/18003-foudre" class="min-w-0">
+                            <span class="block text-white hover:text-cyan-300 font-medium truncate transition">Foudre</span>
+                                                            <span class="block text-xs text-gray-500 truncate">Lightning Bolt</span>
+                                                                                                            </a>
+                    </div>
+                </td>
+                <td class="px-3 py-2 hidden sm:table-cell text-gray-400">149</td>
+                                    <td class="px-3 py-2 hidden md:table-cell">
+                                                                                
+                            <a href="https://boutique.magiccorporation.com/cartes/109-magic-2011"
+                               class="flex items-center gap-1.5 text-gray-400 hover:text-cyan-300 transition" title="Magic 2011">
+                                <span class="relative w-3.5 h-3.5 shrink-0 inline-flex items-center justify-center">
+    <span class="hidden absolute inset-0 items-center justify-center rounded-md bg-white/10 text-[7px] font-bold text-gray-400 select-none js-icon-fb">M11</span>
+            <img src="https://svgs.scryfall.io/sets/m11.svg" alt="" class="edition-logo relative w-3.5 h-3.5"
+             loading="lazy"
+             onerror="this.style.display='none'; var f=this.parentElement.querySelector('.js-icon-fb'); if(f){f.classList.remove('hidden');f.classList.add('flex');}">
+    </span>
+                                <span class="truncate max-w-[12rem]">Magic 2011</span>
+                            </a>
+                                            </td>
+                                <td class="px-3 py-2 hidden md:table-cell">
+                                            <span class="inline-block rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap bg-gray-500/20 text-gray-300">
+                            Commune
+                        </span>
+                                    </td>
+                
+                <td class="px-2 py-2 text-right whitespace-nowrap sm:hidden text-cyan-300">
+                                            3,90 €
+                        <span class="block text-[10px] text-gray-500 uppercase">VO</span>
+                                    </td>
+                
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-cyan-300">
+                                            3,90 €
+                                    </td>
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-cyan-300">
+                                            3,90 €
+                                    </td>
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-gray-700">
+                                            —
+                                    </td>
+                
+                
+                <td class="px-2 py-2 text-right hidden sm:table-cell">
+                                        
+                    <form method="post" action="https://boutique.magiccorporation.com/panier/ajouter" class="inline-flex items-center gap-1.5 js-cart-row">
+                        <input type="hidden" name="_token" value="54oHGfe4GvkDKbrBiBgIo6wtBgaXE2ZmSDy4BhTC" autocomplete="off">                        <input type="hidden" name="type" value="carte">
+                        <input type="hidden" name="id" value="18003">
+                        <select name="variant" class="js-variant hidden sm:block w-36 h-7 rounded-lg border-white/20 bg-white/10 text-white text-xs py-0 pl-2 pr-6 focus:ring-cyan-400" aria-label="Version">
+                                                            <option value="vo" data-max="5">VO · 3,90 €</option>
+                                                            <option value="vf" data-max="5">VF · 3,90 €</option>
+                                                    </select>
+                        <select name="qty" class="js-qty hidden sm:block w-14 h-7 rounded-lg border-white/20 bg-white/10 text-white text-xs py-0 pl-2 pr-6 focus:ring-cyan-400" aria-label="Quantité">
+                            <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>                        </select>
+                        <button class="h-7 w-7 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-sm font-bold leading-none transition" title="Ajouter au panier">+</button>
+                    </form>
+                                    </td>
+            </tr>
+                                    <tr class="hover:bg-white/5 transition">
+                <td class="px-3 py-2">
+                    <div class="flex items-center gap-2.5">
+                                                    
+                            <span class="relative group shrink-0">
+                                <a href="https://boutique.magiccorporation.com/carte/18458-lightning-bolt">
+                                    <img src="https://static.magiccorporation.com/scan_maxi/premium_deck_series_fire_lightning/vo/017.jpg" alt=""
+                                         class="w-10 h-14 object-cover rounded bg-white/5"
+                                         loading="lazy"
+                                         onerror="this.style.visibility='hidden'">
+                                </a>
+                                                                <span class="pointer-events-none absolute left-12 top-1/2 -translate-y-1/2 z-50 hidden group-hover:block">
+                                    <img src="https://static.magiccorporation.com/scan_maxi/premium_deck_series_fire_lightning/vo/017.jpg" alt=""
+                                         class="w-56 rounded-xl shadow-2xl ring-1 ring-white/20"
+                                         loading="lazy"
+                                         onerror="this.parentElement.style.display='none'">
+                                </span>
+                                                            </span>
+                                                <a href="https://boutique.magiccorporation.com/carte/18458-lightning-bolt" class="min-w-0">
+                            <span class="block text-white hover:text-cyan-300 font-medium truncate transition">Lightning Bolt</span>
+                                                                                                            </a>
+                    </div>
+                </td>
+                <td class="px-3 py-2 hidden sm:table-cell text-gray-400">17</td>
+                                    <td class="px-3 py-2 hidden md:table-cell">
+                                                                                
+                            <a href="https://boutique.magiccorporation.com/cartes/115-premium-deck-series-fire-lightning"
+                               class="flex items-center gap-1.5 text-gray-400 hover:text-cyan-300 transition" title="Premium Deck Series Fire &amp; Lightning">
+                                <span class="relative w-3.5 h-3.5 shrink-0 inline-flex items-center justify-center">
+    <span class="hidden absolute inset-0 items-center justify-center rounded-md bg-white/10 text-[7px] font-bold text-gray-400 select-none js-icon-fb">FAL</span>
+            <img src="https://svgs.scryfall.io/sets/fal.svg" alt="" class="edition-logo relative w-3.5 h-3.5"
+             loading="lazy"
+             onerror="this.style.display='none'; var f=this.parentElement.querySelector('.js-icon-fb'); if(f){f.classList.remove('hidden');f.classList.add('flex');}">
+    </span>
+                                <span class="truncate max-w-[12rem]">Premium Deck Series Fire &amp; Lightning</span>
+                            </a>
+                                            </td>
+                                <td class="px-3 py-2 hidden md:table-cell">
+                                            <span class="inline-block rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap bg-gray-500/20 text-gray-300">
+                            Commune
+                        </span>
+                                    </td>
+                
+                <td class="px-2 py-2 text-right whitespace-nowrap sm:hidden text-cyan-300">
+                                            7,90 €
+                        <span class="block text-[10px] text-gray-500 uppercase">VO Foil</span>
+                                    </td>
+                
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-cyan-300">
+                                            —
+                                    </td>
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-gray-700">
+                                            —
+                                    </td>
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-amber-300">
+                                            7,90 €
+                                    </td>
+                
+                
+                <td class="px-2 py-2 text-right hidden sm:table-cell">
+                                        
+                    <form method="post" action="https://boutique.magiccorporation.com/panier/ajouter" class="inline-flex items-center gap-1.5 js-cart-row">
+                        <input type="hidden" name="_token" value="54oHGfe4GvkDKbrBiBgIo6wtBgaXE2ZmSDy4BhTC" autocomplete="off">                        <input type="hidden" name="type" value="carte">
+                        <input type="hidden" name="id" value="18458">
+                        <select name="variant" class="js-variant hidden sm:block w-36 h-7 rounded-lg border-white/20 bg-white/10 text-white text-xs py-0 pl-2 pr-6 focus:ring-cyan-400" aria-label="Version">
+                                                            <option value="vo_foil" data-max="5">VO Foil · 7,90 €</option>
+                                                    </select>
+                        <select name="qty" class="js-qty hidden sm:block w-14 h-7 rounded-lg border-white/20 bg-white/10 text-white text-xs py-0 pl-2 pr-6 focus:ring-cyan-400" aria-label="Quantité">
+                            <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>                        </select>
+                        <button class="h-7 w-7 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-sm font-bold leading-none transition" title="Ajouter au panier">+</button>
+                    </form>
+                                    </td>
+            </tr>
+                                    <tr class="hover:bg-white/5 transition">
+                <td class="px-3 py-2">
+                    <div class="flex items-center gap-2.5">
+                                                    
+                            <span class="relative group shrink-0">
+                                <a href="https://boutique.magiccorporation.com/carte/27447-lightning-bolt">
+                                    <img src="https://static.magiccorporation.com/scan_maxi/modern_masters_2015/vo/122.jpg" alt=""
+                                         class="w-10 h-14 object-cover rounded bg-white/5"
+                                         loading="lazy"
+                                         onerror="this.style.visibility='hidden'">
+                                </a>
+                                                                <span class="pointer-events-none absolute left-12 top-1/2 -translate-y-1/2 z-50 hidden group-hover:block">
+                                    <img src="https://static.magiccorporation.com/scan_maxi/modern_masters_2015/vo/122.jpg" alt=""
+                                         class="w-56 rounded-xl shadow-2xl ring-1 ring-white/20"
+                                         loading="lazy"
+                                         onerror="this.parentElement.style.display='none'">
+                                </span>
+                                                            </span>
+                                                <a href="https://boutique.magiccorporation.com/carte/27447-lightning-bolt" class="min-w-0">
+                            <span class="block text-white hover:text-cyan-300 font-medium truncate transition">Lightning Bolt</span>
+                                                                                                            </a>
+                    </div>
+                </td>
+                <td class="px-3 py-2 hidden sm:table-cell text-gray-400">122</td>
+                                    <td class="px-3 py-2 hidden md:table-cell">
+                                                                                
+                            <a href="https://boutique.magiccorporation.com/cartes/158-modern-masters-2015"
+                               class="flex items-center gap-1.5 text-gray-400 hover:text-cyan-300 transition" title="Modern Masters 2015">
+                                <span class="relative w-3.5 h-3.5 shrink-0 inline-flex items-center justify-center">
+    <span class="hidden absolute inset-0 items-center justify-center rounded-md bg-white/10 text-[7px] font-bold text-gray-400 select-none js-icon-fb">MM2</span>
+            <img src="https://svgs.scryfall.io/sets/mm2.svg" alt="" class="edition-logo relative w-3.5 h-3.5"
+             loading="lazy"
+             onerror="this.style.display='none'; var f=this.parentElement.querySelector('.js-icon-fb'); if(f){f.classList.remove('hidden');f.classList.add('flex');}">
+    </span>
+                                <span class="truncate max-w-[12rem]">Modern Masters 2015</span>
+                            </a>
+                                            </td>
+                                <td class="px-3 py-2 hidden md:table-cell">
+                                            <span class="inline-block rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap bg-slate-400/20 text-slate-200">
+                            Peu commune
+                        </span>
+                                    </td>
+                
+                <td class="px-2 py-2 text-right whitespace-nowrap sm:hidden text-cyan-300">
+                                            13,90 €
+                        <span class="block text-[10px] text-gray-500 uppercase">VO Foil</span>
+                                    </td>
+                
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-gray-700">
+                                            —
+                                    </td>
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-gray-700">
+                                            —
+                                    </td>
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-amber-300">
+                                            13,90 €
+                                    </td>
+                
+                
+                <td class="px-2 py-2 text-right hidden sm:table-cell">
+                                        
+                    <form method="post" action="https://boutique.magiccorporation.com/panier/ajouter" class="inline-flex items-center gap-1.5 js-cart-row">
+                        <input type="hidden" name="_token" value="54oHGfe4GvkDKbrBiBgIo6wtBgaXE2ZmSDy4BhTC" autocomplete="off">                        <input type="hidden" name="type" value="carte">
+                        <input type="hidden" name="id" value="27447">
+                        <select name="variant" class="js-variant hidden sm:block w-36 h-7 rounded-lg border-white/20 bg-white/10 text-white text-xs py-0 pl-2 pr-6 focus:ring-cyan-400" aria-label="Version">
+                                                            <option value="vo_foil" data-max="1">VO Foil · 13,90 €</option>
+                                                    </select>
+                        <select name="qty" class="js-qty hidden sm:block w-14 h-7 rounded-lg border-white/20 bg-white/10 text-white text-xs py-0 pl-2 pr-6 focus:ring-cyan-400" aria-label="Quantité">
+                            <option value="1">1</option>                        </select>
+                        <button class="h-7 w-7 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-sm font-bold leading-none transition" title="Ajouter au panier">+</button>
+                    </form>
+                                    </td>
+            </tr>
+                                    <tr class="hover:bg-white/5 transition">
+                <td class="px-3 py-2">
+                    <div class="flex items-center gap-2.5">
+                                                    
+                            <span class="relative group shrink-0">
+                                <a href="https://boutique.magiccorporation.com/carte/37461-foudre">
+                                    <img src="https://static.magiccorporation.com/scan_maxi/archenemy_nicol_bolas_deck/vo/054.jpg" alt=""
+                                         class="w-10 h-14 object-cover rounded bg-white/5"
+                                         loading="lazy"
+                                         onerror="this.style.visibility='hidden'">
+                                </a>
+                                                                <span class="pointer-events-none absolute left-12 top-1/2 -translate-y-1/2 z-50 hidden group-hover:block">
+                                    <img src="https://static.magiccorporation.com/scan_maxi/archenemy_nicol_bolas_deck/vo/054.jpg" alt=""
+                                         class="w-56 rounded-xl shadow-2xl ring-1 ring-white/20"
+                                         loading="lazy"
+                                         onerror="this.parentElement.style.display='none'">
+                                </span>
+                                                            </span>
+                                                <a href="https://boutique.magiccorporation.com/carte/37461-foudre" class="min-w-0">
+                            <span class="block text-white hover:text-cyan-300 font-medium truncate transition">Foudre</span>
+                                                            <span class="block text-xs text-gray-500 truncate">Lightning Bolt</span>
+                                                                                                            </a>
+                    </div>
+                </td>
+                <td class="px-3 py-2 hidden sm:table-cell text-gray-400">54</td>
+                                    <td class="px-3 py-2 hidden md:table-cell">
+                                                                                
+                            <a href="https://boutique.magiccorporation.com/cartes/194-archenemy-nicol-bolas-deck"
+                               class="flex items-center gap-1.5 text-gray-400 hover:text-cyan-300 transition" title="Archenemy Nicol Bolas Deck">
+                                <span class="relative w-3.5 h-3.5 shrink-0 inline-flex items-center justify-center">
+    <span class="hidden absolute inset-0 items-center justify-center rounded-md bg-white/10 text-[7px] font-bold text-gray-400 select-none js-icon-fb">ARC</span>
+            <img src="https://svgs.scryfall.io/sets/arc.svg" alt="" class="edition-logo relative w-3.5 h-3.5"
+             loading="lazy"
+             onerror="this.style.display='none'; var f=this.parentElement.querySelector('.js-icon-fb'); if(f){f.classList.remove('hidden');f.classList.add('flex');}">
+    </span>
+                                <span class="truncate max-w-[12rem]">Archenemy Nicol Bolas Deck</span>
+                            </a>
+                                            </td>
+                                <td class="px-3 py-2 hidden md:table-cell">
+                                            <span class="inline-block rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap bg-slate-400/20 text-slate-200">
+                            Peu commune
+                        </span>
+                                    </td>
+                
+                <td class="px-2 py-2 text-right whitespace-nowrap sm:hidden text-cyan-300">
+                                            3,90 €
+                        <span class="block text-[10px] text-gray-500 uppercase">VO</span>
+                                    </td>
+                
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-cyan-300">
+                                            3,90 €
+                                    </td>
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-gray-700">
+                                            —
+                                    </td>
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-gray-700">
+                                            —
+                                    </td>
+                
+                
+                <td class="px-2 py-2 text-right hidden sm:table-cell">
+                                        
+                    <form method="post" action="https://boutique.magiccorporation.com/panier/ajouter" class="inline-flex items-center gap-1.5 js-cart-row">
+                        <input type="hidden" name="_token" value="54oHGfe4GvkDKbrBiBgIo6wtBgaXE2ZmSDy4BhTC" autocomplete="off">                        <input type="hidden" name="type" value="carte">
+                        <input type="hidden" name="id" value="37461">
+                        <select name="variant" class="js-variant hidden sm:block w-36 h-7 rounded-lg border-white/20 bg-white/10 text-white text-xs py-0 pl-2 pr-6 focus:ring-cyan-400" aria-label="Version">
+                                                            <option value="vo" data-max="5">VO · 3,90 €</option>
+                                                    </select>
+                        <select name="qty" class="js-qty hidden sm:block w-14 h-7 rounded-lg border-white/20 bg-white/10 text-white text-xs py-0 pl-2 pr-6 focus:ring-cyan-400" aria-label="Quantité">
+                            <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>                        </select>
+                        <button class="h-7 w-7 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-sm font-bold leading-none transition" title="Ajouter au panier">+</button>
+                    </form>
+                                    </td>
+            </tr>
+                                    <tr class="hover:bg-white/5 transition">
+                <td class="px-3 py-2">
+                    <div class="flex items-center gap-2.5">
+                                                    
+                            <span class="relative group shrink-0">
+                                <a href="https://boutique.magiccorporation.com/carte/37685-lightning-bolt">
+                                    <img src="https://static.magiccorporation.com/scan_maxi/masters_25/vo/141.webp" alt=""
+                                         class="w-10 h-14 object-cover rounded bg-white/5"
+                                         loading="lazy"
+                                         onerror="this.style.visibility='hidden'">
+                                </a>
+                                                                <span class="pointer-events-none absolute left-12 top-1/2 -translate-y-1/2 z-50 hidden group-hover:block">
+                                    <img src="https://static.magiccorporation.com/scan_maxi/masters_25/vo/141.webp" alt=""
+                                         class="w-56 rounded-xl shadow-2xl ring-1 ring-white/20"
+                                         loading="lazy"
+                                         onerror="this.parentElement.style.display='none'">
+                                </span>
+                                                            </span>
+                                                <a href="https://boutique.magiccorporation.com/carte/37685-lightning-bolt" class="min-w-0">
+                            <span class="block text-white hover:text-cyan-300 font-medium truncate transition">Lightning Bolt</span>
+                                                                                        <span class="mt-0.5 inline-flex items-center gap-1 rounded-full bg-amber-500/15 text-amber-300 text-[11px] font-medium px-2 py-0.5 whitespace-nowrap">
+                                    📷 1 exemplaire unique · dès 3,90 €
+                                </span>
+                                                                                </a>
+                    </div>
+                </td>
+                <td class="px-3 py-2 hidden sm:table-cell text-gray-400">141</td>
+                                    <td class="px-3 py-2 hidden md:table-cell">
+                                                                                
+                            <a href="https://boutique.magiccorporation.com/cartes/204-masters-25"
+                               class="flex items-center gap-1.5 text-gray-400 hover:text-cyan-300 transition" title="Masters 25">
+                                <span class="relative w-3.5 h-3.5 shrink-0 inline-flex items-center justify-center">
+    <span class="hidden absolute inset-0 items-center justify-center rounded-md bg-white/10 text-[7px] font-bold text-gray-400 select-none js-icon-fb">A25</span>
+            <img src="https://svgs.scryfall.io/sets/a25.svg" alt="" class="edition-logo relative w-3.5 h-3.5"
+             loading="lazy"
+             onerror="this.style.display='none'; var f=this.parentElement.querySelector('.js-icon-fb'); if(f){f.classList.remove('hidden');f.classList.add('flex');}">
+    </span>
+                                <span class="truncate max-w-[12rem]">Masters 25</span>
+                            </a>
+                                            </td>
+                                <td class="px-3 py-2 hidden md:table-cell">
+                                            <span class="inline-block rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap bg-slate-400/20 text-slate-200">
+                            Peu commune
+                        </span>
+                                    </td>
+                
+                <td class="px-2 py-2 text-right whitespace-nowrap sm:hidden text-cyan-300">
+                                            3,90 €
+                        <span class="block text-[10px] text-gray-500 uppercase">VO</span>
+                                    </td>
+                
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-cyan-300">
+                                            3,90 €
+                                    </td>
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-gray-700">
+                                            —
+                                    </td>
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-gray-700">
+                                            —
+                                    </td>
+                
+                
+                <td class="px-2 py-2 text-right hidden sm:table-cell">
+                                        
+                    <form method="post" action="https://boutique.magiccorporation.com/panier/ajouter" class="inline-flex items-center gap-1.5 js-cart-row">
+                        <input type="hidden" name="_token" value="54oHGfe4GvkDKbrBiBgIo6wtBgaXE2ZmSDy4BhTC" autocomplete="off">                        <input type="hidden" name="type" value="carte">
+                        <input type="hidden" name="id" value="37685">
+                        <select name="variant" class="js-variant hidden sm:block w-36 h-7 rounded-lg border-white/20 bg-white/10 text-white text-xs py-0 pl-2 pr-6 focus:ring-cyan-400" aria-label="Version">
+                                                            <option value="vo" data-max="5">VO · 3,90 €</option>
+                                                    </select>
+                        <select name="qty" class="js-qty hidden sm:block w-14 h-7 rounded-lg border-white/20 bg-white/10 text-white text-xs py-0 pl-2 pr-6 focus:ring-cyan-400" aria-label="Quantité">
+                            <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>                        </select>
+                        <button class="h-7 w-7 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-sm font-bold leading-none transition" title="Ajouter au panier">+</button>
+                    </form>
+                                    </td>
+            </tr>
+                                    <tr class="hover:bg-white/5 transition">
+                <td class="px-3 py-2">
+                    <div class="flex items-center gap-2.5">
+                                                    
+                            <span class="relative group shrink-0">
+                                <a href="https://boutique.magiccorporation.com/carte/56071-lightning-bolt">
+                                    <img src="https://static.magiccorporation.com/scan_maxi/jumpstart/vo/342.webp" alt=""
+                                         class="w-10 h-14 object-cover rounded bg-white/5"
+                                         loading="lazy"
+                                         onerror="this.style.visibility='hidden'">
+                                </a>
+                                                                <span class="pointer-events-none absolute left-12 top-1/2 -translate-y-1/2 z-50 hidden group-hover:block">
+                                    <img src="https://static.magiccorporation.com/scan_maxi/jumpstart/vo/342.webp" alt=""
+                                         class="w-56 rounded-xl shadow-2xl ring-1 ring-white/20"
+                                         loading="lazy"
+                                         onerror="this.parentElement.style.display='none'">
+                                </span>
+                                                            </span>
+                                                <a href="https://boutique.magiccorporation.com/carte/56071-lightning-bolt" class="min-w-0">
+                            <span class="block text-white hover:text-cyan-300 font-medium truncate transition">Lightning Bolt</span>
+                                                                                                            </a>
+                    </div>
+                </td>
+                <td class="px-3 py-2 hidden sm:table-cell text-gray-400">342</td>
+                                    <td class="px-3 py-2 hidden md:table-cell">
+                                                                                
+                            <a href="https://boutique.magiccorporation.com/cartes/245-jumpstart"
+                               class="flex items-center gap-1.5 text-gray-400 hover:text-cyan-300 transition" title="Jumpstart">
+                                <span class="relative w-3.5 h-3.5 shrink-0 inline-flex items-center justify-center">
+    <span class="hidden absolute inset-0 items-center justify-center rounded-md bg-white/10 text-[7px] font-bold text-gray-400 select-none js-icon-fb">JPS</span>
+            <img src="https://svgs.scryfall.io/sets/jmp.svg" alt="" class="edition-logo relative w-3.5 h-3.5"
+             loading="lazy"
+             onerror="this.style.display='none'; var f=this.parentElement.querySelector('.js-icon-fb'); if(f){f.classList.remove('hidden');f.classList.add('flex');}">
+    </span>
+                                <span class="truncate max-w-[12rem]">Jumpstart</span>
+                            </a>
+                                            </td>
+                                <td class="px-3 py-2 hidden md:table-cell">
+                                            <span class="inline-block rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap bg-slate-400/20 text-slate-200">
+                            Peu commune
+                        </span>
+                                    </td>
+                
+                <td class="px-2 py-2 text-right whitespace-nowrap sm:hidden text-cyan-300">
+                                            3,90 €
+                        <span class="block text-[10px] text-gray-500 uppercase">VO</span>
+                                    </td>
+                
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-cyan-300">
+                                            3,90 €
+                                    </td>
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-gray-700">
+                                            —
+                                    </td>
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-gray-700">
+                                            —
+                                    </td>
+                
+                
+                <td class="px-2 py-2 text-right hidden sm:table-cell">
+                                        
+                    <form method="post" action="https://boutique.magiccorporation.com/panier/ajouter" class="inline-flex items-center gap-1.5 js-cart-row">
+                        <input type="hidden" name="_token" value="54oHGfe4GvkDKbrBiBgIo6wtBgaXE2ZmSDy4BhTC" autocomplete="off">                        <input type="hidden" name="type" value="carte">
+                        <input type="hidden" name="id" value="56071">
+                        <select name="variant" class="js-variant hidden sm:block w-36 h-7 rounded-lg border-white/20 bg-white/10 text-white text-xs py-0 pl-2 pr-6 focus:ring-cyan-400" aria-label="Version">
+                                                            <option value="vo" data-max="5">VO · 3,90 €</option>
+                                                    </select>
+                        <select name="qty" class="js-qty hidden sm:block w-14 h-7 rounded-lg border-white/20 bg-white/10 text-white text-xs py-0 pl-2 pr-6 focus:ring-cyan-400" aria-label="Quantité">
+                            <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>                        </select>
+                        <button class="h-7 w-7 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-sm font-bold leading-none transition" title="Ajouter au panier">+</button>
+                    </form>
+                                    </td>
+            </tr>
+                                    <tr class="hover:bg-white/5 transition">
+                <td class="px-3 py-2">
+                    <div class="flex items-center gap-2.5">
+                                                    
+                            <span class="relative group shrink-0">
+                                <a href="https://boutique.magiccorporation.com/carte/60238-foudre">
+                                    <img src="https://static.magiccorporation.com/scan_maxi/strixhaven_mystical_archive/lightning_bolt.jpg" alt=""
+                                         class="w-10 h-14 object-cover rounded bg-white/5"
+                                         loading="lazy"
+                                         onerror="this.style.visibility='hidden'">
+                                </a>
+                                                                <span class="pointer-events-none absolute left-12 top-1/2 -translate-y-1/2 z-50 hidden group-hover:block">
+                                    <img src="https://static.magiccorporation.com/scan_maxi/strixhaven_mystical_archive/lightning_bolt.jpg" alt=""
+                                         class="w-56 rounded-xl shadow-2xl ring-1 ring-white/20"
+                                         loading="lazy"
+                                         onerror="this.parentElement.style.display='none'">
+                                </span>
+                                                            </span>
+                                                <a href="https://boutique.magiccorporation.com/carte/60238-foudre" class="min-w-0">
+                            <span class="block text-white hover:text-cyan-300 font-medium truncate transition">Foudre</span>
+                                                            <span class="block text-xs text-gray-500 truncate">Lightning Bolt</span>
+                                                                                                            </a>
+                    </div>
+                </td>
+                <td class="px-3 py-2 hidden sm:table-cell text-gray-400">42</td>
+                                    <td class="px-3 py-2 hidden md:table-cell">
+                                                                                
+                            <a href="https://boutique.magiccorporation.com/cartes/257-strixhaven-mystical-archive"
+                               class="flex items-center gap-1.5 text-gray-400 hover:text-cyan-300 transition" title="Strixhaven Mystical Archive">
+                                <span class="relative w-3.5 h-3.5 shrink-0 inline-flex items-center justify-center">
+    <span class="hidden absolute inset-0 items-center justify-center rounded-md bg-white/10 text-[7px] font-bold text-gray-400 select-none js-icon-fb">STM</span>
+            <img src="https://svgs.scryfall.io/sets/sta.svg" alt="" class="edition-logo relative w-3.5 h-3.5"
+             loading="lazy"
+             onerror="this.style.display='none'; var f=this.parentElement.querySelector('.js-icon-fb'); if(f){f.classList.remove('hidden');f.classList.add('flex');}">
+    </span>
+                                <span class="truncate max-w-[12rem]">Strixhaven Mystical Archive</span>
+                            </a>
+                                            </td>
+                                <td class="px-3 py-2 hidden md:table-cell">
+                                            <span class="inline-block rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap bg-amber-500/20 text-amber-300">
+                            Rare
+                        </span>
+                                    </td>
+                
+                <td class="px-2 py-2 text-right whitespace-nowrap sm:hidden text-gray-700">
+                                            —
+                                    </td>
+                
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-gray-700">
+                                            —
+                                    </td>
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-gray-700">
+                                            —
+                                    </td>
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-gray-700">
+                                            —
+                                    </td>
+                
+                
+                <td class="px-2 py-2 text-right hidden sm:table-cell">
+                                            <span class="text-xs text-gray-600">Épuisé</span>
+                                    </td>
+            </tr>
+                                    <tr class="hover:bg-white/5 transition">
+                <td class="px-3 py-2">
+                    <div class="flex items-center gap-2.5">
+                                                    
+                            <span class="relative group shrink-0">
+                                <a href="https://boutique.magiccorporation.com/carte/66729-foudre">
+                                    <img src="https://static.magiccorporation.com/scan_maxi/commander_legends_battle_for_baldurs_gate/vf/187.webp" alt=""
+                                         class="w-10 h-14 object-cover rounded bg-white/5"
+                                         loading="lazy"
+                                         onerror="this.style.visibility='hidden'">
+                                </a>
+                                                                <span class="pointer-events-none absolute left-12 top-1/2 -translate-y-1/2 z-50 hidden group-hover:block">
+                                    <img src="https://static.magiccorporation.com/scan_maxi/commander_legends_battle_for_baldurs_gate/vf/187.webp" alt=""
+                                         class="w-56 rounded-xl shadow-2xl ring-1 ring-white/20"
+                                         loading="lazy"
+                                         onerror="this.parentElement.style.display='none'">
+                                </span>
+                                                            </span>
+                                                <a href="https://boutique.magiccorporation.com/carte/66729-foudre" class="min-w-0">
+                            <span class="block text-white hover:text-cyan-300 font-medium truncate transition">Foudre</span>
+                                                            <span class="block text-xs text-gray-500 truncate">Lightning Bolt</span>
+                                                                                                            </a>
+                    </div>
+                </td>
+                <td class="px-3 py-2 hidden sm:table-cell text-gray-400">187</td>
+                                    <td class="px-3 py-2 hidden md:table-cell">
+                                                                                
+                            <a href="https://boutique.magiccorporation.com/cartes/277-commander-legends-battle-for-baldurs-gate"
+                               class="flex items-center gap-1.5 text-gray-400 hover:text-cyan-300 transition" title="Commander Legends: Battle for Baldur&#039;s Gate">
+                                <span class="relative w-3.5 h-3.5 shrink-0 inline-flex items-center justify-center">
+    <span class="hidden absolute inset-0 items-center justify-center rounded-md bg-white/10 text-[7px] font-bold text-gray-400 select-none js-icon-fb">CLB</span>
+            <img src="https://svgs.scryfall.io/sets/clb.svg" alt="" class="edition-logo relative w-3.5 h-3.5"
+             loading="lazy"
+             onerror="this.style.display='none'; var f=this.parentElement.querySelector('.js-icon-fb'); if(f){f.classList.remove('hidden');f.classList.add('flex');}">
+    </span>
+                                <span class="truncate max-w-[12rem]">Commander Legends: Battle for Baldur&#039;s Gate</span>
+                            </a>
+                                            </td>
+                                <td class="px-3 py-2 hidden md:table-cell">
+                                            <span class="inline-block rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap bg-gray-500/20 text-gray-300">
+                            Commune
+                        </span>
+                                    </td>
+                
+                <td class="px-2 py-2 text-right whitespace-nowrap sm:hidden text-cyan-300">
+                                            3,50 €
+                        <span class="block text-[10px] text-gray-500 uppercase">VO</span>
+                                    </td>
+                
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-cyan-300">
+                                            3,50 €
+                                    </td>
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-gray-700">
+                                            —
+                                    </td>
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-amber-300">
+                                            4,90 €
+                                    </td>
+                
+                
+                <td class="px-2 py-2 text-right hidden sm:table-cell">
+                                        
+                    <form method="post" action="https://boutique.magiccorporation.com/panier/ajouter" class="inline-flex items-center gap-1.5 js-cart-row">
+                        <input type="hidden" name="_token" value="54oHGfe4GvkDKbrBiBgIo6wtBgaXE2ZmSDy4BhTC" autocomplete="off">                        <input type="hidden" name="type" value="carte">
+                        <input type="hidden" name="id" value="66729">
+                        <select name="variant" class="js-variant hidden sm:block w-36 h-7 rounded-lg border-white/20 bg-white/10 text-white text-xs py-0 pl-2 pr-6 focus:ring-cyan-400" aria-label="Version">
+                                                            <option value="vo" data-max="5">VO · 3,50 €</option>
+                                                            <option value="vo_foil" data-max="4">VO Foil · 4,90 €</option>
+                                                    </select>
+                        <select name="qty" class="js-qty hidden sm:block w-14 h-7 rounded-lg border-white/20 bg-white/10 text-white text-xs py-0 pl-2 pr-6 focus:ring-cyan-400" aria-label="Quantité">
+                            <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>                        </select>
+                        <button class="h-7 w-7 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-sm font-bold leading-none transition" title="Ajouter au panier">+</button>
+                    </form>
+                                    </td>
+            </tr>
+                                    <tr class="hover:bg-white/5 transition">
+                <td class="px-3 py-2">
+                    <div class="flex items-center gap-2.5">
+                                                    
+                            <span class="relative group shrink-0">
+                                <a href="https://boutique.magiccorporation.com/carte/66943-foudre">
+                                    <img src="https://static.magiccorporation.com/scan_maxi/commander_legends_battle_for_baldurs_gate/vf/401.webp" alt=""
+                                         class="w-10 h-14 object-cover rounded bg-white/5"
+                                         loading="lazy"
+                                         onerror="this.style.visibility='hidden'">
+                                </a>
+                                                                <span class="pointer-events-none absolute left-12 top-1/2 -translate-y-1/2 z-50 hidden group-hover:block">
+                                    <img src="https://static.magiccorporation.com/scan_maxi/commander_legends_battle_for_baldurs_gate/vf/401.webp" alt=""
+                                         class="w-56 rounded-xl shadow-2xl ring-1 ring-white/20"
+                                         loading="lazy"
+                                         onerror="this.parentElement.style.display='none'">
+                                </span>
+                                                            </span>
+                                                <a href="https://boutique.magiccorporation.com/carte/66943-foudre" class="min-w-0">
+                            <span class="block text-white hover:text-cyan-300 font-medium truncate transition">Foudre</span>
+                                                            <span class="block text-xs text-gray-500 truncate">Lightning Bolt</span>
+                                                                                                            </a>
+                    </div>
+                </td>
+                <td class="px-3 py-2 hidden sm:table-cell text-gray-400">401</td>
+                                    <td class="px-3 py-2 hidden md:table-cell">
+                                                                                
+                            <a href="https://boutique.magiccorporation.com/cartes/277-commander-legends-battle-for-baldurs-gate"
+                               class="flex items-center gap-1.5 text-gray-400 hover:text-cyan-300 transition" title="Commander Legends: Battle for Baldur&#039;s Gate">
+                                <span class="relative w-3.5 h-3.5 shrink-0 inline-flex items-center justify-center">
+    <span class="hidden absolute inset-0 items-center justify-center rounded-md bg-white/10 text-[7px] font-bold text-gray-400 select-none js-icon-fb">CLB</span>
+            <img src="https://svgs.scryfall.io/sets/clb.svg" alt="" class="edition-logo relative w-3.5 h-3.5"
+             loading="lazy"
+             onerror="this.style.display='none'; var f=this.parentElement.querySelector('.js-icon-fb'); if(f){f.classList.remove('hidden');f.classList.add('flex');}">
+    </span>
+                                <span class="truncate max-w-[12rem]">Commander Legends: Battle for Baldur&#039;s Gate</span>
+                            </a>
+                                            </td>
+                                <td class="px-3 py-2 hidden md:table-cell">
+                                            <span class="inline-block rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap bg-gray-500/20 text-gray-300">
+                            Commune
+                        </span>
+                                    </td>
+                
+                <td class="px-2 py-2 text-right whitespace-nowrap sm:hidden text-gray-700">
+                                            —
+                                    </td>
+                
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-gray-700">
+                                            —
+                                    </td>
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-gray-700">
+                                            —
+                                    </td>
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-gray-700">
+                                            —
+                                    </td>
+                
+                
+                <td class="px-2 py-2 text-right hidden sm:table-cell">
+                                            <span class="text-xs text-gray-600">Épuisé</span>
+                                    </td>
+            </tr>
+                                    <tr class="hover:bg-white/5 transition">
+                <td class="px-3 py-2">
+                    <div class="flex items-center gap-2.5">
+                                                    
+                            <span class="relative group shrink-0">
+                                <a href="https://boutique.magiccorporation.com/carte/68647-foudre">
+                                    <img src="https://static.magiccorporation.com/scan_maxi/double_masters_2022/vf/117.webp" alt=""
+                                         class="w-10 h-14 object-cover rounded bg-white/5"
+                                         loading="lazy"
+                                         onerror="this.style.visibility='hidden'">
+                                </a>
+                                                                <span class="pointer-events-none absolute left-12 top-1/2 -translate-y-1/2 z-50 hidden group-hover:block">
+                                    <img src="https://static.magiccorporation.com/scan_maxi/double_masters_2022/vf/117.webp" alt=""
+                                         class="w-56 rounded-xl shadow-2xl ring-1 ring-white/20"
+                                         loading="lazy"
+                                         onerror="this.parentElement.style.display='none'">
+                                </span>
+                                                            </span>
+                                                <a href="https://boutique.magiccorporation.com/carte/68647-foudre" class="min-w-0">
+                            <span class="block text-white hover:text-cyan-300 font-medium truncate transition">Foudre</span>
+                                                            <span class="block text-xs text-gray-500 truncate">Lightning Bolt</span>
+                                                                                                            </a>
+                    </div>
+                </td>
+                <td class="px-3 py-2 hidden sm:table-cell text-gray-400">117</td>
+                                    <td class="px-3 py-2 hidden md:table-cell">
+                                                                                
+                            <a href="https://boutique.magiccorporation.com/cartes/279-double-masters-2022"
+                               class="flex items-center gap-1.5 text-gray-400 hover:text-cyan-300 transition" title="Double Masters 2022">
+                                <span class="relative w-3.5 h-3.5 shrink-0 inline-flex items-center justify-center">
+    <span class="hidden absolute inset-0 items-center justify-center rounded-md bg-white/10 text-[7px] font-bold text-gray-400 select-none js-icon-fb">2X2</span>
+            <img src="https://svgs.scryfall.io/sets/2x2.svg" alt="" class="edition-logo relative w-3.5 h-3.5"
+             loading="lazy"
+             onerror="this.style.display='none'; var f=this.parentElement.querySelector('.js-icon-fb'); if(f){f.classList.remove('hidden');f.classList.add('flex');}">
+    </span>
+                                <span class="truncate max-w-[12rem]">Double Masters 2022</span>
+                            </a>
+                                            </td>
+                                <td class="px-3 py-2 hidden md:table-cell">
+                                            <span class="inline-block rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap bg-slate-400/20 text-slate-200">
+                            Peu commune
+                        </span>
+                                    </td>
+                
+                <td class="px-2 py-2 text-right whitespace-nowrap sm:hidden text-cyan-300">
+                                            3,90 €
+                        <span class="block text-[10px] text-gray-500 uppercase">VO</span>
+                                    </td>
+                
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-cyan-300">
+                                            3,90 €
+                                    </td>
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-gray-700">
+                                            —
+                                    </td>
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-gray-700">
+                                            —
+                                    </td>
+                
+                
+                <td class="px-2 py-2 text-right hidden sm:table-cell">
+                                        
+                    <form method="post" action="https://boutique.magiccorporation.com/panier/ajouter" class="inline-flex items-center gap-1.5 js-cart-row">
+                        <input type="hidden" name="_token" value="54oHGfe4GvkDKbrBiBgIo6wtBgaXE2ZmSDy4BhTC" autocomplete="off">                        <input type="hidden" name="type" value="carte">
+                        <input type="hidden" name="id" value="68647">
+                        <select name="variant" class="js-variant hidden sm:block w-36 h-7 rounded-lg border-white/20 bg-white/10 text-white text-xs py-0 pl-2 pr-6 focus:ring-cyan-400" aria-label="Version">
+                                                            <option value="vo" data-max="1">VO · 3,90 €</option>
+                                                    </select>
+                        <select name="qty" class="js-qty hidden sm:block w-14 h-7 rounded-lg border-white/20 bg-white/10 text-white text-xs py-0 pl-2 pr-6 focus:ring-cyan-400" aria-label="Quantité">
+                            <option value="1">1</option>                        </select>
+                        <button class="h-7 w-7 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-sm font-bold leading-none transition" title="Ajouter au panier">+</button>
+                    </form>
+                                    </td>
+            </tr>
+                                    <tr class="hover:bg-white/5 transition">
+                <td class="px-3 py-2">
+                    <div class="flex items-center gap-2.5">
+                                                    
+                            <span class="relative group shrink-0">
+                                <a href="https://boutique.magiccorporation.com/carte/68891-foudre">
+                                    <img src="https://static.magiccorporation.com/scan_maxi/double_masters_2022/vf/361.webp" alt=""
+                                         class="w-10 h-14 object-cover rounded bg-white/5"
+                                         loading="lazy"
+                                         onerror="this.style.visibility='hidden'">
+                                </a>
+                                                                <span class="pointer-events-none absolute left-12 top-1/2 -translate-y-1/2 z-50 hidden group-hover:block">
+                                    <img src="https://static.magiccorporation.com/scan_maxi/double_masters_2022/vf/361.webp" alt=""
+                                         class="w-56 rounded-xl shadow-2xl ring-1 ring-white/20"
+                                         loading="lazy"
+                                         onerror="this.parentElement.style.display='none'">
+                                </span>
+                                                            </span>
+                                                <a href="https://boutique.magiccorporation.com/carte/68891-foudre" class="min-w-0">
+                            <span class="block text-white hover:text-cyan-300 font-medium truncate transition">Foudre</span>
+                                                            <span class="block text-xs text-gray-500 truncate">Lightning Bolt</span>
+                                                                                                            </a>
+                    </div>
+                </td>
+                <td class="px-3 py-2 hidden sm:table-cell text-gray-400">361</td>
+                                    <td class="px-3 py-2 hidden md:table-cell">
+                                                                                
+                            <a href="https://boutique.magiccorporation.com/cartes/279-double-masters-2022"
+                               class="flex items-center gap-1.5 text-gray-400 hover:text-cyan-300 transition" title="Double Masters 2022">
+                                <span class="relative w-3.5 h-3.5 shrink-0 inline-flex items-center justify-center">
+    <span class="hidden absolute inset-0 items-center justify-center rounded-md bg-white/10 text-[7px] font-bold text-gray-400 select-none js-icon-fb">2X2</span>
+            <img src="https://svgs.scryfall.io/sets/2x2.svg" alt="" class="edition-logo relative w-3.5 h-3.5"
+             loading="lazy"
+             onerror="this.style.display='none'; var f=this.parentElement.querySelector('.js-icon-fb'); if(f){f.classList.remove('hidden');f.classList.add('flex');}">
+    </span>
+                                <span class="truncate max-w-[12rem]">Double Masters 2022</span>
+                            </a>
+                                            </td>
+                                <td class="px-3 py-2 hidden md:table-cell">
+                                            <span class="inline-block rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap bg-slate-400/20 text-slate-200">
+                            Peu commune
+                        </span>
+                                    </td>
+                
+                <td class="px-2 py-2 text-right whitespace-nowrap sm:hidden text-gray-700">
+                                            —
+                                    </td>
+                
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-gray-700">
+                                            —
+                                    </td>
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-gray-700">
+                                            —
+                                    </td>
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-gray-700">
+                                            —
+                                    </td>
+                
+                
+                <td class="px-2 py-2 text-right hidden sm:table-cell">
+                                            <span class="text-xs text-gray-600">Épuisé</span>
+                                    </td>
+            </tr>
+                                    <tr class="hover:bg-white/5 transition">
+                <td class="px-3 py-2">
+                    <div class="flex items-center gap-2.5">
+                                                    
+                            <span class="relative group shrink-0">
+                                <a href="https://boutique.magiccorporation.com/carte/91682-foudre">
+                                    <img src="https://static.magiccorporation.com/scan_maxi/final_fantasy_through_the_ages/vo/040.webp" alt=""
+                                         class="w-10 h-14 object-cover rounded bg-white/5"
+                                         loading="lazy"
+                                         onerror="this.style.visibility='hidden'">
+                                </a>
+                                                                <span class="pointer-events-none absolute left-12 top-1/2 -translate-y-1/2 z-50 hidden group-hover:block">
+                                    <img src="https://static.magiccorporation.com/scan_maxi/final_fantasy_through_the_ages/vo/040.webp" alt=""
+                                         class="w-56 rounded-xl shadow-2xl ring-1 ring-white/20"
+                                         loading="lazy"
+                                         onerror="this.parentElement.style.display='none'">
+                                </span>
+                                                            </span>
+                                                <a href="https://boutique.magiccorporation.com/carte/91682-foudre" class="min-w-0">
+                            <span class="block text-white hover:text-cyan-300 font-medium truncate transition">Foudre</span>
+                                                            <span class="block text-xs text-gray-500 truncate">Lightning Bolt</span>
+                                                                                                            </a>
+                    </div>
+                </td>
+                <td class="px-3 py-2 hidden sm:table-cell text-gray-400">40</td>
+                                    <td class="px-3 py-2 hidden md:table-cell">
+                                                                                
+                            <a href="https://boutique.magiccorporation.com/cartes/330-final-fantasy-through-the-ages"
+                               class="flex items-center gap-1.5 text-gray-400 hover:text-cyan-300 transition" title="Final Fantasy : Through the Ages">
+                                <span class="relative w-3.5 h-3.5 shrink-0 inline-flex items-center justify-center">
+    <span class="hidden absolute inset-0 items-center justify-center rounded-md bg-white/10 text-[7px] font-bold text-gray-400 select-none js-icon-fb">FCA</span>
+            <img src="https://svgs.scryfall.io/sets/fca.svg" alt="" class="edition-logo relative w-3.5 h-3.5"
+             loading="lazy"
+             onerror="this.style.display='none'; var f=this.parentElement.querySelector('.js-icon-fb'); if(f){f.classList.remove('hidden');f.classList.add('flex');}">
+    </span>
+                                <span class="truncate max-w-[12rem]">Final Fantasy : Through the Ages</span>
+                            </a>
+                                            </td>
+                                <td class="px-3 py-2 hidden md:table-cell">
+                                            <span class="inline-block rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap bg-slate-400/20 text-slate-200">
+                            Peu commune
+                        </span>
+                                    </td>
+                
+                <td class="px-2 py-2 text-right whitespace-nowrap sm:hidden text-cyan-300">
+                                            3,50 €
+                        <span class="block text-[10px] text-gray-500 uppercase">VO</span>
+                                    </td>
+                
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-cyan-300">
+                                            3,50 €
+                                    </td>
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-cyan-300">
+                                            3,50 €
+                                    </td>
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-gray-700">
+                                            —
+                                    </td>
+                
+                
+                <td class="px-2 py-2 text-right hidden sm:table-cell">
+                                        
+                    <form method="post" action="https://boutique.magiccorporation.com/panier/ajouter" class="inline-flex items-center gap-1.5 js-cart-row">
+                        <input type="hidden" name="_token" value="54oHGfe4GvkDKbrBiBgIo6wtBgaXE2ZmSDy4BhTC" autocomplete="off">                        <input type="hidden" name="type" value="carte">
+                        <input type="hidden" name="id" value="91682">
+                        <select name="variant" class="js-variant hidden sm:block w-36 h-7 rounded-lg border-white/20 bg-white/10 text-white text-xs py-0 pl-2 pr-6 focus:ring-cyan-400" aria-label="Version">
+                                                            <option value="vo" data-max="5">VO · 3,50 €</option>
+                                                            <option value="vf" data-max="1">VF · 3,50 €</option>
+                                                    </select>
+                        <select name="qty" class="js-qty hidden sm:block w-14 h-7 rounded-lg border-white/20 bg-white/10 text-white text-xs py-0 pl-2 pr-6 focus:ring-cyan-400" aria-label="Quantité">
+                            <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>                        </select>
+                        <button class="h-7 w-7 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-sm font-bold leading-none transition" title="Ajouter au panier">+</button>
+                    </form>
+                                    </td>
+            </tr>
+                                    <tr class="hover:bg-white/5 transition">
+                <td class="px-3 py-2">
+                    <div class="flex items-center gap-2.5">
+                                                    
+                            <span class="relative group shrink-0">
+                                <a href="https://boutique.magiccorporation.com/carte/93671-foudre">
+                                    <img src="https://static.magiccorporation.com/scan_maxi/avatar_the_last_airbender_eternal_legal/vf/032.webp" alt=""
+                                         class="w-10 h-14 object-cover rounded bg-white/5"
+                                         loading="lazy"
+                                         onerror="this.style.visibility='hidden'">
+                                </a>
+                                                                <span class="pointer-events-none absolute left-12 top-1/2 -translate-y-1/2 z-50 hidden group-hover:block">
+                                    <img src="https://static.magiccorporation.com/scan_maxi/avatar_the_last_airbender_eternal_legal/vf/032.webp" alt=""
+                                         class="w-56 rounded-xl shadow-2xl ring-1 ring-white/20"
+                                         loading="lazy"
+                                         onerror="this.parentElement.style.display='none'">
+                                </span>
+                                                            </span>
+                                                <a href="https://boutique.magiccorporation.com/carte/93671-foudre" class="min-w-0">
+                            <span class="block text-white hover:text-cyan-300 font-medium truncate transition">Foudre</span>
+                                                            <span class="block text-xs text-gray-500 truncate">Lightning Bolt</span>
+                                                                                                            </a>
+                    </div>
+                </td>
+                <td class="px-3 py-2 hidden sm:table-cell text-gray-400">32</td>
+                                    <td class="px-3 py-2 hidden md:table-cell">
+                                                                                
+                            <a href="https://boutique.magiccorporation.com/cartes/338-avatar-the-last-airbender-eternal-legal"
+                               class="flex items-center gap-1.5 text-gray-400 hover:text-cyan-300 transition" title="Avatar, the last airbender : Eternal legal">
+                                <span class="relative w-3.5 h-3.5 shrink-0 inline-flex items-center justify-center">
+    <span class="hidden absolute inset-0 items-center justify-center rounded-md bg-white/10 text-[7px] font-bold text-gray-400 select-none js-icon-fb">TLE</span>
+            <img src="https://svgs.scryfall.io/sets/tle.svg" alt="" class="edition-logo relative w-3.5 h-3.5"
+             loading="lazy"
+             onerror="this.style.display='none'; var f=this.parentElement.querySelector('.js-icon-fb'); if(f){f.classList.remove('hidden');f.classList.add('flex');}">
+    </span>
+                                <span class="truncate max-w-[12rem]">Avatar, the last airbender : Eternal legal</span>
+                            </a>
+                                            </td>
+                                <td class="px-3 py-2 hidden md:table-cell">
+                                            <span class="inline-block rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap bg-purple-500/20 text-purple-300">
+                            Rare Mythique
+                        </span>
+                                    </td>
+                
+                <td class="px-2 py-2 text-right whitespace-nowrap sm:hidden text-gray-700">
+                                            —
+                                    </td>
+                
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-gray-700">
+                                            —
+                                    </td>
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-gray-700">
+                                            —
+                                    </td>
+                <td class="px-3 py-2 text-right whitespace-nowrap hidden sm:table-cell text-gray-700">
+                                            —
+                                    </td>
+                
+                
+                <td class="px-2 py-2 text-right hidden sm:table-cell">
+                                            <span class="text-xs text-gray-600">Épuisé</span>
+                                    </td>
+            </tr>
+                    </tbody>
+    </table>
+</div>
+
+<script>
+document.addEventListener('change', function (e) {
+    if (!e.target.classList.contains('js-variant')) return;
+    var form = e.target.closest('.js-cart-row');
+    var max = parseInt(e.target.selectedOptions[0].dataset.max || '1', 10);
+    var qty = form.querySelector('.js-qty');
+    var current = parseInt(qty.value, 10);
+    qty.innerHTML = '';
+    for (var i = 1; i <= max; i++) {
+        var o = document.createElement('option');
+        o.value = i; o.textContent = i;
+        if (i === Math.min(current, max)) o.selected = true;
+        qty.appendChild(o);
+    }
+});
+</script>
+                <div class="mt-6"><nav role="navigation" aria-label="Pagination" class="flex flex-col sm:flex-row items-center justify-between gap-4">
+
+        
+        <p class="text-sm text-gray-400 order-2 sm:order-1">
+            Résultats 1 à 25 sur 26
+        </p>
+
+        
+        <div class="flex items-center gap-1 order-1 sm:order-2">
+            
+                            <span class="px-3 py-1.5 rounded-lg text-sm text-gray-600 border border-white/5 cursor-default select-none">‹ Précédent</span>
+            
+            
+            <div class="hidden sm:flex items-center gap-1">
+                                    
+                                                                                                        <span aria-current="page"
+                                      class="px-3 py-1.5 rounded-lg text-sm font-semibold bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 select-none">1</span>
+                                                                                                                <a href="https://boutique.magiccorporation.com/recherche?q=Lightning%20Bolt&amp;cartes=2#cartes"
+                                   class="px-3 py-1.5 rounded-lg text-sm text-gray-300 border border-white/10 hover:border-cyan-400/40 hover:text-cyan-300 transition">2</a>
+                                                                                                    </div>
+
+            
+            <span class="sm:hidden px-3 py-1.5 text-sm text-gray-400 select-none">
+                1 / 2
+            </span>
+
+            
+                            <a href="https://boutique.magiccorporation.com/recherche?q=Lightning%20Bolt&amp;cartes=2#cartes" rel="next"
+                   class="px-3 py-1.5 rounded-lg text-sm text-gray-300 border border-white/10 hover:border-cyan-400/40 hover:text-cyan-300 transition">Suivant ›</a>
+                    </div>
+    </nav>
+</div>
+                    </section>
+    </div>
+    </main>
+
+    
+    <section class="hidden sm:block border-t border-white/10">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
+            <div
+    x-data="{
+        active: 0,
+        count: 2,
+        timer: null,
+        start() { if (this.count > 1) this.timer = setInterval(() => this.next(), 5000); },
+        stop() { clearInterval(this.timer); },
+        next() { this.active = (this.active + 1) % this.count; },
+        prev() { this.active = (this.active - 1 + this.count) % this.count; },
+        go(i) { this.active = i; },
+    }"
+    x-init="start()"
+    @mouseenter="stop()" @mouseleave="start()"
+    class="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 h-28 sm:h-40 lg:h-48"
+    role="region" >
+    
+            <div
+            x-show="active === 0"
+            x-transition:enter="transition ease-out duration-700"
+            x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100"
+            x-transition:leave="transition ease-in duration-700"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            class="absolute inset-0"
+                    >
+            <div class="relative h-full w-full">
+                                    <a href="https://boutiquev2.misterchrono.com/precommandes"
+                                              class="relative block h-full w-full">
+                        <img src="https://boutique.magiccorporation.com/images/bannieres/393.jpg" alt=""
+                             loading="lazy" decoding="async" class="relative h-full w-full object-contain"
+                             onerror="this.closest('.absolute.inset-0')?.remove()">
+                    </a>
+                            </div>
+        </div>
+            <div
+            x-show="active === 1"
+            x-transition:enter="transition ease-out duration-700"
+            x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100"
+            x-transition:leave="transition ease-in duration-700"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            class="absolute inset-0"
+             style="display: none;"         >
+            <div class="relative h-full w-full">
+                                    <a href="https://boutique.magiccorporation.com/cartes-magic-edition-347-marvel-super-heroes.html"
+                                              class="relative block h-full w-full">
+                        <img src="https://boutique.magiccorporation.com/images/bannieres/391.jpg" alt=""
+                             loading="lazy" decoding="async" class="relative h-full w-full object-contain"
+                             onerror="this.closest('.absolute.inset-0')?.remove()">
+                    </a>
+                            </div>
+        </div>
+    
+    
+    
+    <template x-if="count > 1">
+        <div>
+            <button type="button" @click="prev()" aria-label="Image précédente"
+                    class="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-black/30 p-2 text-white backdrop-blur transition hover:bg-black/50">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
+            </button>
+            <button type="button" @click="next()" aria-label="Image suivante"
+                    class="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-black/30 p-2 text-white backdrop-blur transition hover:bg-black/50">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
+            </button>
+        </div>
+    </template>
+
+    
+    <template x-if="count > 1">
+        <div class="absolute right-3 top-3 flex gap-1.5">
+                            <button type="button" @click="go(0)" aria-label="Aller à l&#039;image 1"
+                        class="h-1.5 rounded-full transition-all"
+                        :class="active === 0 ? 'w-5 bg-white' : 'w-1.5 bg-white/50 hover:bg-white/80'"></button>
+                            <button type="button" @click="go(1)" aria-label="Aller à l&#039;image 2"
+                        class="h-1.5 rounded-full transition-all"
+                        :class="active === 1 ? 'w-5 bg-white' : 'w-1.5 bg-white/50 hover:bg-white/80'"></button>
+                    </div>
+    </template>
+</div>
+        </div>
+    </section>
+
+    
+    <section class="mt-16 border-t border-white/10 bg-white/[0.02]">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-5">
+            <ul class="grid grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-4">
+                                                <li class="flex items-center gap-3 justify-center lg:justify-start">
+                    <span class="shrink-0 w-9 h-9 rounded-lg bg-cyan-500/10 border border-cyan-400/20 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+                        </svg>
+                    </span>
+                    <span class="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-gray-200">Paiement sécurisé</span>
+                </li>
+                                <li class="flex items-center gap-3 justify-center lg:justify-start">
+                    <span class="shrink-0 w-9 h-9 rounded-lg bg-cyan-500/10 border border-cyan-400/20 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
+                        </svg>
+                    </span>
+                    <span class="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-gray-200">Distributeur officiel</span>
+                </li>
+                                <li class="flex items-center gap-3 justify-center lg:justify-start">
+                    <span class="shrink-0 w-9 h-9 rounded-lg bg-cyan-500/10 border border-cyan-400/20 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 0 1-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 0 0-3.213-9.193 2.056 2.056 0 0 0-1.58-.86H14.25M16.5 18.75h-6.563m0 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m12-3-1.5-9H6m9 6V3.75A1.5 1.5 0 0 0 13.5 2.25h-9A1.5 1.5 0 0 0 3 3.75v10.5" />
+                        </svg>
+                    </span>
+                    <span class="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-gray-200">Expédition Chronopost J+1</span>
+                </li>
+                                <li class="flex items-center gap-3 justify-center lg:justify-start">
+                    <span class="shrink-0 w-9 h-9 rounded-lg bg-cyan-500/10 border border-cyan-400/20 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 0 0 2.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 0 1-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 0 0-1.091-.852H4.5A2.25 2.25 0 0 0 2.25 4.5v2.25Z" />
+                        </svg>
+                    </span>
+                    <span class="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-gray-200">Service client français</span>
+                </li>
+                            </ul>
+        </div>
+    </section>
+
+    
+    <footer class="border-t border-white/10">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 text-sm text-gray-400">
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <p class="text-center sm:text-left">© 2026 Magic Corporation — Boutique Magic depuis 2000</p>
+                <div class="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+                    <a href="https://boutique.magiccorporation.com/nouveautes" class="hover:text-cyan-400 transition">Nouveautés</a>
+                    <a href="https://boutique.magiccorporation.com/editions" class="hover:text-cyan-400 transition">Éditions</a>
+                                        <a href="https://rachat.magiccorporation.com" class="hover:text-cyan-400 transition">Rachat de cartes</a>
+                    <a href="https://animation.magiccorporation.com" class="hover:text-cyan-400 transition">Tournois</a>
+                    <a href="https://boutique.magiccorporation.com/contact" class="hover:text-cyan-400 transition">Contact</a>
+                    <a href="https://www.magiccorporation.com" class="hover:text-cyan-400 transition">Communauté</a>
+                </div>
+            </div>
+            <div class="mt-4 pt-4 border-t border-white/5 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-xs text-gray-500">
+                <a href="https://boutique.magiccorporation.com/cgv" class="hover:text-cyan-400 transition">CGV</a>
+                <span aria-hidden="true">·</span>
+                <a href="https://boutique.magiccorporation.com/mentions-legales" class="hover:text-cyan-400 transition">Mentions légales</a>
+                <span aria-hidden="true">·</span>
+                <a href="https://boutique.magiccorporation.com/politique-de-confidentialite" class="hover:text-cyan-400 transition">Confidentialité</a>
+            </div>
+        </div>
+    </footer>
+
+    
+    <script>
+        function toggleTheme() {
+            var b = document.body;
+            var light = b.classList.toggle('theme-light');
+            b.classList.toggle('theme-dark', !light);
+            document.cookie = 'theme=' + (light ? 'light' : 'dark') + ';path=/;max-age=31536000;samesite=lax';
+        }
+    </script>
+
+    
+    <script>
+    (function () {
+        function setBadge(count) {
+            var b = document.querySelector('[data-cart-badge]');
+            if (!b) return;
+            if (count > 0) { b.textContent = count; b.classList.remove('hidden'); }
+            else { b.classList.add('hidden'); }
+        }
+        function toast(msg, isError) {
+            var el = document.createElement('div');
+            el.textContent = msg;
+            el.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);z-index:200;'
+                + 'border-radius:12px;padding:10px 16px;font-size:14px;font-weight:600;color:#fff;'
+                + 'box-shadow:0 10px 30px rgba(0,0,0,.45);transition:opacity .3s;'
+                + 'background:' + (isError ? '#ef4444' : '#10b981');
+            document.body.appendChild(el);
+            setTimeout(function () { el.style.opacity = '0'; }, 1600);
+            setTimeout(function () { el.remove(); }, 2000);
+        }
+        document.addEventListener('submit', function (e) {
+            var form = e.target;
+            if (!form.classList || !form.classList.contains('js-cart-row')) return;
+            // Vieux Safari (iPad de salle) sans fetch : on laisse la soumission
+            // classique — sinon preventDefault puis ReferenceError sur fetch()
+            // = bouton mort (retour Antoine 2026-07-02).
+            if (typeof window.fetch !== 'function') return;
+            e.preventDefault();
+            var btn = form.querySelector('button');
+            var original = btn ? btn.innerHTML : '';
+            if (btn) btn.disabled = true;
+            fetch(form.action, {
+                method: 'POST',
+                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                body: new FormData(form),
+            }).then(function (r) {
+                return r.json().then(function (d) { return { ok: r.ok, d: d }; });
+            }).then(function (res) {
+                if (res.ok && res.d && res.d.ok) {
+                    if (typeof res.d.count !== 'undefined') setBadge(res.d.count);
+                    if (btn) {
+                        btn.innerHTML = '✓';
+                        btn.style.backgroundColor = '#10b981';
+                        setTimeout(function () { btn.innerHTML = original; btn.style.backgroundColor = ''; btn.disabled = false; }, 1100);
+                    }
+                    toast(res.d.message || "Ajout\u00e9 au panier \u2713", false);
+                } else {
+                    if (btn) { btn.innerHTML = original; btn.disabled = false; }
+                    toast((res.d && res.d.message) || "Stock insuffisant.", true);
+                }
+            }).catch(function () {
+                // repli réseau : soumission classique (rechargement)
+                if (btn) btn.disabled = false;
+                form.submit();
+            });
+        });
+    })();
+    </script>
+</body>
+</html>

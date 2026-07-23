@@ -11,6 +11,21 @@ from cz_mtg_compare.optimizer import DecklistOptimizer
 from ._factories import StubAdapter as _StubAdapter
 from ._factories import make_offer as _o
 
+UNCONDITIONAL_SHOPS = {
+    "tolarie",
+    "najada",
+    "blacklotus",
+    "cernyrytir",
+    "rishada",
+    "untap",
+    "axionnow",
+    "mtgspot",
+    "magiccorporation",
+    "jkentertainment",
+    "bazaarofmagic",
+    "spellenwinkel",
+}
+
 
 # ---------------------------------------------------------------------------
 # Per-call opt-out via Aggregator.search(exclude_shops=...)
@@ -107,22 +122,31 @@ async def test_optimizer_exclude_shops_does_not_change_total_when_excluded_shop_
 
 
 def test_build_default_adapters_drops_disabled_via_env(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setenv("CZ_MTG_DISABLED_SHOPS", "blacklotus,untap")
+    monkeypatch.setenv(
+        "CZ_MTG_DISABLED_SHOPS",
+        "blacklotus,untap,axionnow,spellenwinkel",
+    )
     adapters = build_default_adapters()
     shops = {a.shop_id for a in adapters}
     assert "blacklotus" not in shops
     assert "untap" not in shops
+    assert "axionnow" not in shops
+    assert "spellenwinkel" not in shops
     # Other shops still present.
     assert "tolarie" in shops
     assert "najada" in shops
 
 
 def test_disabled_shops_env_is_case_insensitive(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setenv("CZ_MTG_DISABLED_SHOPS", "BlackLotus, UNTAP")
+    monkeypatch.setenv(
+        "CZ_MTG_DISABLED_SHOPS",
+        "BlackLotus, UNTAP, MagicCorporation",
+    )
     adapters = build_default_adapters()
     shops = {a.shop_id for a in adapters}
     assert "blacklotus" not in shops
     assert "untap" not in shops
+    assert "magiccorporation" not in shops
 
 
 def test_disabled_shops_env_unset_keeps_all(monkeypatch: pytest.MonkeyPatch):
@@ -130,16 +154,14 @@ def test_disabled_shops_env_unset_keeps_all(monkeypatch: pytest.MonkeyPatch):
     adapters = build_default_adapters()
     shops = {a.shop_id for a in adapters}
     # Cardmarket only present if creds are also set; ignore for this check.
-    cz_shops = {"tolarie", "najada", "blacklotus", "cernyrytir", "rishada", "untap"}
-    assert cz_shops.issubset(shops)
+    assert UNCONDITIONAL_SHOPS.issubset(shops)
 
 
 def test_disabled_shops_env_empty_string_keeps_all(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setenv("CZ_MTG_DISABLED_SHOPS", "")
     adapters = build_default_adapters()
     shops = {a.shop_id for a in adapters}
-    cz_shops = {"tolarie", "najada", "blacklotus", "cernyrytir", "rishada", "untap"}
-    assert cz_shops.issubset(shops)
+    assert UNCONDITIONAL_SHOPS.issubset(shops)
 
 
 def test_disabled_shops_env_unknown_name_does_not_break(monkeypatch: pytest.MonkeyPatch):

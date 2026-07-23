@@ -13,7 +13,9 @@ import pytest
 import respx
 
 from cz_mtg_compare import credentials
+from cz_mtg_compare.adapters.axionnow import AxionNowAdapter
 from cz_mtg_compare.adapters.base import AccountFeatureNotSupported
+from cz_mtg_compare.adapters.bazaargames import BazaarGamesAdapter
 from cz_mtg_compare.adapters.blacklotus import (
     CART_ADD_URL,
     CART_CONTENT_URL,
@@ -26,6 +28,9 @@ from cz_mtg_compare.adapters.cernyrytir import (
     CernyRytirAdapter,
 )
 from cz_mtg_compare.adapters.rishada import LOGIN_URL as RI_LOGIN_URL, RishadaAdapter
+from cz_mtg_compare.adapters.jkentertainment import JkEntertainmentAdapter
+from cz_mtg_compare.adapters.magiccorporation import MagicCorporationAdapter
+from cz_mtg_compare.adapters.mtgspot import MtgspotAdapter
 from cz_mtg_compare.adapters.untap import (
     ACCOUNT_URL,
     CART_URL,
@@ -67,6 +72,30 @@ def test_capability_flags_per_shop() -> None:
 
     ri = RishadaAdapter()
     assert (ri.supports_login, ri.supports_cart, ri.supports_watchlist) == (True, True, False)
+
+    read_only_adapters = [
+        AxionNowAdapter(),
+        MtgspotAdapter(),
+        MagicCorporationAdapter(),
+        JkEntertainmentAdapter(),
+        BazaarGamesAdapter(
+            shop_id="bazaarofmagic",
+            base_url="https://www.bazaarofmagic.eu",
+        ),
+        BazaarGamesAdapter(
+            shop_id="spellenwinkel",
+            base_url="https://www.spellenwinkel.nl",
+        ),
+    ]
+    assert all(
+        (
+            adapter.supports_login,
+            adapter.supports_cart,
+            adapter.supports_watchlist,
+        )
+        == (False, False, False)
+        for adapter in read_only_adapters
+    )
 
 
 # --- blacklotus -------------------------------------------------------------

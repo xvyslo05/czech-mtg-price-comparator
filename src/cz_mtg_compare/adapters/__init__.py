@@ -2,9 +2,14 @@ import logging
 import os
 
 from .base import ShopAdapter
+from .axionnow import AxionNowAdapter
+from .bazaargames import BazaarGamesAdapter
 from .blacklotus import BlackLotusAdapter
 from .cardmarket import CardmarketAdapter, MkmCredentials
 from .cernyrytir import CernyRytirAdapter
+from .jkentertainment import JkEntertainmentAdapter
+from .magiccorporation import MagicCorporationAdapter
+from .mtgspot import MtgspotAdapter
 from .najada import NajadaAdapter
 from .rishada import RishadaAdapter
 from .tolarie import TolarieAdapter
@@ -12,10 +17,15 @@ from .untap import UntapAdapter
 
 __all__ = [
     "ShopAdapter",
+    "AxionNowAdapter",
+    "BazaarGamesAdapter",
     "BlackLotusAdapter",
     "CardmarketAdapter",
     "CernyRytirAdapter",
+    "JkEntertainmentAdapter",
+    "MagicCorporationAdapter",
     "MkmCredentials",
+    "MtgspotAdapter",
     "NajadaAdapter",
     "RishadaAdapter",
     "TolarieAdapter",
@@ -52,6 +62,18 @@ def build_default_adapters() -> list[ShopAdapter]:
         CernyRytirAdapter(),
         RishadaAdapter(),
         UntapAdapter(),
+        AxionNowAdapter(),
+        MtgspotAdapter(),
+        MagicCorporationAdapter(),
+        JkEntertainmentAdapter(),
+        BazaarGamesAdapter(
+            shop_id="bazaarofmagic",
+            base_url="https://www.bazaarofmagic.eu",
+        ),
+        BazaarGamesAdapter(
+            shop_id="spellenwinkel",
+            base_url="https://www.spellenwinkel.nl",
+        ),
     ]
     creds = MkmCredentials.from_env()
     if creds is not None:

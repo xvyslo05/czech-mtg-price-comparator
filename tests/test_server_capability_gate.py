@@ -19,6 +19,15 @@ from cz_mtg_compare.server import (
 )
 from cz_mtg_compare.service import default_service, require_capability
 
+NEW_READ_ONLY_SHOPS = [
+    "axionnow",
+    "mtgspot",
+    "magiccorporation",
+    "jkentertainment",
+    "bazaarofmagic",
+    "spellenwinkel",
+]
+
 
 def test_untap_cart_capability_is_false() -> None:
     """Sanity check: untap's adapter ships with cart code but flags it off."""
@@ -37,6 +46,21 @@ def test_shop_account_capabilities_reports_untap_cart_off() -> None:
     rows = {row["shop"]: row for row in shop_account_capabilities()}
     assert rows["untap"]["supports_login"] is True
     assert rows["untap"]["supports_cart"] is False
+
+
+@pytest.mark.parametrize("shop", NEW_READ_ONLY_SHOPS)
+def test_new_shop_account_capabilities_are_read_only(shop: str) -> None:
+    rows = {row["shop"]: row for row in shop_account_capabilities()}
+    assert rows[shop]["supports_login"] is False
+    assert rows[shop]["supports_cart"] is False
+    assert rows[shop]["supports_watchlist"] is False
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("shop", NEW_READ_ONLY_SHOPS)
+async def test_mcp_add_to_cart_refuses_new_read_only_shops(shop: str) -> None:
+    with pytest.raises(AccountFeatureNotSupported):
+        await add_to_cart(shop=shop, shop_ref="fixture-ref", count=1)
 
 
 @pytest.mark.asyncio

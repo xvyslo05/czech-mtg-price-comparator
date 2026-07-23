@@ -1,6 +1,6 @@
 # cz-mtg-compare-mcp
 
-A **Model Context Protocol** server that lets Claude (or any other MCP client) compare **Magic: The Gathering** single-card prices across six major Czech online card shops, optionally falling back to Cardmarket. Ask Claude what something costs — it queries every shop in parallel and returns one normalized, price-sorted list.
+A **Model Context Protocol** server that lets Claude (or any other MCP client) compare **Magic: The Gathering** single-card prices across six Czech shops and six additional European shop storefronts, optionally falling back to Cardmarket. Ask Claude what something costs — it queries every enabled shop in parallel and returns one normalized, CZK-converted, price-sorted list.
 
 ```
 You:    Find me the cheapest in-stock Lightning Bolt across the Czech shops.
@@ -39,7 +39,7 @@ Claude: (calls search_card)
 
 This is an MCP server. MCP is the protocol Claude Desktop (and other clients) use to call external tools. Once configured, Claude can:
 
-- **Search a single card** across all six Czech shops at once.
+- **Search a single card** across six Czech shops plus shops in the UK, Poland, France, Germany, and the Netherlands.
 - **Optimize a Commander/Standard/Modern decklist** — paste the list in chat, get back either the cheapest cross-shop split (default) or a plan that consolidates into the fewest distinct shops (`strategy="fewest_shops"`, within a 10% price tolerance), plus each shop's solo total.
 - **Resolve card names** through Scryfall (canonical name, set/collector#, oracle text, multilingual printed names).
 - **Fall back to Cardmarket** for European pricing when CZ shops don't carry a card (optional, requires API credentials).
@@ -59,6 +59,12 @@ It does **not** place orders or send notifications — cart contents must still 
 | `cernyrytir.cz`      | HTML scrape (windows-1250, POST search) | name, edition, set code, condition, foil, stock, price |
 | `rishada.cz`         | HTML scrape (custom-PHP, tabular)      | name, edition, condition, foil (incl. judge / etched), stock, price |
 | `untap.cz`           | HTML scrape (Prestashop)               | name, edition, set code, condition + foil from product reference, stock, price |
+| `axionnow.com`       | Shopify JSON (`suggest.json` + per-product `.js`) | name, edition, set code, condition, foil, binary stock, price (GBP→CZK) |
+| `mtgspot.pl`         | JSON API (`gateway.mtgspot.pl`)        | name, edition, condition, language, foil, stock count, price (PLN→CZK) |
+| `boutique.magiccorporation.com` | HTML scrape (Laravel variant forms) | name, edition, NM condition, language (VO/VF), foil, stock count, price (EUR→CZK) |
+| `jk-entertainment.de` | HTML scrape (Shopware GA4 dataLayer + aligned product DOM) | name, edition, condition, language, foil, stock count, price (EUR→CZK); default variant per listing |
+| `bazaarofmagic.eu`   | HTML scrape (Bazaar Games singles tiles) + optional JSON-LD detail | name, edition, NM condition, foil, binary stock, price (EUR→CZK) |
+| `spellenwinkel.nl`   | Shared Bazaar Games HTML adapter       | singles fields as above; currently no MTG singles catalog, so searches legitimately return no offers |
 | `cardmarket.com`     | OAuth1 API (opt-in, **untested live**) | aggregate priceGuide (TREND/AVG/LOW + foil), EUR→CZK — see [Cardmarket section](#optional-enable-cardmarket) |
 
 ---
@@ -76,6 +82,8 @@ Once installed, you can talk to Claude in plain Czech or English. Some examples 
 > "Lookup Atraxa, Praetors' Voice on Scryfall and tell me which sets it's printed in."
 >
 > "Compare prices for the cards in this Pioneer deck — but only from najada and tolarie."
+>
+> "Compare Lightning Bolt across the Czech shops, Axion Now, MTGSpot, and the other European stores."
 >
 > "I'd rather place fewer separate orders — optimize this decklist to use the fewest shops possible, even if it costs a bit more."
 >
@@ -301,7 +309,7 @@ Then try a real query:
 
 > "Find Lightning Bolt across all Czech card shops, show me the five cheapest in-stock copies."
 
-Claude will call `search_card`, the server will fan out to all six shops in parallel (typically responding in 2–4 seconds), and Claude will summarise the results.
+Claude will call `search_card`, the server will fan out to every enabled shop in parallel, and Claude will summarise the results.
 
 If something doesn't work, jump to [Troubleshooting](#troubleshooting).
 
@@ -369,6 +377,12 @@ This is **opt-in per shop**. The server has no credentials by default and never 
 | `untap`       | ✅    | ⛔ disabled (each login starts a fresh checkout — items don't persist) | ❌ |
 | `cernyrytir`  | ✅    | ✅                        | ❌        |
 | `rishada`     | ✅    | ✅                        | ❌        |
+| `axionnow`    | ❌    | ❌                        | ❌        |
+| `mtgspot`     | ❌    | ❌                        | ❌        |
+| `magiccorporation` | ❌ | ❌                      | ❌        |
+| `jkentertainment` | ❌ | ❌                       | ❌        |
+| `bazaarofmagic` | ❌  | ❌                        | ❌        |
+| `spellenwinkel` | ❌  | ❌                        | ❌        |
 | `cardmarket`  | ❌    | ❌                        | ❌        |
 
 Each shop's account flow has to be reverse-engineered separately, so the supported set grows shop-by-shop. The `shop_account_capabilities` MCP tool reports this matrix at runtime including whether credentials are currently configured — ask Claude *"which shops can I log into?"*.
@@ -471,6 +485,9 @@ Sessions live in-process for the lifetime of the MCP server. If the cached token
 | `MKM_ACCESS_TOKEN_SECRET`     | Cardmarket OAuth1 access token secret              | unset |
 | `MKM_API_BASE`                | Override Cardmarket API base URL                   | `https://api.cardmarket.com/ws/v2.0/output.json` |
 | `MKM_EUR_TO_CZK`              | EUR → CZK conversion rate for Cardmarket prices    | `24.5` |
+| `CZ_MTG_EUR_TO_CZK`           | EUR → CZK conversion rate shared by MagicCorporation, JK Entertainment, Bazaar of Magic, and Spellenwinkel | `24.5` |
+| `CZ_MTG_GBP_TO_CZK`           | GBP → CZK conversion rate for Axion Now prices     | `28.5` |
+| `CZ_MTG_PLN_TO_CZK`           | PLN → CZK conversion rate for MTGSpot prices       | `5.8` |
 | `CZ_MTG_SCRYFALL_CACHE`       | Override Scryfall on-disk cache directory          | `~/.cache/cz-mtg-compare/scryfall/` |
 | `CZ_MTG_DISABLED_SHOPS`       | Comma-separated, case-insensitive list of shop IDs to drop at startup (e.g. `blacklotus,untap`) | unset |
 | `CZ_MTG_MAX_UNIQUE_CARDS`     | Hard cap on unique cards per `optimize_decklist` call (one HTTP request per unique card per shop). Invalid / non-positive values are ignored | `100` |
@@ -572,19 +589,25 @@ Three ways, in increasing scope:
                           │  cz_mtg_compare    │
                           └─────────┬──────────┘
                                     │  fans out in parallel
-       ┌────────────┬────────────┬──┴──────────┬────────────┬────────────┬────────────┐
-       ▼            ▼            ▼             ▼            ▼            ▼            ▼
-   tolarie.cz  najada API   blacklotus    cernyrytir    rishada       untap       cardmarket
-   (HTML)      (JSON)       (Shoptet      (HTML/cp1250  (custom PHP   (Presta-    (OAuth1,
-                            +detail)       POST search)  table)        shop)        opt-in)
-       │            │            │             │            │            │            │
-       └────────────┴────────────┴─────────────┴────────────┴────────────┴────────────┘
-                                              │
-                                              ▼
-                                   normalized Offer[] sorted by price_czk
+                                    │
+           ┌────────────────────────┴────────────────────────┐
+           │                                                 │
+           ▼                                                 ▼
+   Czech adapters                                    European adapters
+   tolarie · najada · blacklotus                     axionnow · mtgspot
+   cernyrytir · rishada · untap                      magiccorporation · jkentertainment
+                                                     bazaarofmagic · spellenwinkel
+           │                                                 │
+           └────────────────────────┬────────────────────────┘
+                                    │
+                              cardmarket (opt-in)
+                                    │
+                                    ▼
+                         normalized Offer[] sorted by price_czk
 ```
 
-- A single `search_card` call dispatches to every adapter concurrently, with per-host concurrency capped at 3 and a 10-second timeout per shop.
+- A single `search_card` call dispatches to every adapter concurrently, with per-host concurrency capped at 3 and a 20-second timeout per shop.
+- Axion Now uses a bounded two-stage Shopify lookup: predictive search finds at most 10 product handles, then the adapter fetches each handle's `.js` variants under the same per-host concurrency cap.
 - Each adapter returns a list of normalized `Offer` objects with the same fields regardless of source.
 - Per-shop results are cached in-memory for 10 minutes (LRU eviction not yet, just TTL).
 - One shop failing or timing out **never** kills the query — partial results come back, and the failed shop's error is surfaced through `list_shops`.
@@ -728,7 +751,7 @@ The `state` parameter is single-use: the server clears it the moment the callbac
 4. Copy the **Client ID** and **Client secret** into your deployment's env (`CZ_MTG_OAUTH_GOOGLE_CLIENT_ID`, `CZ_MTG_OAUTH_GOOGLE_CLIENT_SECRET`). Set `CZ_MTG_PUBLIC_BASE_URL` to the matching origin.
 
 Caveats:
-- `/v1/decklists/optimize` runs inline in the handler today. A 100-card list can fan out to ~600 upstream HTTP requests and take several seconds. Moving to a background job queue is tracked as A4 in issue #9.
+- `/v1/decklists/optimize` runs inline in the handler today. A 100-card list can fan out to roughly 1,200 top-level requests across the 12 default shop ids, plus Axion Now's bounded product-variant lookups, and take several seconds. Moving to a background job queue is tracked as A4 in issue #9.
 - No rate limiting on the auth endpoints yet — that lands with G2.
 - GitHub OAuth is **not** wired yet — that's B1 PR6, and most of the schema (`oauth_identities` keyed by `(provider, provider_user_id)`) is reused verbatim.
 - No "unlink Google" endpoint yet — that needs the settings page (B2). Workaround for now: delete the row from `oauth_identities` directly.
@@ -740,9 +763,16 @@ Caveats:
 - **Shipping cost isn't modelled explicitly.** The `cheapest` strategy minimizes card prices only and ignores per-shop shipping fees. Use `strategy="fewest_shops"` to consolidate into fewer orders (within 10% of the cheapest-split total by default, configurable via `CZ_MTG_CONSOLIDATE_TOLERANCE_PCT`). Per-shop totals still let you eyeball trade-offs manually.
 - **blacklotus condition can occasionally still be `?`** if the product page lacks the gtag variant marker — best-effort only.
 - **Cardmarket per-seller offers** require a paid Trader-tier API key, not yet wired up. Free tier surfaces priceGuide aggregates only.
-- **Decklist size capped at 100 cards total AND 100 unique cards.** Commander format is the largest legal format. The unique-cards limit is what actually drives the request count (one search per unique card per shop = up to 600 requests at 100/6) and exists to keep a single tool call from spawning runaway traffic. Override via `CZ_MTG_MAX_UNIQUE_CARDS` if you genuinely need a bigger list.
+- **Decklist size capped at 100 cards total AND 100 unique cards.** Commander format is the largest legal format. The unique-cards limit is what actually drives the request count (one top-level search per unique card per enabled shop, plus Axion Now's bounded per-product variant lookups) and exists to keep a single tool call from spawning runaway traffic. Override via `CZ_MTG_MAX_UNIQUE_CARDS` if you genuinely need a bigger list.
 - **No price history.** Each query is a fresh snapshot. Track prices yourself if you need it (or open an issue requesting it).
-- **Account features cover six of seven shops, with five of them fully cartable.** Full login + cart: `najada` (Djoser/DRF API), `blacklotus` (Shoptet), `tolarie` (Django + jQuery `getJSON` per-product URLs), `rishada` (custom-PHP form POST — `act=20005` against `/`), `cernyrytir` (custom-PHP form POST — `nakupzbozi=Pridat` + `carovy_kod`). Login only: `untap` — cart works against Prestashop but doesn't persist between logins (see Known limitations). Cardmarket has no per-user cart on the free tier and stays out of scope.
+- **Foreign-currency prices use configurable static conversion rates.** EUR, GBP, and PLN prices are converted at adapter initialization using `CZ_MTG_EUR_TO_CZK`, `CZ_MTG_GBP_TO_CZK`, and `CZ_MTG_PLN_TO_CZK`. They are indicative snapshots rather than live FX quotes. Cardmarket intentionally keeps its existing separate `MKM_EUR_TO_CZK` setting.
+- **Axion Now stock is binary.** Shopify exposes each variant only as available/unavailable, so `stock_qty` is `1` or `0`; no exact quantity or language field is available.
+- **MagicCorporation and Bazaar of Magic expose a single NM/default-new grade.** MagicCorporation search results surface only in-stock new VO/VF variants; used “exemplaires uniques” and their per-copy grades would require detail-page fan-out and are not included. Bazaar of Magic's Bazaar Games catalog likewise exposes one new/NM grade and binary stock.
+- **Bazaar of Magic searches only the first page of singles results (24 tiles).** Pagination is deliberately not crawled so the shared Bazaar Games host request budget remains bounded.
+- **JK Entertainment exposes only the default variant per listing.** Other conditions/languages can exist behind its JavaScript-only sibling-variant selector, but the server-rendered GA4 dataLayer and aligned product box carry one purchasable variant and its current stock count.
+- **Spellenwinkel currently has no MTG singles catalog.** Its shared Bazaar Games adapter deliberately ignores sealed/accessory `div.products` tiles and therefore returns zero offers for the checked catalog; it will begin parsing automatically if `div.singles` listings appear later.
+- **MTGSpot uses a reverse-engineered public gateway contract.** The anonymous SPA key and `filter[...]` request shape can change, and the API exposes edition names but no set codes.
+- **Account features cover six of thirteen shop ids, with five of them fully cartable.** Full login + cart: `najada` (Djoser/DRF API), `blacklotus` (Shoptet), `tolarie` (Django + jQuery `getJSON` per-product URLs), `rishada` (custom-PHP form POST — `act=20005` against `/`), `cernyrytir` (custom-PHP form POST — `nakupzbozi=Pridat` + `carovy_kod`). Login only: `untap` — cart works against Prestashop but doesn't persist between logins (see Known limitations). The six new European shop ids and Cardmarket are read-only.
 - **No automated checkout.** The cart tools stop at "items are in the cart" — finalizing the order, shipping, and payment still happen manually on the shop's website. This is intentional.
 
 ---
@@ -755,7 +785,7 @@ The local-clone setup is documented as [Install method D](#install-method-d--fro
 # from inside the cloned repo with the venv activated
 pip install -e ".[dev]"
 
-# Fast deterministic tests (~0.5s, 151+ tests)
+# Fast deterministic tests (offline fixtures; no live shop requests)
 pytest
 
 # Live smoke tests against real shops + Scryfall (~40s, 10 tests)
@@ -851,6 +881,11 @@ src/cz_mtg_compare/
     cernyrytir.py      (windows-1250 HTML)
     rishada.py         (custom-PHP tabular HTML)
     untap.py           (Prestashop HTML; condition+foil in product reference)
+    axionnow.py        (Shopify predictive JSON + per-product variant JSON)
+    mtgspot.py         (Polish gateway JSON API)
+    magiccorporation.py (Laravel HTML; per-row language/foil variants)
+    jkentertainment.py (Shopware GA4 dataLayer + DOM detail links)
+    bazaargames.py     (shared Bazaar of Magic / Spellenwinkel HTML adapter)
     cardmarket.py      (OAuth1 API; opt-in)
 tests/
   fixtures/            saved real-world responses

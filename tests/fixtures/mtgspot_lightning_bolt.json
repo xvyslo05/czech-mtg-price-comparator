@@ -1,0 +1,673 @@
+{
+ "response": {
+  "total": 18,
+  "data": [
+   {
+    "type": "shop/articles",
+    "id": "33fd66d016ef6de",
+    "attributes": {
+     "title": "Emeritus of Conflict // Lightning Bolt",
+     "description": "",
+     "language": "English",
+     "condition": "NM",
+     "is_foil": false,
+     "is_signed": false,
+     "is_playset": false,
+     "is_altered": false,
+     "id_article": 603529,
+     "id_product": 882058,
+     "id_expansion": 6474,
+     "id_category": 1,
+     "category_name": "Single",
+     "expansion_name": "Secrets of Strixhaven",
+     "rarity": "Mythic",
+     "stock": 14,
+     "price": "8.59",
+     "image": "https://gateway.mtgspot.pl/images/singles/SOS/882058.jpg",
+     "type": "single",
+     "metadata": {
+      "types": null,
+      "subtypes": null,
+      "text": null,
+      "flavor": null,
+      "mana_const": null,
+      "power": null,
+      "toughness": null
+     }
+    },
+    "links": {
+     "self": "/shop/articles/33fd66d016ef6de"
+    }
+   },
+   {
+    "type": "shop/articles",
+    "id": "9d595cf0d217613",
+    "attributes": {
+     "title": "Emeritus of Conflict // Lightning Bolt",
+     "description": "",
+     "language": "English",
+     "condition": "NM",
+     "is_foil": true,
+     "is_signed": false,
+     "is_playset": false,
+     "is_altered": false,
+     "id_article": 604522,
+     "id_product": 882058,
+     "id_expansion": 6474,
+     "id_category": 1,
+     "category_name": "Single",
+     "expansion_name": "Secrets of Strixhaven",
+     "rarity": "Mythic",
+     "stock": 1,
+     "price": "11.48",
+     "image": "https://gateway.mtgspot.pl/images/singles/SOS/882058.jpg",
+     "type": "single",
+     "metadata": {
+      "types": null,
+      "subtypes": null,
+      "text": null,
+      "flavor": null,
+      "mana_const": null,
+      "power": null,
+      "toughness": null
+     }
+    },
+    "links": {
+     "self": "/shop/articles/9d595cf0d217613"
+    }
+   },
+   {
+    "type": "shop/articles",
+    "id": "4fd5ba437aba8fb",
+    "attributes": {
+     "title": "Lightning Bolt",
+     "description": "",
+     "language": "English",
+     "condition": "NM",
+     "is_foil": true,
+     "is_signed": false,
+     "is_playset": false,
+     "is_altered": false,
+     "id_article": 621649,
+     "id_product": 892161,
+     "id_expansion": 6617,
+     "id_category": 1,
+     "category_name": "Single",
+     "expansion_name": "Commander: Marvel Super Heroes: Extras",
+     "rarity": "Uncommon",
+     "stock": 6,
+     "price": "21.98",
+     "image": "https://gateway.mtgspot.pl/images/singles/XMSC/892161.jpg",
+     "type": "single",
+     "metadata": {
+      "types": null,
+      "subtypes": null,
+      "text": null,
+      "flavor": null,
+      "mana_const": null,
+      "power": null,
+      "toughness": null
+     }
+    },
+    "links": {
+     "self": "/shop/articles/4fd5ba437aba8fb"
+    }
+   },
+   {
+    "type": "shop/articles",
+    "id": "e134c9347d53199",
+    "attributes": {
+     "title": "Lightning Bolt",
+     "description": "",
+     "language": "English",
+     "condition": "NM",
+     "is_foil": false,
+     "is_signed": false,
+     "is_playset": false,
+     "is_altered": false,
+     "id_article": 626422,
+     "id_product": 892161,
+     "id_expansion": 6617,
+     "id_category": 1,
+     "category_name": "Single",
+     "expansion_name": "Commander: Marvel Super Heroes: Extras",
+     "rarity": "Uncommon",
+     "stock": 32,
+     "price": "8.41",
+     "image": "https://gateway.mtgspot.pl/images/singles/XMSC/892161.jpg",
+     "type": "single",
+     "metadata": {
+      "types": null,
+      "subtypes": null,
+      "text": null,
+      "flavor": null,
+      "mana_const": null,
+      "power": null,
+      "toughness": null
+     }
+    },
+    "links": {
+     "self": "/shop/articles/e134c9347d53199"
+    }
+   },
+   {
+    "type": "shop/articles",
+    "id": "373295ba7300af5",
+    "attributes": {
+     "title": "Lightning Bolt",
+     "description": "",
+     "language": "English",
+     "condition": "GD",
+     "is_foil": false,
+     "is_signed": false,
+     "is_playset": false,
+     "is_altered": false,
+     "id_article": 205644,
+     "id_product": 4951,
+     "id_expansion": 3,
+     "id_category": 1,
+     "category_name": "Single",
+     "expansion_name": "Unlimited",
+     "rarity": "Common",
+     "stock": 2,
+     "price": "200.17",
+     "image": "https://gateway.mtgspot.pl/images/singles/2ED/4951.jpg",
+     "type": "single",
+     "metadata": {
+      "types": null,
+      "subtypes": null,
+      "text": null,
+      "flavor": null,
+      "mana_const": null,
+      "power": null,
+      "toughness": null
+     }
+    },
+    "links": {
+     "self": "/shop/articles/373295ba7300af5"
+    }
+   },
+   {
+    "type": "shop/articles",
+    "id": "d4147a854b67259",
+    "attributes": {
+     "title": "Lightning Bolt",
+     "description": "",
+     "language": "English",
+     "condition": "EX",
+     "is_foil": true,
+     "is_signed": false,
+     "is_playset": false,
+     "is_altered": false,
+     "id_article": 616643,
+     "id_product": 244243,
+     "id_expansion": 1218,
+     "id_category": 1,
+     "category_name": "Single",
+     "expansion_name": "Premium Deck Series: Fire & Lightning",
+     "rarity": "Common",
+     "stock": 1,
+     "price": "12.6",
+     "image": "https://gateway.mtgspot.pl/images/singles/PD2/244243.jpg",
+     "type": "single",
+     "metadata": {
+      "types": null,
+      "subtypes": null,
+      "text": null,
+      "flavor": null,
+      "mana_const": null,
+      "power": null,
+      "toughness": null
+     }
+    },
+    "links": {
+     "self": "/shop/articles/d4147a854b67259"
+    }
+   },
+   {
+    "type": "shop/articles",
+    "id": "adfb28e4fcd3c45",
+    "attributes": {
+     "title": "Lightning Bolt",
+     "description": "",
+     "language": "English",
+     "condition": "NM",
+     "is_foil": true,
+     "is_signed": false,
+     "is_playset": false,
+     "is_altered": false,
+     "id_article": 628738,
+     "id_product": 244243,
+     "id_expansion": 1218,
+     "id_category": 1,
+     "category_name": "Single",
+     "expansion_name": "Premium Deck Series: Fire & Lightning",
+     "rarity": "Common",
+     "stock": 1,
+     "price": "13.26",
+     "image": "https://gateway.mtgspot.pl/images/singles/PD2/244243.jpg",
+     "type": "single",
+     "metadata": {
+      "types": null,
+      "subtypes": null,
+      "text": null,
+      "flavor": null,
+      "mana_const": null,
+      "power": null,
+      "toughness": null
+     }
+    },
+    "links": {
+     "self": "/shop/articles/adfb28e4fcd3c45"
+    }
+   },
+   {
+    "type": "shop/articles",
+    "id": "c52b6c170c35da4",
+    "attributes": {
+     "title": "Lightning Bolt",
+     "description": "",
+     "language": "English",
+     "condition": "GD",
+     "is_foil": false,
+     "is_signed": false,
+     "is_playset": false,
+     "is_altered": false,
+     "id_article": 625870,
+     "id_product": 5689,
+     "id_expansion": 6,
+     "id_category": 1,
+     "category_name": "Single",
+     "expansion_name": "Revised",
+     "rarity": "Common",
+     "stock": 1,
+     "price": "16.38",
+     "image": "https://gateway.mtgspot.pl/images/singles/3ED/5689.jpg",
+     "type": "single",
+     "metadata": {
+      "types": null,
+      "subtypes": null,
+      "text": null,
+      "flavor": null,
+      "mana_const": null,
+      "power": null,
+      "toughness": null
+     }
+    },
+    "links": {
+     "self": "/shop/articles/c52b6c170c35da4"
+    }
+   },
+   {
+    "type": "shop/articles",
+    "id": "d6ee241eaeebd79",
+    "attributes": {
+     "title": "Lightning Bolt",
+     "description": "",
+     "language": "English",
+     "condition": "NM",
+     "is_foil": true,
+     "is_signed": false,
+     "is_playset": false,
+     "is_altered": false,
+     "id_article": 563746,
+     "id_product": 842315,
+     "id_expansion": 2413,
+     "id_category": 1,
+     "category_name": "Single",
+     "expansion_name": "MagicFest Promos",
+     "rarity": "Rare",
+     "stock": 2,
+     "price": "23.94",
+     "image": "https://gateway.mtgspot.pl/images/singles/PMF/842315.jpg",
+     "type": "single",
+     "metadata": {
+      "types": null,
+      "subtypes": null,
+      "text": null,
+      "flavor": null,
+      "mana_const": null,
+      "power": null,
+      "toughness": null
+     }
+    },
+    "links": {
+     "self": "/shop/articles/d6ee241eaeebd79"
+    }
+   },
+   {
+    "type": "shop/articles",
+    "id": "5f42e7445adbbbb",
+    "attributes": {
+     "title": "Lightning Bolt",
+     "description": "",
+     "language": "English",
+     "condition": "LP",
+     "is_foil": false,
+     "is_signed": false,
+     "is_playset": false,
+     "is_altered": false,
+     "id_article": 625894,
+     "id_product": 6061,
+     "id_expansion": 10,
+     "id_category": 1,
+     "category_name": "Single",
+     "expansion_name": "Fourth Edition",
+     "rarity": "Common",
+     "stock": 1,
+     "price": "11.69",
+     "image": "https://gateway.mtgspot.pl/images/singles/4ED/6061.jpg",
+     "type": "single",
+     "metadata": {
+      "types": null,
+      "subtypes": null,
+      "text": null,
+      "flavor": null,
+      "mana_const": null,
+      "power": null,
+      "toughness": null
+     }
+    },
+    "links": {
+     "self": "/shop/articles/5f42e7445adbbbb"
+    }
+   },
+   {
+    "type": "shop/articles",
+    "id": "95fe67a31997f9c",
+    "attributes": {
+     "title": "Lightning Bolt",
+     "description": "",
+     "language": "English",
+     "condition": "PL",
+     "is_foil": false,
+     "is_signed": false,
+     "is_playset": false,
+     "is_altered": false,
+     "id_article": 625895,
+     "id_product": 6061,
+     "id_expansion": 10,
+     "id_category": 1,
+     "category_name": "Single",
+     "expansion_name": "Fourth Edition",
+     "rarity": "Common",
+     "stock": 1,
+     "price": "11",
+     "image": "https://gateway.mtgspot.pl/images/singles/4ED/6061.jpg",
+     "type": "single",
+     "metadata": {
+      "types": null,
+      "subtypes": null,
+      "text": null,
+      "flavor": null,
+      "mana_const": null,
+      "power": null,
+      "toughness": null
+     }
+    },
+    "links": {
+     "self": "/shop/articles/95fe67a31997f9c"
+    }
+   },
+   {
+    "type": "shop/articles",
+    "id": "3166132ff9a9b4b",
+    "attributes": {
+     "title": "Lightning Bolt",
+     "description": "",
+     "language": "English",
+     "condition": "NM",
+     "is_foil": true,
+     "is_signed": false,
+     "is_playset": false,
+     "is_altered": false,
+     "id_article": 620338,
+     "id_product": 650868,
+     "id_expansion": 5031,
+     "id_category": 1,
+     "category_name": "Single",
+     "expansion_name": "Commander Legends: Battle for Baldur's Gate: Extras",
+     "rarity": "Common",
+     "stock": 1,
+     "price": "19.94",
+     "image": "https://gateway.mtgspot.pl/images/singles/XCLB/650868.jpg",
+     "type": "single",
+     "metadata": {
+      "types": null,
+      "subtypes": null,
+      "text": null,
+      "flavor": null,
+      "mana_const": null,
+      "power": null,
+      "toughness": null
+     }
+    },
+    "links": {
+     "self": "/shop/articles/3166132ff9a9b4b"
+    }
+   },
+   {
+    "type": "shop/articles",
+    "id": "212406a41c3075e",
+    "attributes": {
+     "title": "Lightning Bolt",
+     "description": "",
+     "language": "English",
+     "condition": "NM",
+     "is_foil": true,
+     "is_signed": false,
+     "is_playset": false,
+     "is_altered": false,
+     "id_article": 594207,
+     "id_product": 664300,
+     "id_expansion": 5070,
+     "id_category": 1,
+     "category_name": "Single",
+     "expansion_name": "Double Masters 2022",
+     "rarity": "Uncommon",
+     "stock": 1,
+     "price": "17.71",
+     "image": "https://gateway.mtgspot.pl/images/singles/2X2/664300.jpg",
+     "type": "single",
+     "metadata": {
+      "types": null,
+      "subtypes": null,
+      "text": null,
+      "flavor": null,
+      "mana_const": null,
+      "power": null,
+      "toughness": null
+     }
+    },
+    "links": {
+     "self": "/shop/articles/212406a41c3075e"
+    }
+   },
+   {
+    "type": "shop/articles",
+    "id": "7bfceeaf45a61e2",
+    "attributes": {
+     "title": "Lightning Bolt (V.4)",
+     "description": "",
+     "language": "Japanese",
+     "condition": "NM",
+     "is_foil": true,
+     "is_signed": false,
+     "is_playset": false,
+     "is_altered": false,
+     "id_article": 576446,
+     "id_product": 559407,
+     "id_expansion": 3746,
+     "id_category": 1,
+     "category_name": "Single",
+     "expansion_name": "Mystical Archive",
+     "rarity": "Rare",
+     "stock": 1,
+     "price": "73.41",
+     "image": "https://gateway.mtgspot.pl/images/singles/STA/559407.jpg",
+     "type": "single",
+     "metadata": {
+      "types": null,
+      "subtypes": null,
+      "text": null,
+      "flavor": null,
+      "mana_const": null,
+      "power": null,
+      "toughness": null
+     }
+    },
+    "links": {
+     "self": "/shop/articles/7bfceeaf45a61e2"
+    }
+   },
+   {
+    "type": "shop/articles",
+    "id": "9e37a2523694b6b",
+    "attributes": {
+     "title": "Art Series: Lightning Bolt (V.1)",
+     "description": "",
+     "language": "English",
+     "condition": "NM",
+     "is_foil": false,
+     "is_signed": false,
+     "is_playset": false,
+     "is_altered": false,
+     "id_article": null,
+     "id_product": 560749,
+     "id_expansion": 3761,
+     "id_category": 1,
+     "category_name": "Single",
+     "expansion_name": "Strixhaven: School of Mages: Extras",
+     "rarity": "Tip Card",
+     "stock": 0,
+     "price": "2.14",
+     "image": "https://gateway.mtgspot.pl/images/singles/XSTX/560749.jpg",
+     "type": "single",
+     "metadata": {
+      "types": null,
+      "subtypes": null,
+      "text": null,
+      "flavor": null,
+      "mana_const": null,
+      "power": null,
+      "toughness": null
+     }
+    },
+    "links": {
+     "self": "/shop/articles/9e37a2523694b6b"
+    }
+   },
+   {
+    "type": "shop/articles",
+    "id": "5d83c17d0afd876",
+    "attributes": {
+     "title": "Art Series: Lightning Bolt (V.2)",
+     "description": "",
+     "language": "English",
+     "condition": "NM",
+     "is_foil": false,
+     "is_signed": false,
+     "is_playset": false,
+     "is_altered": false,
+     "id_article": null,
+     "id_product": 560751,
+     "id_expansion": 3761,
+     "id_category": 1,
+     "category_name": "Single",
+     "expansion_name": "Strixhaven: School of Mages: Extras",
+     "rarity": "Tip Card",
+     "stock": 0,
+     "price": "21.98",
+     "image": "https://gateway.mtgspot.pl/images/singles/XSTX/560751.jpg",
+     "type": "single",
+     "metadata": {
+      "types": null,
+      "subtypes": null,
+      "text": null,
+      "flavor": null,
+      "mana_const": null,
+      "power": null,
+      "toughness": null
+     }
+    },
+    "links": {
+     "self": "/shop/articles/5d83c17d0afd876"
+    }
+   },
+   {
+    "type": "shop/articles",
+    "id": "bf5572ceea2c96b",
+    "attributes": {
+     "title": "Emeritus of Conflict // Lightning Bolt",
+     "description": "",
+     "language": "English",
+     "condition": "NM",
+     "is_foil": false,
+     "is_signed": false,
+     "is_playset": false,
+     "is_altered": false,
+     "id_article": null,
+     "id_product": 883322,
+     "id_expansion": 6554,
+     "id_category": 1,
+     "category_name": "Single",
+     "expansion_name": "Secrets of Strixhaven: Promos",
+     "rarity": "Mythic",
+     "stock": 0,
+     "price": "22.12",
+     "image": "https://gateway.mtgspot.pl/images/singles/PSOS/883322.jpg",
+     "type": "single",
+     "metadata": {
+      "types": null,
+      "subtypes": null,
+      "text": null,
+      "flavor": null,
+      "mana_const": null,
+      "power": null,
+      "toughness": null
+     }
+    },
+    "links": {
+     "self": "/shop/articles/bf5572ceea2c96b"
+    }
+   },
+   {
+    "type": "shop/articles",
+    "id": "2d8837717c58b07",
+    "attributes": {
+     "title": "Emeritus of Conflict // Lightning Bolt",
+     "description": "",
+     "language": "English",
+     "condition": "NM",
+     "is_foil": false,
+     "is_signed": false,
+     "is_playset": false,
+     "is_altered": false,
+     "id_article": null,
+     "id_product": 882105,
+     "id_expansion": 6546,
+     "id_category": 1,
+     "category_name": "Single",
+     "expansion_name": "Secrets of Strixhaven: Extras",
+     "rarity": "Mythic",
+     "stock": 0,
+     "price": "15.31",
+     "image": "https://gateway.mtgspot.pl/images/singles/XSOS/882105.jpg",
+     "type": "single",
+     "metadata": {
+      "types": null,
+      "subtypes": null,
+      "text": null,
+      "flavor": null,
+      "mana_const": null,
+      "power": null,
+      "toughness": null
+     }
+    },
+    "links": {
+     "self": "/shop/articles/2d8837717c58b07"
+    }
+   }
+  ]
+ }
+}
