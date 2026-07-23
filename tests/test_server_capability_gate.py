@@ -26,6 +26,9 @@ NEW_READ_ONLY_SHOPS = [
     "jkentertainment",
     "bazaarofmagic",
     "spellenwinkel",
+    "traderonline",
+    "magicmadhouse",
+    "magicstore",
 ]
 
 

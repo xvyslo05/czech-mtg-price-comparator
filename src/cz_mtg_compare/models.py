@@ -20,6 +20,9 @@ ShopId = Literal[
     "jkentertainment",
     "bazaarofmagic",
     "spellenwinkel",
+    "traderonline",
+    "magicmadhouse",
+    "magicstore",
 ]
 ALL_SHOPS: tuple[ShopId, ...] = (
     "cernyrytir",
@@ -35,6 +38,9 @@ ALL_SHOPS: tuple[ShopId, ...] = (
     "jkentertainment",
     "bazaarofmagic",
     "spellenwinkel",
+    "traderonline",
+    "magicmadhouse",
+    "magicstore",
 )
 
 

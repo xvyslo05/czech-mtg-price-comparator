@@ -9,10 +9,13 @@ from .cardmarket import CardmarketAdapter, MkmCredentials
 from .cernyrytir import CernyRytirAdapter
 from .jkentertainment import JkEntertainmentAdapter
 from .magiccorporation import MagicCorporationAdapter
+from .magicmadhouse import MagicMadhouseAdapter
+from .magicstore import MagicStoreAdapter
 from .mtgspot import MtgspotAdapter
 from .najada import NajadaAdapter
 from .rishada import RishadaAdapter
 from .tolarie import TolarieAdapter
+from .traderonline import TraderOnlineAdapter
 from .untap import UntapAdapter
 
 __all__ = [
@@ -24,11 +27,14 @@ __all__ = [
     "CernyRytirAdapter",
     "JkEntertainmentAdapter",
     "MagicCorporationAdapter",
+    "MagicMadhouseAdapter",
+    "MagicStoreAdapter",
     "MkmCredentials",
     "MtgspotAdapter",
     "NajadaAdapter",
     "RishadaAdapter",
     "TolarieAdapter",
+    "TraderOnlineAdapter",
     "UntapAdapter",
     "build_default_adapters",
     "DISABLED_SHOPS_ENV",
@@ -66,6 +72,9 @@ def build_default_adapters() -> list[ShopAdapter]:
         MtgspotAdapter(),
         MagicCorporationAdapter(),
         JkEntertainmentAdapter(),
+        TraderOnlineAdapter(),
+        MagicMadhouseAdapter(),
+        MagicStoreAdapter(),
         BazaarGamesAdapter(
             shop_id="bazaarofmagic",
             base_url="https://www.bazaarofmagic.eu",

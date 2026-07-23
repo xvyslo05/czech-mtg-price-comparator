@@ -1,0 +1,1810 @@
+    <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+    <html xmlns="http://www.w3.org/1999/xhtml" dir="ltr" lang="en" xml:lang="en" xmlns:fb="http://www.facebook.com/2008/fbml">
+    <head>
+    <title>Magic Store - Negozio Fantasy Online</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <meta name="language" content="it" />
+    <meta name="author" content="Nimaia sviluppo siti e web marketing - http:/www.nimaia.com/" />
+    <meta name="description" content="Magic Store - Negozio Fantasy Online MAGIC STORE, Vendita online carte Magic, carte Yugioh, giochi da tavolo, miniature" />
+    <meta name="keywords" content="carte magic, Magic store, magic, Carte Wow, Naruto, Yugioh, D&amp;D, Vs System, Giochi di carte, MAGIC, YUGIOH, Warhammer, Miniature Warhammer, signore degli anelli, games workshop, vampiri, carte singole magic, carte singole yugioh, yu-gi-oh, carte usate magic, MTG, Sideboard, carte singole vs system, carte usate yugioh, ritiro carte usate, giochi in scatola" />
+    <link rel="stylesheet" type="text/css" href="https://www.magicstore.it/s/960.css?1775550317" />
+<link media="screen" rel="stylesheet" type="text/css" href="https://www.magicstore.it/s/screen.css?1775550317" />
+<link media="screen" rel="stylesheet" type="text/css" href="https://www.magicstore.it/s/color.css?1775550317" />
+    <!--[if lt IE 9]><link media="screen" rel="stylesheet" type="text/css" href="https://www.magicstore.it/s/ie.css?1775550317" />
+<![endif]-->
+        <script type="text/javascript">
+    window.SITE_URL = 'https://www.magicstore.it/';
+    </script>
+
+    <link rel="shortcut icon" href="https://www.magicstore.it/favicon.ico" />
+    <script type="text/javascript" src="https://www.magicstore.it/js/jquery/jquery.1.5.2.min.js?1775550317"></script>
+<script type="text/javascript" src="https://www.magicstore.it/js/jquery/jquery-ui.1.8.14.min.js?1775550317"></script>
+<script type="text/javascript" src="https://www.magicstore.it/js/ms2011.js?1775550317"></script>
+<script type="text/javascript" src="https://www.magicstore.it/js/nimaia.js?1775550317"></script>
+    <div class="popup" id="ph" data-popup="popup-1">>
+      <div class="popup-inner">
+        <div id="contenitore-msg"></div>
+        <p style="text-align: center;"><strong style="text-align: center;"><img src="http://www.magicstore.it/data/upload_img/MS_web.jpg" alt="" /><br /></strong><strong style="background-color: #ffffff;"><span style="background-color: #ffff00;"><br /><br /></span></strong><strong style="background-color: #ffffff;"><span style="background-color: #ffff00;"><strong style="background-color: #ffffff;"><span style="background-color: #ffff00;"><strong style="background-color: #ffffff;"><span style="background-color: #ffff00;"><strong style="background-color: #ffffff;"><span style="background-color: #ffff00;"><strong style="background-color: #ffffff;"><span style="background-color: #ffff00;"><span style="text-decoration: underline;"><a href="http://www.magicstore.it/areaclienti/">Loggati</a></span> e Scopri le OFFERTE<br /><br /></span></strong></span></strong></span></strong></span></strong><strong style="background-color: #ffffff;"><span style="background-color: #ffff00;"><strong style="background-color: #ffffff;"><span style="background-color: #ffff00;">+ Spedizioni OMAGGIO!</span></strong></span></strong></span></strong></p>        <br /><br />
+        <a class="s_button_1 s_main_color_bgr" data-popup-close="popup-1" style="float: right;"><span class="s_text">Chiudi</span></a>
+        <a class="popup-close" data-popup-close="popup-1" href="#">x</a>
+      </div>
+    </div>
+
+    <script>
+    $(function(){
+      function pophoverModalShow(){
+        var viewed = $('body').data('pophover_viewed');
+
+        if(!viewed){
+          $('#ph').fadeIn();
+          $('body').data('pophover_viewed', true);
+        }
+      }
+      pophoverModalShow();
+      });
+
+    var exdate = new Date();
+    exdate.setDate(exdate.getDate() + 1);
+    document.cookie = 'mo_ph__nonlogged=1; expires=' + exdate.toUTCString() + ';path=/';
+    </script>
+    <style type="text/css">
+.s-filters label { display:inline }
+.s-filters .n { font-size:11px }
+.s-filters img { display:inline; vertical-align: middle }
+</style>
+<script type="text/javascript">
+$(document).ready(function(){
+  // click ordinamento
+  $('.s_switcher a').click(function(){
+    var el_default = $('.s_switcher .s_selected');
+    el_default.html($(this).html());
+    el_default.attr('rel', $(this).attr('rel'));
+
+    $('.s_switcher').mouseout();
+
+    $('#order-hidden').attr('value', $(this).attr('rel'));
+    $('#frm-affina').submit();
+  });
+  
+  $('#frm-affina input').change(function(){
+    $('#frm-affina').submit();
+  });
+});
+</script>
+</head>
+
+<body class="s_layout_fixed">
+<div id="wrapper">
+      <div id="cookie-privacy-bar" class="cookie-bar">
+      <div class="container">
+        <div class="cookie-bar-content">
+          In questo sito utilizziamo cookies propri e di terze parti per migliorare la navigazione e poter offrire contenuti e messaggi pubblicitari personalizzati.
+Continuando la navigazione accetti l&#39;utilizzo dei cookies da parte nostra <a href="https://www.magicstore.it/pages/informativa-privacy.php" id="link_privacy">(Informativa)</a>. Nelle impostazioni del tuo browser puoi modificare le opzioni di utilizzo dei cookie.
+          <a href="#" class="cookie-button" onclick="acceptCookie();">Ok</a>
+        </div>
+        <div class="clear"></div>
+      </div>
+    </div>
+    <script type="text/javascript">
+    function acceptCookie() {
+        var exdate = new Date();
+        exdate.setDate(exdate.getDate() + 365);
+        var c_value = escape("1") + "; expires=" + exdate.toUTCString();
+        document.cookie = "cookieusage=" + c_value;
+        document.getElementById("cookie-privacy-bar").remove();
+        return false;
+    }
+    </script>
+        <div id="header" class="container_12">
+      <div class="grid_12">
+
+        <a id="site_logo" href="https://www.magicstore.it/">Magic Store - Negozio Fantasy Online</a> 
+
+           
+<!--          <a class="butt_login jslogin-b2b" id="rivenditori" href="--><?//=site_url('areaclienti/?b2b'); ?><!--" title="Area Distributori e Rivenditori">Login Rivenditori</a>-->
+          <a class="butt_login" href="https://www.msdistribuzione.it/areaclienti/?b2b" title="Area Distributori e Rivenditori">Area Rivenditori</a></li>
+          <a class="butt_login jslogin" id="clienti" href="https://www.magicstore.it/areaclienti/" title="Area Clienti">Login Privati</a>
+                    <!-- <a id="butt_ritiro" href="#" title="ritiro carte magic">RITIRO CARTE</a> -->
+    
+                  <div id="header-promo">
+            <p style="text-align: center;"><strong><span style="background-color: #ffff00;"><strong style="background-color: #ffffff;"><span style="background-color: #ffff00;"><strong style="background-color: #ffffff;"><span style="background-color: #ffff00;"><span style="text-decoration: underline;"><a href="http://www.magicstore.it/areaclienti/">Loggati</a></span> e Scopri le OFFERTE<br /></span></strong></span></strong></span></strong></p>
+<p style="text-align: center;"><strong>SPEDIZIONI OMAGGIO DA 70&euro; CON CORRIERE</strong><strong style="text-align: center;"></strong></p>          </div>
+                    
+        <div id="system_navigation" class="s_nav">
+          <ul class="s_list_1 clearfix">
+            <li><a href="https://www.magicstore.it/ritiro_carte.php"><strong>Ritiro carte</strong></a></li>
+                        <li><a href="https://www.magicstore.it/preordini.php">Preordini</a></li>
+            <li><a href="https://www.magicstore.it/novita.php">Ultimi arrivi</a></li>
+            <li><a href="https://www.magicstore.it/offerte.php">Offerte</a></li>
+                        <li><a href="https://www.magicstore.it/info.php">Contatti e Info</a></li>
+          </ul>
+        </div>
+
+        <div id="site_search">
+          <div id="search_bar" class="clearfix">
+            <form action="https://www.magicstore.it/ricerca.php">
+              <input type="text" id="filter_keyword" name="q" value="lightning bolt" placeholder="Cerca nel nostro store" />
+              <select name="id_cat"><option value="" selected="selected">Tutti i prodotti</option>
+<option value="26">Altered</option>
+<option value="18">Editoria</option>
+<option value="9">Magic</option>
+<option value="10">Yu-Gi-Oh!</option>
+<option value="13">PKM + SWU</option>
+<option value="12">Lorcana</option>
+<option value="17">MS Eventi</option>
+<option value="1">Giochi di Carte</option>
+<option value="4">Accessori</option>
+<option value="5">Giochi da Tavolo</option>
+<option value="3">Giochi di Ruolo</option>
+<option value="20">Libri</option>
+<option value="2">Miniature</option>
+<option value="19">Giocattoli</option>
+<option value="8">Toys</option>
+<option value="15">Outlet</option>
+</select>              <a id="search_button" class="s_search_button" onclick="$('#search_bar form').submit()" title="Cerca"></a>
+            </form>
+         </div>
+        </div>
+
+        <p id="welcome_message">
+                </p>
+
+          <div id="categories-wrap">
+  <span style="position: absolute; bottom: 52px; color: darkred; left: 13px;font-family: 'Ubuntu Regular',sans-serif;">--- Carte Singole ---</span>
+  <div id="categories" class="s_nav" style="float:left">
+  <ul>
+      <li  id="magic"><a href="https://www.magicstore.it/__/carte_singole_magic/">Magic</a>
+      <div class="s_submenu">
+        <h3>Magic</h3>
+        <ul class="s_list_1 clearfix">
+                      <li><a href="https://www.magicstore.it/__/carte_singole_magic/?divisione=speciali">Set Speciali</a></li>
+                        <li><a href="https://www.magicstore.it/__/carte_singole_magic/?divisione=promofoil">Promo & Foil</a></li>
+                        <li><a href="https://www.magicstore.it/__/carte_singole_magic/?divisione=Standard">Standard</a></li>
+                        <li><a href="https://www.magicstore.it/__/carte_singole_magic/?divisione=Modern">Modern</a></li>
+                        <li><a href="https://www.magicstore.it/__/carte_singole_magic/?divisione=LegacyT1">Legacy & Vintage</a></li>
+                        <li><a href="https://www.magicstore.it/__/carte_singole_magic/?divisione=base">Set Base</a></li>
+                        <li><a href="https://www.magicstore.it/__/carte_singole_magic/?divisione=espansioni">Espansioni</a></li>
+                        <li><a href="https://www.magicstore.it/__/carte_singole_magic/?divisione=duelistpremium">Duelist & Premium Pack</a></li>
+                        <li><a href="https://www.magicstore.it/__/carte_singole_magic/?divisione=duelist">Mazzi</a></li>
+                    </ul>
+        <span class="clear border_eee" style="margin-bottom:10px"></span>
+        <ul class="s_list_1 clearfix">
+          <li><a href="https://www.magicstore.it/__/carte_singole_magic/">Tutti i set Magic</a></li>
+          <li><a style="color:#f00!important" href="https://www.magicstore.it/ritiro_carte.php?id_cat=9">Ritiro Carte Usate</a></li>
+        </ul>
+        <span class="clear border_eee"></span>
+      </div>
+    </li>
+        <li  id="yu-gi-oh"><a href="https://www.magicstore.it/__/carte_singole_yugioh/">Yu-Gi-Oh!</a>
+      <div class="s_submenu">
+        <h3>Yu-Gi-Oh!</h3>
+        <ul class="s_list_1 clearfix">
+                      <li><a href="https://www.magicstore.it/__/carte_singole_yugioh/?divisione=duelist">Mazzi</a></li>
+                        <li><a href="https://www.magicstore.it/__/carte_singole_yugioh/?divisione=duelistpremium">Duelist & Premium Pack</a></li>
+                        <li><a href="https://www.magicstore.it/__/carte_singole_yugioh/?divisione=espansioni">Espansioni</a></li>
+                        <li><a href="https://www.magicstore.it/__/carte_singole_yugioh/?divisione=speciali">Set Speciali</a></li>
+                        <li><a href="https://www.magicstore.it/__/carte_singole_yugioh/?divisione=battle">Battle & Star Pack</a></li>
+                        <li><a href="https://www.magicstore.it/__/carte_singole_yugioh/?divisione=promofoil">Promo & Foil</a></li>
+                    </ul>
+        <span class="clear border_eee" style="margin-bottom:10px"></span>
+        <ul class="s_list_1 clearfix">
+          <li><a href="https://www.magicstore.it/__/carte_singole_yugioh/">Tutti i set Yu-Gi-Oh!</a></li>
+          <li><a style="color:#f00!important" href="https://www.magicstore.it/ritiro_carte.php?id_cat=10">Ritiro Carte Usate</a></li>
+        </ul>
+        <span class="clear border_eee"></span>
+      </div>
+    </li>
+        <li  id="pkm-swu"><a href="https://www.magicstore.it/__/pkm-swu/">PKM + SWU</a>
+      <div class="s_submenu">
+        <h3>PKM + SWU</h3>
+        <ul class="s_list_1 clearfix">
+                      <li><a href="https://www.magicstore.it/__/pkm-swu/?divisione=Standard">Standard</a></li>
+                        <li><a href="https://www.magicstore.it/__/pkm-swu/?divisione=promofoil">Promo & Foil</a></li>
+                        <li><a href="https://www.magicstore.it/__/pkm-swu/?divisione=espansioni">Espansioni</a></li>
+                    </ul>
+        <span class="clear border_eee" style="margin-bottom:10px"></span>
+        <ul class="s_list_1 clearfix">
+          <li><a href="https://www.magicstore.it/__/pkm-swu/">Tutti i set PKM + SWU</a></li>
+          <li><a style="color:#f00!important" href="https://www.magicstore.it/ritiro_carte.php?id_cat=13">Ritiro Carte Usate</a></li>
+        </ul>
+        <span class="clear border_eee"></span>
+      </div>
+    </li>
+        <li  id="lorcana"><a href="https://www.magicstore.it/__/lorcana/">Lorcana</a>
+      <div class="s_submenu">
+        <h3>Lorcana</h3>
+        <ul class="s_list_1 clearfix">
+                      <li><a href="https://www.magicstore.it/__/lorcana/?divisione=espansioni">Espansioni</a></li>
+                    </ul>
+        <span class="clear border_eee" style="margin-bottom:10px"></span>
+        <ul class="s_list_1 clearfix">
+          <li><a href="https://www.magicstore.it/__/lorcana/">Tutti i set Lorcana</a></li>
+          <li><a style="color:#f00!important" href="https://www.magicstore.it/ritiro_carte.php?id_cat=12">Ritiro Carte Usate</a></li>
+        </ul>
+        <span class="clear border_eee"></span>
+      </div>
+    </li>
+        </ul>
+</div>
+<div id="categories" class="s_nav" style="float:left">
+    <ul>
+        <li id="giochi-di-carte"><a href="https://www.magicstore.it/__/giochi_di_carte/">Giochi di Carte</a>
+      <div class="s_submenu">
+        <h3>Giochi di Carte</h3>
+        <ul class="s_list_1 clearfix">
+                    <li> <a href="https://www.magicstore.it/_/magic_the_gathering/">Magic the Gathering</a></li>
+                    <li> <a href="https://www.magicstore.it/_/lorcana/">Lorcana</a></li>
+                    <li> <a href="https://www.magicstore.it/_/star-wars-unlimited/">Star Wars Unlimited</a></li>
+                    <li> <a href="https://www.magicstore.it/_/yugioh/">Yu-Gi-Oh!</a></li>
+                    <li> <a href="https://www.magicstore.it/_/pokemon/">Pokémon</a></li>
+                    <li> <a href="https://www.magicstore.it/_/altered/">Altered</a></li>
+                    <li> <a href="https://www.magicstore.it/_/riftbound-league-of-legends-tcg/">Riftbound: League of Legends TCG</a></li>
+                    <li> <a href="https://www.magicstore.it/_/one-piece-card-game/">One Piece Card Game</a></li>
+                    <li> <a href="https://www.magicstore.it/_/altri-tcg/">Altri TCG</a></li>
+                    <li> <a href="https://www.magicstore.it/_/tomodachi-press/">TOMODACHI PRESS</a></li>
+                    <li> <a href="https://www.magicstore.it/_/skifidol-italian-brainrot-tcg/">SKIFIDOL - ITALIAN BRAINROT TCG</a></li>
+                    <li> <a href="https://www.magicstore.it/_/dragon-ball-super-card-game/">Dragon Ball Super Card Game</a></li>
+                    <li> <a href="https://www.magicstore.it/_/solforge-fusion/">SolForge Fusion</a></li>
+                    <li> <a href="https://www.magicstore.it/_/cardfight-vanguard/">Cardfight!! Vanguard</a></li>
+                    <li> <a href="https://www.magicstore.it/_/flesh-and-blood/">Flesh & Blood</a></li>
+                    <li> <a href="https://www.magicstore.it/_/palworld-official-card-game/">Palworld Official Card Game</a></li>
+                    <li> <a href="https://www.magicstore.it/_/harry-potter-tcg/">Harry Potter TCG</a></li>
+                    <li> <a href="https://www.magicstore.it/_/shaman-king/">Shaman King</a></li>
+                  </ul>
+              </div>
+    </li>
+        <li id="accessori"><a href="https://www.magicstore.it/__/accessori/">Accessori</a>
+      <div class="s_submenu">
+        <h3>Accessori</h3>
+        <ul class="s_list_1 clearfix">
+                    <li> <a href="https://www.magicstore.it/_/koplow-games/">Koplow Games</a></li>
+                    <li> <a href="https://www.magicstore.it/_/gamegenic/">Gamegenic</a></li>
+                    <li> <a href="https://www.magicstore.it/_/tcg-lab/">TCG lab</a></li>
+                    <li> <a href="https://www.magicstore.it/_/nigredo-dadi/">Dadi Nigredo</a></li>
+                    <li> <a href="https://www.magicstore.it/_/chessex/">Chessex</a></li>
+                    <li> <a href="https://www.magicstore.it/_/ultra-pro/">Ultra-PRO</a></li>
+                    <li> <a href="https://www.magicstore.it/_/dragon-shield_accessori/">Dragon Shield</a></li>
+                    <li> <a href="https://www.magicstore.it/_/teche-porta-box-buste/">Teche Porta Box & Buste</a></li>
+                    <li> <a href="https://www.magicstore.it/_/ultimate-guard/">Ultimate Guard</a></li>
+                    <li> <a href="https://www.magicstore.it/_/altri_accessori/">Altri Accessori</a></li>
+                  </ul>
+              </div>
+    </li>
+        <li id="giochi-da-tavolo"><a href="https://www.magicstore.it/__/giochi_da_tavolo/">Giochi da Tavolo</a>
+      <div class="s_submenu">
+        <h3>Giochi da Tavolo</h3>
+        <ul class="s_list_1 clearfix">
+                    <li> <a href="https://www.magicstore.it/_/ms_edizioni/">MS Edizioni</a></li>
+                    <li> <a href="https://www.magicstore.it/_/root/">Root</a></li>
+                    <li> <a href="https://www.magicstore.it/_/djama-games/">Djama Games</a></li>
+                    <li> <a href="https://www.magicstore.it/_/giochix/">Giochix</a></li>
+                    <li> <a href="https://www.magicstore.it/_/nsv/">NSV</a></li>
+                    <li> <a href="https://www.magicstore.it/_/winning-moves/">Winning Moves</a></li>
+                    <li> <a href="https://www.magicstore.it/_/accessori_giochi_da_tavolo/">Accessori per Giochi da Tavolo</a></li>
+                    <li> <a href="https://www.magicstore.it/_/catalogo-giochi-in-scatola/">Catalogo Completo Giochi da Tavolo</a></li>
+                    <li> <a href="https://www.magicstore.it/_/3-emme-games-28447/">3 Emme Games</a></li>
+                    <li> <a href="https://www.magicstore.it/_/asmodee/">Asmodee</a></li>
+                    <li> <a href="https://www.magicstore.it/_/cranio/">Cranio Creations</a></li>
+                    <li> <a href="https://www.magicstore.it/_/deadzone/">Deadzone</a></li>
+                    <li> <a href="https://www.magicstore.it/_/dvgiochi/">dVGiochi</a></li>
+                    <li> <a href="https://www.magicstore.it/_/fever-games/">Fever Games</a></li>
+                    <li> <a href="https://www.magicstore.it/_/gateongames/">GateOnGames</a></li>
+                    <li> <a href="https://www.magicstore.it/_/ghenos-games/">Ghenos Games</a></li>
+                    <li> <a href="https://www.magicstore.it/_/giochi-da-tavolo-in-inglese/">Giochi in Inglese</a></li>
+                    <li> <a href="https://www.magicstore.it/_/giochi-uniti/">Giochi Uniti</a></li>
+                    <li> <a href="https://www.magicstore.it/_/hasbro/">Hasbro</a></li>
+                    <li> <a href="https://www.magicstore.it/_/living-card-game-lcg/">Living Card Game - LCG</a></li>
+                    <li> <a href="https://www.magicstore.it/_/little-rocket-games/">Little Rocket Games</a></li>
+                    <li> <a href="https://www.magicstore.it/_/mancalamaro/">Mancalamaro</a></li>
+                    <li> <a href="https://www.magicstore.it/_/mantic-games/">Mantic Games</a></li>
+                    <li> <a href="https://www.magicstore.it/_/munchkin/">Munchkin</a></li>
+                    <li> <a href="https://www.magicstore.it/_/oliphante/">Oliphante</a></li>
+                    <li> <a href="https://www.magicstore.it/_/party-games-20120405180441/">Party Games</a></li>
+                    <li> <a href="https://www.magicstore.it/_/pendragon-game-studio/">Pendragon Game Studio</a></li>
+                    <li> <a href="https://www.magicstore.it/_/playagame-edizioni/">Playagame Edizioni</a></li>
+                    <li> <a href="https://www.magicstore.it/_/ravensburger/">Ravensburger</a></li>
+                    <li> <a href="https://www.magicstore.it/_/raven/">Raven Distribution</a></li>
+                    <li> <a href="https://www.magicstore.it/_/red-glove/">Red Glove</a></li>
+                    <li> <a href="https://www.magicstore.it/_/eg/">Spin Master/EG</a></li>
+                    <li> <a href="https://www.magicstore.it/_/star-saga/">Star Saga</a></li>
+                    <li> <a href="https://www.magicstore.it/_/the-walking-dead/">The Walking Dead</a></li>
+                    <li> <a href="https://www.magicstore.it/_/studio-supernova/">Studio Supernova</a></li>
+                    <li> <a href="https://www.magicstore.it/_/tin-hat-games/">Tin Hat games</a></li>
+                    <li> <a href="https://www.magicstore.it/_/uplay/">Uplay</a></li>
+                    <li> <a href="https://www.magicstore.it/_/wyrd-edizioni-10713/">Wyrd Edizioni</a></li>
+                    <li> <a href="https://www.magicstore.it/_/yas-games/">Yas! Games</a></li>
+                  </ul>
+              </div>
+    </li>
+        <li id="giochi-di-ruolo"><a href="https://www.magicstore.it/__/giochi_di_ruolo/">Giochi di Ruolo</a>
+      <div class="s_submenu">
+        <h3>Giochi di Ruolo</h3>
+        <ul class="s_list_1 clearfix">
+                    <li> <a href="https://www.magicstore.it/_/alone-against-fear/">Alone Against Fear</a></li>
+                    <li> <a href="https://www.magicstore.it/_/catalogo-completo-giochi-di-ruolo/">Catalogo completo giochi di ruolo</a></li>
+                    <li> <a href="https://www.magicstore.it/_/dungeons_and_dragons/">Dungeons & Dragons</a></li>
+                    <li> <a href="https://www.magicstore.it/_/root-97632/">Root</a></li>
+                    <li> <a href="https://www.magicstore.it/_/four-against-the-great-old-ones/">Four Against the Great Old Ones</a></li>
+                    <li> <a href="https://www.magicstore.it/_/grumpy-bear/">Grumpy Bear</a></li>
+                    <li> <a href="https://www.magicstore.it/_/four-against-darkness/">Four Against Darkness</a></li>
+                    <li> <a href="https://www.magicstore.it/_/the-cthulhu-hack/">The Cthulhu Hack</a></li>
+                    <li> <a href="https://www.magicstore.it/_/dread-il-gioco-di-ruolo/">Dread: Il Gioco di Ruolo</a></li>
+                    <li> <a href="https://www.magicstore.it/_/prima-vennero/">Prima Vennero</a></li>
+                    <li> <a href="https://www.magicstore.it/_/legacy-vita-tra-le-rovine/">Legacy: Vita tra le Rovine</a></li>
+                    <li> <a href="https://www.magicstore.it/_/panini-gdr/">Panini GDR</a></li>
+                    <li> <a href="https://www.magicstore.it/_/panini-gdr-20202/">Panini GDR</a></li>
+                    <li> <a href="https://www.magicstore.it/_/nigredo-press-88401/">Nigredo Press</a></li>
+                    <li> <a href="https://www.magicstore.it/_/fumble-gdr/">Fumble GDR</a></li>
+                    <li> <a href="https://www.magicstore.it/_/unglorious/">Unglorious</a></li>
+                    <li> <a href="https://www.magicstore.it/_/nameless-land/">Nameless Land</a></li>
+                    <li> <a href="https://www.magicstore.it/_/urban-heroes/">Urban Heroes</a></li>
+                    <li> <a href="https://www.magicstore.it/_/the-world-of-anvil/">The World Anvil</a></li>
+                    <li> <a href="https://www.magicstore.it/_/lightfish-games/">Lightfish Games</a></li>
+                    <li> <a href="https://www.magicstore.it/_/vhs-very-horror-stories/">VHS - Very Horror Stories</a></li>
+                    <li> <a href="https://www.magicstore.it/_/45/">Shintiara</a></li>
+                    <li> <a href="https://www.magicstore.it/_/13th-age/">13th Age</a></li>
+                    <li> <a href="https://www.magicstore.it/_/7th-sea/">7th Sea</a></li>
+                    <li> <a href="https://www.magicstore.it/_/acthung-cthulhu/">Achtung! Cthulhu</a></li>
+                    <li> <a href="https://www.magicstore.it/_/nm5cc32028009247-42056159/"></a></li>
+                    <li> <a href="https://www.magicstore.it/_/alice-e-scomparsa-63554/">Alice è Scomparsa</a></li>
+                    <li> <a href="https://www.magicstore.it/_/alien-il-gioco-di-ruolo/">Alien - Il Gioco di Ruolo</a></li>
+                    <li> <a href="https://www.magicstore.it/_/avventure-nella-terra-di-mezzo/">Avventure nella Terra di Mezzo</a></li>
+                    <li> <a href="https://www.magicstore.it/_/broken-compass/">Broken Compass</a></li>
+                    <li> <a href="https://www.magicstore.it/_/blue-rose/">Blue Rose</a></li>
+                    <li> <a href="https://www.magicstore.it/_/conan/">Conan</a></li>
+                    <li> <a href="https://www.magicstore.it/_/63/">Coriolis</a></li>
+                    <li> <a href="https://www.magicstore.it/_/cyberpunk-red/">Cyberpunk Red</a></li>
+                    <li> <a href="https://www.magicstore.it/_/forbidden-lands/">Forbidden Lands</a></li>
+                    <li> <a href="https://www.magicstore.it/_/66/">Cypher System</a></li>
+                    <li> <a href="https://www.magicstore.it/_/degenesis/">Degenesis</a></li>
+                    <li> <a href="https://www.magicstore.it/_/dreamlord-games/">Dreamlord Games</a></li>
+                    <li> <a href="https://www.magicstore.it/_/dune/">DUNE</a></li>
+                    <li> <a href="https://www.magicstore.it/_/fabula-ultima/">Fabula Ultima</a></li>
+                    <li> <a href="https://www.magicstore.it/_/historia/">Historia</a></li>
+                    <li> <a href="https://www.magicstore.it/_/household/">Household</a></li>
+                    <li> <a href="https://www.magicstore.it/_/il-richiamo-di-cthulhu/">Il Richiamo di Cthulhu</a></li>
+                    <li> <a href="https://www.magicstore.it/_/kids-on-bikes/">Kids on Bikes</a></li>
+                    <li> <a href="https://www.magicstore.it/_/kult-divinita-perduta/">Kult: Divinità Perduta</a></li>
+                    <li> <a href="https://www.magicstore.it/_/l-ultima-bomba/">L'Ultima Bomba</a></li>
+                    <li> <a href="https://www.magicstore.it/_/l-ultima-torcia/">L'Ultima Torcia</a></li>
+                    <li> <a href="https://www.magicstore.it/_/l-unico-anello/">L'Unico Anello</a></li>
+                    <li> <a href="https://www.magicstore.it/_/lex-arcana/">Lex Arcana</a></li>
+                    <li> <a href="https://www.magicstore.it/_/lex-occultum/">LexOccultum</a></li>
+                    <li> <a href="https://www.magicstore.it/_/lupo-solitario-il-gioco-di-ruolo/">Lupo Solitario - Il Gioco di Ruolo</a></li>
+                    <li> <a href="https://www.magicstore.it/_/memento-mori/">Memento Mori</a></li>
+                    <li> <a href="https://www.magicstore.it/_/mouse-guard-la-guardia-dei-topi/">Mouse Guard: La Guardia dei Topi</a></li>
+                    <li> <a href="https://www.magicstore.it/_/narrattiva/">Narrattiva</a></li>
+                    <li> <a href="https://www.magicstore.it/_/numenera/">Numenera</a></li>
+                    <li> <a href="https://www.magicstore.it/_/old-school-essential/">Old School Essential</a></li>
+                    <li> <a href="https://www.magicstore.it/_/pathfinder_chronicles/">Pathfinder Gioco di Ruolo</a></li>
+                    <li> <a href="https://www.magicstore.it/_/shadow-of-the-demon-lord/">Shadow of the Demon Lord</a></li>
+                    <li> <a href="https://www.magicstore.it/_/ms-edizioni-89027/">MS Edizioni</a></li>
+                    <li> <a href="https://www.magicstore.it/_/sine-requie-15021/">Sine Requie</a></li>
+                    <li> <a href="https://www.magicstore.it/_/space-orange-42/">Space Orange 42</a></li>
+                    <li> <a href="https://www.magicstore.it/_/spire-la-citta-deve-cadere/">Spire - La Città deve Cadere</a></li>
+                    <li> <a href="https://www.magicstore.it/_/starfinder/">Starfinder</a></li>
+                    <li> <a href="https://www.magicstore.it/_/tales-from-the-loop/">Tales from the Loop</a></li>
+                    <li> <a href="https://www.magicstore.it/_/the-strange-l-anomalia/">The Strange: L'Anomalia</a></li>
+                    <li> <a href="https://www.magicstore.it/_/troika/">Troika!</a></li>
+                    <li> <a href="https://www.magicstore.it/_/trudvang-chronicles/">Trudvang Chronicles</a></li>
+                    <li> <a href="https://www.magicstore.it/_/vampiri_masquerade/">Vampiri la Masquerade</a></li>
+                    <li> <a href="https://www.magicstore.it/_/66-13166/">True20</a></li>
+                    <li> <a href="https://www.magicstore.it/_/vampiri-i-secoli-bui/">Vampiri: I Secoli Bui</a></li>
+                    <li> <a href="https://www.magicstore.it/_/w-h-40-000-roleplay/">W40K</a></li>
+                    <li> <a href="https://www.magicstore.it/_/warhammer_fantasy_roleplay/">Warhammer Fantasy Roleplay</a></li>
+                    <li> <a href="https://www.magicstore.it/_/warhammer-age-of-sigmar-soulbound/">Warhammer: Age of Sigmar - Soulbound</a></li>
+                    <li> <a href="https://www.magicstore.it/_/altri-giochi-di-ruolo/">Altri Giochi di Ruolo</a></li>
+                    <li> <a href="https://www.magicstore.it/_/wyrd-edizioni/">Wyrd Edizioni</a></li>
+                    <li> <a href="https://www.magicstore.it/_/zombicide-chronicles/">Zombicide: Chronicles</a></li>
+                  </ul>
+                <ul class="s_list_1 clearfix">
+          <li><a href="https://www.magicstore.it/_altri/giochi_di_ruolo/">Altri Giochi di Ruolo</a></li>
+        </ul>
+              </div>
+    </li>
+        <li id="libri"><a href="https://www.magicstore.it/__/libri-game/">Libri</a>
+      <div class="s_submenu">
+        <h3>Libri</h3>
+        <ul class="s_list_1 clearfix">
+                    <li> <a href="https://www.magicstore.it/_/ms-edizioni-10814/">MS Edizioni - Fumetto Gioco</a></li>
+                    <li> <a href="https://www.magicstore.it/_/misteri-d-oriente/">Misteri d'Oriente</a></li>
+                    <li> <a href="https://www.magicstore.it/_/horror-business/">Horror Business</a></li>
+                    <li> <a href="https://www.magicstore.it/_/romanzi-warhammer/">Romanzi Warhammer</a></li>
+                    <li> <a href="https://www.magicstore.it/_/lupo-solitario/">Lupo Solitario</a></li>
+                    <li> <a href="https://www.magicstore.it/_/libri-game-asmodee/">Asmodee Entertainment</a></li>
+                    <li> <a href="https://www.magicstore.it/_/oberon-il-mago/">Oberon il Mago</a></li>
+                    <li> <a href="https://www.magicstore.it/_/freeway-warrior/">Freeway Warrior</a></li>
+                    <li> <a href="https://www.magicstore.it/_/choose-cthulhu/">Choose Cthulhu</a></li>
+                    <li> <a href="https://www.magicstore.it/_/il-cavaliere-del-sole-nero/">Il Cavaliere del Sole Nero</a></li>
+                    <li> <a href="https://www.magicstore.it/_/l-ultima-torcia-librogame/">L'Ultima Torcia Librogame</a></li>
+                    <li> <a href="https://www.magicstore.it/_/natale-ad-innsmouth/">Natale Ad Innsmouth</a></li>
+                    <li> <a href="https://www.magicstore.it/_/ace-gamebooks/">Ace Gamebooks</a></li>
+                    <li> <a href="https://www.magicstore.it/_/le-honeste-avventure-di-gigi/">Le Honeste Avventure di Gigi</a></li>
+                    <li> <a href="https://www.magicstore.it/_/destiny-quest/">Destiny Quest</a></li>
+                    <li> <a href="https://www.magicstore.it/_/blood-sword/">Blood Sword</a></li>
+                    <li> <a href="https://www.magicstore.it/_/terre-leggendarie/">Terre Leggendarie</a></li>
+                    <li> <a href="https://www.magicstore.it/_/dangerous-world/">Dangerous World</a></li>
+                    <li> <a href="https://www.magicstore.it/_/critical-if/">Critical IF</a></li>
+                    <li> <a href="https://www.magicstore.it/_/hella-heroes/">Hellas Heroes</a></li>
+                    <li> <a href="https://www.magicstore.it/_/age-of-vapor/">Age of Vapor</a></li>
+                    <li> <a href="https://www.magicstore.it/_/storia-a-bivi/">Storia a Bivi</a></li>
+                    <li> <a href="https://www.magicstore.it/_/fra-tenebra-e-abisso/">Fra Tenebra e Abisso</a></li>
+                    <li> <a href="https://www.magicstore.it/_/nuovi-mondi/">Nuovi Mondi</a></li>
+                    <li> <a href="https://www.magicstore.it/_/dedalo/">Dedalo</a></li>
+                    <li> <a href="https://www.magicstore.it/_/sangue-inchiostro/">Sangue Inchiostro</a></li>
+                    <li> <a href="https://www.magicstore.it/_/libri-game/">Libri Game</a></li>
+                  </ul>
+              </div>
+    </li>
+        <li id="miniature"><a href="https://www.magicstore.it/__/funko_miniature/">Miniature</a>
+      <div class="s_submenu">
+        <h3>Miniature</h3>
+        <ul class="s_list_1 clearfix">
+                    <li> <a href="https://www.magicstore.it/_/warhammer-old-world/">Warhammer Old World</a></li>
+                    <li> <a href="https://www.magicstore.it/_/d-d-nolzur-s-marvelous-miniatures/">D&D Nolzur's Marvelous Miniatures</a></li>
+                    <li> <a href="https://www.magicstore.it/_/wizkids-miniature/">D&D Icons of the Realms</a></li>
+                    <li> <a href="https://www.magicstore.it/_/warhammer_fantasy/">Warhammer Age of Sigmar</a></li>
+                    <li> <a href="https://www.magicstore.it/_/warhammer_40k_miniature/">Warhammer 40.000</a></li>
+                    <li> <a href="https://www.magicstore.it/_/tamiya/">Tamiya</a></li>
+                    <li> <a href="https://www.magicstore.it/_/games_workshop_miniature/">Games Workshop</a></li>
+                    <li> <a href="https://www.magicstore.it/_/blood-bowl/">Blood Bowl</a></li>
+                    <li> <a href="https://www.magicstore.it/_/vallejo/">Vallejo</a></li>
+                    <li> <a href="https://www.magicstore.it/_/necromunda/">Necromunda</a></li>
+                    <li> <a href="https://www.magicstore.it/_/terraincrate/">Terrain Crate</a></li>
+                    <li> <a href="https://www.magicstore.it/_/heroclix_miniature/">Heroclix</a></li>
+                    <li> <a href="https://www.magicstore.it/_/nuove_collezioni/">Lego Minifigures</a></li>
+                  </ul>
+                <ul class="s_list_1 clearfix">
+          <li><a href="https://www.magicstore.it/_altri/funko_miniature/">Altre Miniature</a></li>
+        </ul>
+              </div>
+    </li>
+        <li id="outlet"><a href="https://www.magicstore.it/__/outlet/">Outlet</a>
+      <div class="s_submenu s_submenu_short">
+        <h3>Outlet</h3>
+        <ul class="s_list_1 clearfix">
+                    <li> <a href="https://www.magicstore.it/_/giochi-di-carte/">Giochi di Carte</a></li>
+                    <li> <a href="https://www.magicstore.it/_/giochi-da-tavolo/">Giochi da Tavolo e di Ruolo</a></li>
+                  </ul>
+                <ul class="s_list_1 clearfix">
+          <li><a href="https://www.magicstore.it/_altri/outlet/">Altrt Outlet</a></li>
+        </ul>
+              </div>
+    </li>
+      </ul>
+</div>
+<div style="clear:both"></div>
+</div>
+  
+        <div id="cart_menu" class="s_nav">
+            <a href="https://www.magicstore.it/carrello/"><span class="s_icon"></span> <small class="s_text">Carrello</small><span class="s_grand_total s_main_color">&euro; 0,00</span></a>
+
+            </div>
+
+      </div>
+    </div>
+    
+      <div id="intro">
+      <div id="intro_wrap" class="bg-gdc">
+        
+        <div class="container_12">
+          
+          <div id="breadcrumbs" class="grid_12">
+            <a href="https://www.magicstore.it/">Home</a>
+                      </div>
+          <h1>Ricerca di &quot;lightning bolt&quot;</h1>
+        </div>
+      </div>
+    </div>
+    
+  <div id="content" class="container_16">
+
+    <div id="category" class="grid_12">
+
+            <div id="listing_options">
+
+        <div id="listing_sort" class="s_switcher">
+          <span class="s_selected" rel="data_arrivo-desc">Data arrivo</span>
+          <ul class="s_options" style="display: none;">
+            <li><a rel="default-desc">Seleziona ordinamento</a></li><li><a rel="data_arrivo-desc">Data arrivo</a></li><li><a rel="prodotto-asc">Nome A - Z</a></li><li><a rel="prodotto-desc">Nome Z - A</a></li><li><a rel="prezzo-asc">Prezzo crescente</a></li><li><a rel="prezzo-desc">Prezzo decrescente</a></li>          </ul>
+        </div>
+
+        <div id="view_mode" class="s_nav">
+        </div>
+      </div>
+      
+      <div class="clear"></div>
+
+      <div id="prod_listing">
+                    <div id="suggerimenti">
+              <strong>Ti potrebbe interessare anche</strong> : 
+              <a href="https://www.magicstore.it/ricerca.php?q=Emeritus+of+Conflict++%2F++%2F++Lightning+Bolt">Emeritus of Conflict  /  /  Lightning Bolt</a>, <a href="https://www.magicstore.it/ricerca.php?q=Lightning+Bolt+%28Judge+Foil%29">Lightning Bolt (Judge Foil)</a>, <a href="https://www.magicstore.it/ricerca.php?q=Lightning+Bolt+%28Textless+Player+Rewards%29">Lightning Bolt (Textless Player Rewards)</a>            </div>
+                      <div class="s_listing s_list_view clearfix">
+                            <div class="s_item clearfix">
+                  <div class="grid_2 alpha">
+                    <a class="s_thumb" href="https://www.magicstore.it/-/emeritus-of-conflict-lightning-bolt"><img src="https://www.magicstore.it/images/ms_img_default_w60.gif" title="EMERITUS OF CONFLICT  /  /  LIGHTNING BOLT" alt="EMERITUS OF CONFLICT  /  /  LIGHTNING BOLT" /></a>
+                  </div>
+
+                  <div class="grid_10 omega">
+                    <h3><a href="https://www.magicstore.it/-/emeritus-of-conflict-lightning-bolt">EMERITUS OF CONFLICT  /  /  LIGHTNING BOLT</a></h3>
+
+                                        
+                    <p class="subcat-rel"><span><a href="https://www.magicstore.it/__/carte_singole_magic/">Magic</a> &gt; <a href="https://www.magicstore.it/_/i-segreti-di-strixhaven/">I Segreti di Strixhaven</a></span><br /></p><p>M - nr 113&nbsp; &nbsp;<img src="https://www.magicstore.it/images/colori_magic/color_R.gif" alt="R" /></p>                    <p class="s_price s_price">
+                                            <span class="s_currency s_before">&euro;</span>7.00                      
+                                        <div style="text-align:center;float:right;padding-right:7px">
+                      <img src="https://www.magicstore.it/images/semaforo_2.gif" alt="Disponibile" /> 
+
+                                              (4)
+                                          </div>
+                                        </p>
+
+                    
+                                        Qta: <input type="text" class="box-qta" id="product_buy_quantity_154654" value="1" size="3" />&nbsp;&nbsp;
+                                        
+                                        <a class="s_button_add_to_cart" href="https://www.magicstore.it/carrello/update.php?id=154654" rel="154654"><span class="s_icon_16"><span class="s_icon"></span>Compra</span></a>
+                                        
+                                        
+                                      </div>
+                </div>
+                                <div class="s_item clearfix">
+                  <div class="grid_2 alpha">
+                    <a class="s_thumb" href="https://www.magicstore.it/-/fulmine-15619"><img src="https://www.magicstore.it/images/ms_img_default_w60.gif" title="FULMINE" alt="FULMINE" /></a>
+                  </div>
+
+                  <div class="grid_10 omega">
+                    <h3><a href="https://www.magicstore.it/-/fulmine-15619">FULMINE</a></h3>
+
+                                        
+                    <p class="subcat-rel"><span><a href="https://www.magicstore.it/__/carte_singole_magic/">Magic</a> &gt; <a href="https://www.magicstore.it/_/magic-the-gathering-avatar-the-last-airbender-eternal/">Magic: The Gathering | Avatar: The Last Airbender: Eternal</a></span><br /></p><p>M - nr 32&nbsp; &nbsp;<img src="https://www.magicstore.it/images/colori_magic/color_R.gif" alt="R" /></p>                    <p class="s_price s_price">
+                                            <span class="s_currency s_before">&euro;</span>4.00                      
+                                        <div style="text-align:center;float:right;padding-right:7px">
+                      <img src="https://www.magicstore.it/images/semaforo_1.gif" alt="Disponibilità limitata" /> 
+
+                                              (1)
+                                          </div>
+                                        </p>
+
+                    
+                                        Qta: <input type="text" class="box-qta" id="product_buy_quantity_152269" value="1" size="3" />&nbsp;&nbsp;
+                                        
+                                        <a class="s_button_add_to_cart" href="https://www.magicstore.it/carrello/update.php?id=152269" rel="152269"><span class="s_icon_16"><span class="s_icon"></span>Compra</span></a>
+                                        
+                                        
+                                      </div>
+                </div>
+                                <div class="s_item clearfix">
+                  <div class="grid_2 alpha">
+                    <a class="s_thumb" href="https://www.magicstore.it/-/fulmine-37265"><img src="https://www.magicstore.it/images/ms_img_default_w60.gif" title="FULMINE" alt="FULMINE" /></a>
+                  </div>
+
+                  <div class="grid_10 omega">
+                    <h3><a href="https://www.magicstore.it/-/fulmine-37265">FULMINE</a></h3>
+
+                                        
+                    <p class="subcat-rel"><span><a href="https://www.magicstore.it/__/carte_singole_magic/">Magic</a> &gt; <a href="https://www.magicstore.it/_/magic-the-gathering-final-fantasy-through-the-ages/">Magic: The Gathering - FINAL FANTASY Through the Ages</a></span><br /></p><p>N - nr 40&nbsp; &nbsp;<img src="https://www.magicstore.it/images/colori_magic/color_R.gif" alt="R" /></p>                    <p class="s_price  s_no_price">
+                                            <span class="s_currency s_before">&euro;</span>2.50                      
+                                        <div style="text-align:center;float:right;padding-right:7px">
+                      <img src="https://www.magicstore.it/images/semaforo_0.gif" alt="Esaurito" /> 
+
+                                              <a href="https://www.magicstore.it/areaclienti/wishlist.php?id_prod=148713&amp;return=%2Fricerca.php%3Fq%3Dlightning%2Bbolt%26id_cat%3D9&amp;n=FULMINE">
+                        <img src="https://www.magicstore.it/images/i_avvisami_40.gif" alt="avvisami quando la carta torna disponibile" />
+                        </a>
+                                          </div>
+                                        </p>
+
+                    
+                                        
+                                        <span class="s_button_add_to_cart"><span class="s_icon"></span>Non disponibile. Per essere avvisato quando la carta tornerà disponibile <strong style="cursor:pointer" onclick="window.location='https://www.magicstore.it/areaclienti/wishlist.php?id_prod=148713&return=%2Fricerca.php%3Fq%3Dlightning%2Bbolt%26id_cat%3D9&n=FULMINE'">clicca qui</strong></span>
+                                        
+                                        
+                                      </div>
+                </div>
+                                <div class="s_item clearfix">
+                  <div class="grid_2 alpha">
+                    <a class="s_thumb" href="https://www.magicstore.it/-/fulmine-foil-35932"><img src="https://www.magicstore.it/data/prodotti/th_w60/l/lightning-bolt-13113.jpg" title="FULMINE FOIL" alt="FULMINE FOIL" /></a>
+                  </div>
+
+                  <div class="grid_10 omega">
+                    <h3><a href="https://www.magicstore.it/-/fulmine-foil-35932">FULMINE FOIL</a></h3>
+
+                                        
+                    <p class="subcat-rel"><span><a href="https://www.magicstore.it/__/carte_singole_magic/">Magic</a> &gt; <a href="https://www.magicstore.it/_/secret-lair/">Secret Lair</a></span><br /></p><p>R - nr 675&nbsp; &nbsp;<img src="https://www.magicstore.it/images/colori_magic/color_R.gif" alt="R" /></p>                    <p class="s_price  s_no_price">
+                                            <span class="s_currency s_before">&euro;</span>5.00                      
+                                        <div style="text-align:center;float:right;padding-right:7px">
+                      <img src="https://www.magicstore.it/images/semaforo_0.gif" alt="Esaurito" /> 
+
+                                              <a href="https://www.magicstore.it/areaclienti/wishlist.php?id_prod=118254&amp;return=%2Fricerca.php%3Fq%3Dlightning%2Bbolt%26id_cat%3D9&amp;n=FULMINE FOIL">
+                        <img src="https://www.magicstore.it/images/i_avvisami_40.gif" alt="avvisami quando la carta torna disponibile" />
+                        </a>
+                                          </div>
+                                        </p>
+
+                    
+                                        Qta: <input type="text" class="box-qta" id="product_buy_quantity_118254" value="1" size="3" />&nbsp;&nbsp;
+                                        
+                                        <span class="s_button_add_to_cart"><span class="s_icon"></span>Non disponibile. Per essere avvisato quando la carta tornerà disponibile <strong style="cursor:pointer" onclick="window.location='https://www.magicstore.it/areaclienti/wishlist.php?id_prod=118254&return=%2Fricerca.php%3Fq%3Dlightning%2Bbolt%26id_cat%3D9&n=FULMINE FOIL'">clicca qui</strong></span>
+                                        
+                                        
+                                        &nbsp; &nbsp; &nbsp; 
+                    <span class="prezzo_vendita">Valutazione: &euro; 2.50 &gt;</span>&nbsp;
+                    <a class="s_button_add_to_cart sell" rel="118254" href="https://www.magicstore.it/ritiro/update.php?id=118254">Vendi</a>
+                                      </div>
+                </div>
+                                <div class="s_item clearfix">
+                  <div class="grid_2 alpha">
+                    <a class="s_thumb" href="https://www.magicstore.it/-/fulmine-78733"><img src="https://www.magicstore.it/data/prodotti/th_w60/l/lightning-bolt-12138.jpg" title="FULMINE" alt="FULMINE" /></a>
+                  </div>
+
+                  <div class="grid_10 omega">
+                    <h3><a href="https://www.magicstore.it/-/fulmine-78733">FULMINE</a></h3>
+
+                                        
+                    <p class="subcat-rel"><span><a href="https://www.magicstore.it/__/carte_singole_magic/">Magic</a> &gt; <a href="https://www.magicstore.it/_/secret-lair/">Secret Lair</a></span><br /></p><p>R - nr 675&nbsp; &nbsp;<img src="https://www.magicstore.it/images/colori_magic/color_R.gif" alt="R" /></p>                    <p class="s_price  s_no_price">
+                                            <span class="s_currency s_before">&euro;</span>6.00                      
+                                        <div style="text-align:center;float:right;padding-right:7px">
+                      <img src="https://www.magicstore.it/images/semaforo_0.gif" alt="Esaurito" /> 
+
+                                              <a href="https://www.magicstore.it/areaclienti/wishlist.php?id_prod=118255&amp;return=%2Fricerca.php%3Fq%3Dlightning%2Bbolt%26id_cat%3D9&amp;n=FULMINE">
+                        <img src="https://www.magicstore.it/images/i_avvisami_40.gif" alt="avvisami quando la carta torna disponibile" />
+                        </a>
+                                          </div>
+                                        </p>
+
+                    
+                                        Qta: <input type="text" class="box-qta" id="product_buy_quantity_118255" value="1" size="3" />&nbsp;&nbsp;
+                                        
+                                        <span class="s_button_add_to_cart"><span class="s_icon"></span>Non disponibile. Per essere avvisato quando la carta tornerà disponibile <strong style="cursor:pointer" onclick="window.location='https://www.magicstore.it/areaclienti/wishlist.php?id_prod=118255&return=%2Fricerca.php%3Fq%3Dlightning%2Bbolt%26id_cat%3D9&n=FULMINE'">clicca qui</strong></span>
+                                        
+                                        
+                                        &nbsp; &nbsp; &nbsp; 
+                    <span class="prezzo_vendita">Valutazione: &euro; 3.00 &gt;</span>&nbsp;
+                    <a class="s_button_add_to_cart sell" rel="118255" href="https://www.magicstore.it/ritiro/update.php?id=118255">Vendi</a>
+                                      </div>
+                </div>
+                                <div class="s_item clearfix">
+                  <div class="grid_2 alpha">
+                    <a class="s_thumb" href="https://www.magicstore.it/-/fulmine-96381"><img src="https://www.magicstore.it/data/prodotti/th_w60/f/fulmine-60504.jpg" title="FULMINE" alt="FULMINE" /></a>
+                  </div>
+
+                  <div class="grid_10 omega">
+                    <h3><a href="https://www.magicstore.it/-/fulmine-96381">FULMINE</a></h3>
+
+                                        
+                    <p class="subcat-rel"><span><a href="https://www.magicstore.it/__/carte_singole_magic/">Magic</a> &gt; <a href="https://www.magicstore.it/_/double-masters-2022/">Double Masters 2022</a></span><br /></p><p>NC - nr 117&nbsp; &nbsp;<img src="https://www.magicstore.it/images/colori_magic/color_R.gif" alt="R" /></p>                    <p class="s_price  s_no_price">
+                                            <span class="s_currency s_before">&euro;</span>1.00                      
+                                        <div style="text-align:center;float:right;padding-right:7px">
+                      <img src="https://www.magicstore.it/images/semaforo_0.gif" alt="Esaurito" /> 
+
+                                              <a href="https://www.magicstore.it/areaclienti/wishlist.php?id_prod=117358&amp;return=%2Fricerca.php%3Fq%3Dlightning%2Bbolt%26id_cat%3D9&amp;n=FULMINE">
+                        <img src="https://www.magicstore.it/images/i_avvisami_40.gif" alt="avvisami quando la carta torna disponibile" />
+                        </a>
+                                          </div>
+                                        </p>
+
+                    
+                                        Qta: <input type="text" class="box-qta" id="product_buy_quantity_117358" value="1" size="3" />&nbsp;&nbsp;
+                                        
+                                        <span class="s_button_add_to_cart"><span class="s_icon"></span>Non disponibile. Per essere avvisato quando la carta tornerà disponibile <strong style="cursor:pointer" onclick="window.location='https://www.magicstore.it/areaclienti/wishlist.php?id_prod=117358&return=%2Fricerca.php%3Fq%3Dlightning%2Bbolt%26id_cat%3D9&n=FULMINE'">clicca qui</strong></span>
+                                        
+                                        
+                                        &nbsp; &nbsp; &nbsp; 
+                    <span class="prezzo_vendita">Valutazione: &euro; 0.50 &gt;</span>&nbsp;
+                    <a class="s_button_add_to_cart sell" rel="117358" href="https://www.magicstore.it/ritiro/update.php?id=117358">Vendi</a>
+                                      </div>
+                </div>
+                                <div class="s_item clearfix">
+                  <div class="grid_2 alpha">
+                    <a class="s_thumb" href="https://www.magicstore.it/-/fulmine-87540"><img src="https://www.magicstore.it/data/prodotti/th_w60/f/fulmine-66419.jpg" title="FULMINE" alt="FULMINE" /></a>
+                  </div>
+
+                  <div class="grid_10 omega">
+                    <h3><a href="https://www.magicstore.it/-/fulmine-87540">FULMINE</a></h3>
+
+                                        
+                    <p class="subcat-rel"><span><a href="https://www.magicstore.it/__/carte_singole_magic/">Magic</a> &gt; <a href="https://www.magicstore.it/_/double-masters-2022-extra/">Double Masters 2022 EXTRA</a></span><br /></p><p>NC - nr 361&nbsp; &nbsp;<img src="https://www.magicstore.it/images/colori_magic/color_R.gif" alt="R" /></p>                    <p class="s_price  s_no_price">
+                                            <span class="s_currency s_before">&euro;</span>5.00                      
+                                        <div style="text-align:center;float:right;padding-right:7px">
+                      <img src="https://www.magicstore.it/images/semaforo_0.gif" alt="Esaurito" /> 
+
+                                              <a href="https://www.magicstore.it/areaclienti/wishlist.php?id_prod=117605&amp;return=%2Fricerca.php%3Fq%3Dlightning%2Bbolt%26id_cat%3D9&amp;n=FULMINE">
+                        <img src="https://www.magicstore.it/images/i_avvisami_40.gif" alt="avvisami quando la carta torna disponibile" />
+                        </a>
+                                          </div>
+                                        </p>
+
+                    
+                                        Qta: <input type="text" class="box-qta" id="product_buy_quantity_117605" value="1" size="3" />&nbsp;&nbsp;
+                                        
+                                        <span class="s_button_add_to_cart"><span class="s_icon"></span>Non disponibile. Per essere avvisato quando la carta tornerà disponibile <strong style="cursor:pointer" onclick="window.location='https://www.magicstore.it/areaclienti/wishlist.php?id_prod=117605&return=%2Fricerca.php%3Fq%3Dlightning%2Bbolt%26id_cat%3D9&n=FULMINE'">clicca qui</strong></span>
+                                        
+                                        
+                                        &nbsp; &nbsp; &nbsp; 
+                    <span class="prezzo_vendita">Valutazione: &euro; 2.50 &gt;</span>&nbsp;
+                    <a class="s_button_add_to_cart sell" rel="117605" href="https://www.magicstore.it/ritiro/update.php?id=117605">Vendi</a>
+                                      </div>
+                </div>
+                                <div class="s_item clearfix">
+                  <div class="grid_2 alpha">
+                    <a class="s_thumb" href="https://www.magicstore.it/-/fulmine-68431-85325"><img src="https://www.magicstore.it/data/prodotti/th_w60/f/fulmine-46143-15051.png" title="FULMINE - FOIL" alt="FULMINE - FOIL" /></a>
+                  </div>
+
+                  <div class="grid_10 omega">
+                    <h3><a href="https://www.magicstore.it/-/fulmine-68431-85325">FULMINE - FOIL</a></h3>
+
+                                        
+                    <p class="subcat-rel"><span><a href="https://www.magicstore.it/__/carte_singole_magic/">Magic</a> &gt; <a href="https://www.magicstore.it/_/foil/">MTG Foil</a></span><br /><span><a href="https://www.magicstore.it/__/carte_singole_magic/">Magic</a> &gt; <a href="https://www.magicstore.it/_/leggende-di-commander-battaglia-per-baldur-s-gate/">Leggende di Commander: Battaglia per Baldur’s Gate</a></span><br /></p><p>C - nr 187&nbsp; &nbsp;<img src="https://www.magicstore.it/images/colori_magic/color_R.gif" alt="R" /></p>                    <p class="s_price  s_no_price">
+                                            <span class="s_currency s_before">&euro;</span>3.00                      
+                                        <div style="text-align:center;float:right;padding-right:7px">
+                      <img src="https://www.magicstore.it/images/semaforo_0.gif" alt="Esaurito" /> 
+
+                                              <a href="https://www.magicstore.it/areaclienti/wishlist.php?id_prod=121052&amp;return=%2Fricerca.php%3Fq%3Dlightning%2Bbolt%26id_cat%3D9&amp;n=FULMINE - FOIL">
+                        <img src="https://www.magicstore.it/images/i_avvisami_40.gif" alt="avvisami quando la carta torna disponibile" />
+                        </a>
+                                          </div>
+                                        </p>
+
+                    
+                                        
+                                        <span class="s_button_add_to_cart"><span class="s_icon"></span>Non disponibile. Per essere avvisato quando la carta tornerà disponibile <strong style="cursor:pointer" onclick="window.location='https://www.magicstore.it/areaclienti/wishlist.php?id_prod=121052&return=%2Fricerca.php%3Fq%3Dlightning%2Bbolt%26id_cat%3D9&n=FULMINE - FOIL'">clicca qui</strong></span>
+                                        
+                                        
+                                      </div>
+                </div>
+                                <div class="s_item clearfix">
+                  <div class="grid_2 alpha">
+                    <a class="s_thumb" href="https://www.magicstore.it/-/fulmine-68431"><img src="https://www.magicstore.it/data/prodotti/th_w60/f/fulmine-46143.png" title="FULMINE" alt="FULMINE" /></a>
+                  </div>
+
+                  <div class="grid_10 omega">
+                    <h3><a href="https://www.magicstore.it/-/fulmine-68431">FULMINE</a></h3>
+
+                                        
+                    <p class="subcat-rel"><span><a href="https://www.magicstore.it/__/carte_singole_magic/">Magic</a> &gt; <a href="https://www.magicstore.it/_/leggende-di-commander-battaglia-per-baldur-s-gate/">Leggende di Commander: Battaglia per Baldur’s Gate</a></span><br /></p><p>C - nr 187&nbsp; &nbsp;<img src="https://www.magicstore.it/images/colori_magic/color_R.gif" alt="R" /></p>                    <p class="s_price  s_no_price">
+                                            <span class="s_currency s_before">&euro;</span>0.50                      
+                                        <div style="text-align:center;float:right;padding-right:7px">
+                      <img src="https://www.magicstore.it/images/semaforo_0.gif" alt="Esaurito" /> 
+
+                                              <a href="https://www.magicstore.it/areaclienti/wishlist.php?id_prod=116531&amp;return=%2Fricerca.php%3Fq%3Dlightning%2Bbolt%26id_cat%3D9&amp;n=FULMINE">
+                        <img src="https://www.magicstore.it/images/i_avvisami_40.gif" alt="avvisami quando la carta torna disponibile" />
+                        </a>
+                                          </div>
+                                        </p>
+
+                    
+                                        Qta: <input type="text" class="box-qta" id="product_buy_quantity_116531" value="1" size="3" />&nbsp;&nbsp;
+                                        
+                                        <span class="s_button_add_to_cart"><span class="s_icon"></span>Non disponibile. Per essere avvisato quando la carta tornerà disponibile <strong style="cursor:pointer" onclick="window.location='https://www.magicstore.it/areaclienti/wishlist.php?id_prod=116531&return=%2Fricerca.php%3Fq%3Dlightning%2Bbolt%26id_cat%3D9&n=FULMINE'">clicca qui</strong></span>
+                                        
+                                        
+                                        &nbsp; &nbsp; &nbsp; 
+                    <span class="prezzo_vendita">Valutazione: &euro; 0.15 &gt;</span>&nbsp;
+                    <a class="s_button_add_to_cart sell" rel="116531" href="https://www.magicstore.it/ritiro/update.php?id=116531">Vendi</a>
+                                      </div>
+                </div>
+                                <div class="s_item clearfix">
+                  <div class="grid_2 alpha">
+                    <a class="s_thumb" href="https://www.magicstore.it/-/fulmine-16671"><img src="https://www.magicstore.it/data/prodotti/th_w60/f/fulmine-92175.jpg" title="FULMINE" alt="FULMINE" /></a>
+                  </div>
+
+                  <div class="grid_10 omega">
+                    <h3><a href="https://www.magicstore.it/-/fulmine-16671">FULMINE</a></h3>
+
+                                        
+                    <p class="subcat-rel"><span><a href="https://www.magicstore.it/__/carte_singole_magic/">Magic</a> &gt; <a href="https://www.magicstore.it/_/leggende-di-commander-battaglia-per-baldur-s-gate-extra/">Leggende di Commander: Battaglia per Baldur’s Gate EXTRA</a></span><br /></p><p>C - nr 401&nbsp; &nbsp;<img src="https://www.magicstore.it/images/colori_magic/color_R.gif" alt="R" /></p>                    <p class="s_price s_price">
+                                            <span class="s_currency s_before">&euro;</span>5.00                      
+                                        <div style="text-align:center;float:right;padding-right:7px">
+                      <img src="https://www.magicstore.it/images/semaforo_2.gif" alt="Disponibile" /> 
+
+                                              (4)
+                                          </div>
+                                        </p>
+
+                    
+                                        Qta: <input type="text" class="box-qta" id="product_buy_quantity_116749" value="1" size="3" />&nbsp;&nbsp;
+                                        
+                                        <a class="s_button_add_to_cart" href="https://www.magicstore.it/carrello/update.php?id=116749" rel="116749"><span class="s_icon_16"><span class="s_icon"></span>Compra</span></a>
+                                        
+                                        
+                                      </div>
+                </div>
+                                <div class="s_item clearfix">
+                  <div class="grid_2 alpha">
+                    <a class="s_thumb" href="https://www.magicstore.it/-/fulmine-89948"><img src="https://www.magicstore.it/data/prodotti/th_w60/f/fulmine-41986.png" title="FULMINE" alt="FULMINE" /></a>
+                  </div>
+
+                  <div class="grid_10 omega">
+                    <h3><a href="https://www.magicstore.it/-/fulmine-89948">FULMINE</a></h3>
+
+                                        
+                    <p class="subcat-rel"><span><a href="https://www.magicstore.it/__/carte_singole_magic/">Magic</a> &gt; <a href="https://www.magicstore.it/_/strixhaven-archivio-mistico/">Strixhaven - Archivio Mistico</a></span><br /></p><p>R - nr 42&nbsp; &nbsp;<img src="https://www.magicstore.it/images/colori_magic/color_R.gif" alt="R" /></p>                    <p class="s_price  s_no_price">
+                                            <span class="s_currency s_before">&euro;</span>1.00                      
+                                        <div style="text-align:center;float:right;padding-right:7px">
+                      <img src="https://www.magicstore.it/images/semaforo_0.gif" alt="Esaurito" /> 
+
+                                              <a href="https://www.magicstore.it/areaclienti/wishlist.php?id_prod=105660&amp;return=%2Fricerca.php%3Fq%3Dlightning%2Bbolt%26id_cat%3D9&amp;n=FULMINE">
+                        <img src="https://www.magicstore.it/images/i_avvisami_40.gif" alt="avvisami quando la carta torna disponibile" />
+                        </a>
+                                          </div>
+                                        </p>
+
+                    
+                                        Qta: <input type="text" class="box-qta" id="product_buy_quantity_105660" value="1" size="3" />&nbsp;&nbsp;
+                                        
+                                        <span class="s_button_add_to_cart"><span class="s_icon"></span>Non disponibile. Per essere avvisato quando la carta tornerà disponibile <strong style="cursor:pointer" onclick="window.location='https://www.magicstore.it/areaclienti/wishlist.php?id_prod=105660&return=%2Fricerca.php%3Fq%3Dlightning%2Bbolt%26id_cat%3D9&n=FULMINE'">clicca qui</strong></span>
+                                        
+                                        
+                                        &nbsp; &nbsp; &nbsp; 
+                    <span class="prezzo_vendita">Valutazione: &euro; 0.50 &gt;</span>&nbsp;
+                    <a class="s_button_add_to_cart sell" rel="105660" href="https://www.magicstore.it/ritiro/update.php?id=105660">Vendi</a>
+                                      </div>
+                </div>
+                                <div class="s_item clearfix">
+                  <div class="grid_2 alpha">
+                    <a class="s_thumb" href="https://www.magicstore.it/-/fulmine-promo-magicfest"><img src="https://www.magicstore.it/data/prodotti/th_w60/3/367404.jpg" title="FULMINE - PROMO MAGICFEST" alt="FULMINE - PROMO MAGICFEST" /></a>
+                  </div>
+
+                  <div class="grid_10 omega">
+                    <h3><a href="https://www.magicstore.it/-/fulmine-promo-magicfest">FULMINE - PROMO MAGICFEST</a></h3>
+
+                                        
+                    <p class="subcat-rel"><span><a href="https://www.magicstore.it/__/carte_singole_magic/">Magic</a> &gt; <a href="https://www.magicstore.it/_/promo/">Promo</a></span><br /></p><p>R - nr 141&nbsp; &nbsp;<img src="https://www.magicstore.it/images/colori_magic/color_R.gif" alt="R" /></p>                    <p class="s_price  s_no_price">
+                                            <span class="s_currency s_before">&euro;</span>5.00                      
+                                        <div style="text-align:center;float:right;padding-right:7px">
+                      <img src="https://www.magicstore.it/images/semaforo_0.gif" alt="Esaurito" /> 
+
+                                              <a href="https://www.magicstore.it/areaclienti/wishlist.php?id_prod=111235&amp;return=%2Fricerca.php%3Fq%3Dlightning%2Bbolt%26id_cat%3D9&amp;n=FULMINE - PROMO MAGICFEST">
+                        <img src="https://www.magicstore.it/images/i_avvisami_40.gif" alt="avvisami quando la carta torna disponibile" />
+                        </a>
+                                          </div>
+                                        </p>
+
+                    
+                                        Qta: <input type="text" class="box-qta" id="product_buy_quantity_111235" value="1" size="3" />&nbsp;&nbsp;
+                                        
+                                        <span class="s_button_add_to_cart"><span class="s_icon"></span>Non disponibile. Per essere avvisato quando la carta tornerà disponibile <strong style="cursor:pointer" onclick="window.location='https://www.magicstore.it/areaclienti/wishlist.php?id_prod=111235&return=%2Fricerca.php%3Fq%3Dlightning%2Bbolt%26id_cat%3D9&n=FULMINE - PROMO MAGICFEST'">clicca qui</strong></span>
+                                        
+                                        
+                                        &nbsp; &nbsp; &nbsp; 
+                    <span class="prezzo_vendita">Valutazione: &euro; 2.50 &gt;</span>&nbsp;
+                    <a class="s_button_add_to_cart sell" rel="111235" href="https://www.magicstore.it/ritiro/update.php?id=111235">Vendi</a>
+                                      </div>
+                </div>
+                                <div class="s_item clearfix">
+                  <div class="grid_2 alpha">
+                    <a class="s_thumb" href="https://www.magicstore.it/-/fulmine-promo-magicfest-92277"><img src="https://www.magicstore.it/data/prodotti/th_w60/3/367404-19445.jpg" title="FULMINE - FOIL PROMO MAGICFEST" alt="FULMINE - FOIL PROMO MAGICFEST" /></a>
+                  </div>
+
+                  <div class="grid_10 omega">
+                    <h3><a href="https://www.magicstore.it/-/fulmine-promo-magicfest-92277">FULMINE - FOIL PROMO MAGICFEST</a></h3>
+
+                                        
+                    <p class="subcat-rel"><span><a href="https://www.magicstore.it/__/carte_singole_magic/">Magic</a> &gt; <a href="https://www.magicstore.it/_/promo/">Promo</a></span><br /></p><p>R - nr 141&nbsp; &nbsp;<img src="https://www.magicstore.it/images/colori_magic/color_R.gif" alt="R" /></p>                    <p class="s_price  s_no_price">
+                                            <span class="s_currency s_before">&euro;</span>6.00                      
+                                        <div style="text-align:center;float:right;padding-right:7px">
+                      <img src="https://www.magicstore.it/images/semaforo_0.gif" alt="Esaurito" /> 
+
+                                              <a href="https://www.magicstore.it/areaclienti/wishlist.php?id_prod=111236&amp;return=%2Fricerca.php%3Fq%3Dlightning%2Bbolt%26id_cat%3D9&amp;n=FULMINE - FOIL PROMO MAGICFEST">
+                        <img src="https://www.magicstore.it/images/i_avvisami_40.gif" alt="avvisami quando la carta torna disponibile" />
+                        </a>
+                                          </div>
+                                        </p>
+
+                    
+                                        Qta: <input type="text" class="box-qta" id="product_buy_quantity_111236" value="1" size="3" />&nbsp;&nbsp;
+                                        
+                                        <span class="s_button_add_to_cart"><span class="s_icon"></span>Non disponibile. Per essere avvisato quando la carta tornerà disponibile <strong style="cursor:pointer" onclick="window.location='https://www.magicstore.it/areaclienti/wishlist.php?id_prod=111236&return=%2Fricerca.php%3Fq%3Dlightning%2Bbolt%26id_cat%3D9&n=FULMINE - FOIL PROMO MAGICFEST'">clicca qui</strong></span>
+                                        
+                                        
+                                        &nbsp; &nbsp; &nbsp; 
+                    <span class="prezzo_vendita">Valutazione: &euro; 3.00 &gt;</span>&nbsp;
+                    <a class="s_button_add_to_cart sell" rel="111236" href="https://www.magicstore.it/ritiro/update.php?id=111236">Vendi</a>
+                                      </div>
+                </div>
+                                <div class="s_item clearfix">
+                  <div class="grid_2 alpha">
+                    <a class="s_thumb" href="https://www.magicstore.it/-/fulmine1808318988"><img src="https://www.magicstore.it/data/prodotti/th_w60/l/lightning-bolt15358.png" title="FULMINE - FOIL" alt="FULMINE - FOIL" /></a>
+                  </div>
+
+                  <div class="grid_10 omega">
+                    <h3><a href="https://www.magicstore.it/-/fulmine1808318988">FULMINE - FOIL</a></h3>
+
+                                        
+                    <p class="subcat-rel"><span><a href="https://www.magicstore.it/__/carte_singole_magic/">Magic</a> &gt; <a href="https://www.magicstore.it/_/foil/">MTG Foil</a></span><br /><span><a href="https://www.magicstore.it/__/carte_singole_magic/">Magic</a> &gt; <a href="https://www.magicstore.it/_/masters-25/">Masters 25</a></span><br /></p><p>NC - nr 141&nbsp; &nbsp;<img src="https://www.magicstore.it/images/colori_magic/color_R.gif" alt="R" /></p>                    <p class="s_price  s_no_price">
+                                            <span class="s_currency s_before">&euro;</span>7.00                      
+                                        <div style="text-align:center;float:right;padding-right:7px">
+                      <img src="https://www.magicstore.it/images/semaforo_0.gif" alt="Esaurito" /> 
+
+                                              <a href="https://www.magicstore.it/areaclienti/wishlist.php?id_prod=83561&amp;return=%2Fricerca.php%3Fq%3Dlightning%2Bbolt%26id_cat%3D9&amp;n=FULMINE - FOIL">
+                        <img src="https://www.magicstore.it/images/i_avvisami_40.gif" alt="avvisami quando la carta torna disponibile" />
+                        </a>
+                                          </div>
+                                        </p>
+
+                    
+                                        
+                                        <span class="s_button_add_to_cart"><span class="s_icon"></span>Non disponibile. Per essere avvisato quando la carta tornerà disponibile <strong style="cursor:pointer" onclick="window.location='https://www.magicstore.it/areaclienti/wishlist.php?id_prod=83561&return=%2Fricerca.php%3Fq%3Dlightning%2Bbolt%26id_cat%3D9&n=FULMINE - FOIL'">clicca qui</strong></span>
+                                        
+                                        
+                                      </div>
+                </div>
+                                <div class="s_item clearfix">
+                  <div class="grid_2 alpha">
+                    <a class="s_thumb" href="https://www.magicstore.it/-/fulmine18083"><img src="https://www.magicstore.it/data/prodotti/th_w60/l/lightning-bolt.png" title="FULMINE" alt="FULMINE" /></a>
+                  </div>
+
+                  <div class="grid_10 omega">
+                    <h3><a href="https://www.magicstore.it/-/fulmine18083">FULMINE</a></h3>
+
+                                        
+                    <p class="subcat-rel"><span><a href="https://www.magicstore.it/__/carte_singole_magic/">Magic</a> &gt; <a href="https://www.magicstore.it/_/masters-25/">Masters 25</a></span><br /></p><p>NC - nr 141&nbsp; &nbsp;<img src="https://www.magicstore.it/images/colori_magic/color_R.gif" alt="R" /></p>                    <p class="s_price  s_no_price">
+                                            <span class="s_currency s_before">&euro;</span>4.00                      
+                                        <div style="text-align:center;float:right;padding-right:7px">
+                      <img src="https://www.magicstore.it/images/semaforo_0.gif" alt="Esaurito" /> 
+
+                                              <a href="https://www.magicstore.it/areaclienti/wishlist.php?id_prod=82821&amp;return=%2Fricerca.php%3Fq%3Dlightning%2Bbolt%26id_cat%3D9&amp;n=FULMINE">
+                        <img src="https://www.magicstore.it/images/i_avvisami_40.gif" alt="avvisami quando la carta torna disponibile" />
+                        </a>
+                                          </div>
+                                        </p>
+
+                    
+                                        Qta: <input type="text" class="box-qta" id="product_buy_quantity_82821" value="1" size="3" />&nbsp;&nbsp;
+                                        
+                                        <span class="s_button_add_to_cart"><span class="s_icon"></span>Non disponibile. Per essere avvisato quando la carta tornerà disponibile <strong style="cursor:pointer" onclick="window.location='https://www.magicstore.it/areaclienti/wishlist.php?id_prod=82821&return=%2Fricerca.php%3Fq%3Dlightning%2Bbolt%26id_cat%3D9&n=FULMINE'">clicca qui</strong></span>
+                                        
+                                        
+                                        &nbsp; &nbsp; &nbsp; 
+                    <span class="prezzo_vendita">Valutazione: &euro; 2.00 &gt;</span>&nbsp;
+                    <a class="s_button_add_to_cart sell" rel="82821" href="https://www.magicstore.it/ritiro/update.php?id=82821">Vendi</a>
+                                      </div>
+                </div>
+                                <div class="s_item clearfix">
+                  <div class="grid_2 alpha">
+                    <a class="s_thumb" href="https://www.magicstore.it/-/fulmine14806"><img src="https://www.magicstore.it/data/prodotti/th_w60/l/lightning-bolt.jpg" title="FULMINE" alt="FULMINE" /></a>
+                  </div>
+
+                  <div class="grid_10 omega">
+                    <h3><a href="https://www.magicstore.it/-/fulmine14806">FULMINE</a></h3>
+
+                                        
+                    <p class="subcat-rel"><span><a href="https://www.magicstore.it/__/carte_singole_magic/">Magic</a> &gt; <a href="https://www.magicstore.it/_/archenemy-nicol-bolas/">Archenemy: Nicol Bolas</a></span><br /></p><p>NC - nr 54&nbsp; &nbsp;<img src="https://www.magicstore.it/images/colori_magic/color_R.gif" alt="R" /></p>                    <p class="s_price  s_no_price">
+                                            <span class="s_currency s_before">&euro;</span>5.00                      
+                                        <div style="text-align:center;float:right;padding-right:7px">
+                      <img src="https://www.magicstore.it/images/semaforo_0.gif" alt="Esaurito" /> 
+
+                                              <a href="https://www.magicstore.it/areaclienti/wishlist.php?id_prod=77538&amp;return=%2Fricerca.php%3Fq%3Dlightning%2Bbolt%26id_cat%3D9&amp;n=FULMINE">
+                        <img src="https://www.magicstore.it/images/i_avvisami_40.gif" alt="avvisami quando la carta torna disponibile" />
+                        </a>
+                                          </div>
+                                        </p>
+
+                    
+                                        Qta: <input type="text" class="box-qta" id="product_buy_quantity_77538" value="1" size="3" />&nbsp;&nbsp;
+                                        
+                                        <span class="s_button_add_to_cart"><span class="s_icon"></span>Non disponibile. Per essere avvisato quando la carta tornerà disponibile <strong style="cursor:pointer" onclick="window.location='https://www.magicstore.it/areaclienti/wishlist.php?id_prod=77538&return=%2Fricerca.php%3Fq%3Dlightning%2Bbolt%26id_cat%3D9&n=FULMINE'">clicca qui</strong></span>
+                                        
+                                        
+                                        &nbsp; &nbsp; &nbsp; 
+                    <span class="prezzo_vendita">Valutazione: &euro; 2.50 &gt;</span>&nbsp;
+                    <a class="s_button_add_to_cart sell" rel="77538" href="https://www.magicstore.it/ritiro/update.php?id=77538">Vendi</a>
+                                      </div>
+                </div>
+                                <div class="s_item clearfix">
+                  <div class="grid_2 alpha">
+                    <a class="s_thumb" href="https://www.magicstore.it/-/fulmine10148"><img src="https://www.magicstore.it/data/prodotti/th_w60/f/fulmine.png" title="FULMINE" alt="FULMINE" /></a>
+                  </div>
+
+                  <div class="grid_10 omega">
+                    <h3><a href="https://www.magicstore.it/-/fulmine10148">FULMINE</a></h3>
+
+                                        
+                    <p class="subcat-rel"><span><a href="https://www.magicstore.it/__/carte_singole_magic/">Magic</a> &gt; <a href="https://www.magicstore.it/_/modern-masters-2015/">Modern Masters 2015</a></span><br /></p><p>NC - nr 122&nbsp; &nbsp;<img src="https://www.magicstore.it/images/colori_magic/color_R.gif" alt="R" /></p>                    <p class="s_price  s_no_price">
+                                            <span class="s_currency s_before">&euro;</span>3.00                      
+                                        <div style="text-align:center;float:right;padding-right:7px">
+                      <img src="https://www.magicstore.it/images/semaforo_0.gif" alt="Esaurito" /> 
+
+                                              <a href="https://www.magicstore.it/areaclienti/wishlist.php?id_prod=62914&amp;return=%2Fricerca.php%3Fq%3Dlightning%2Bbolt%26id_cat%3D9&amp;n=FULMINE">
+                        <img src="https://www.magicstore.it/images/i_avvisami_40.gif" alt="avvisami quando la carta torna disponibile" />
+                        </a>
+                                          </div>
+                                        </p>
+
+                    
+                                        Qta: <input type="text" class="box-qta" id="product_buy_quantity_62914" value="1" size="3" />&nbsp;&nbsp;
+                                        
+                                        <span class="s_button_add_to_cart"><span class="s_icon"></span>Non disponibile. Per essere avvisato quando la carta tornerà disponibile <strong style="cursor:pointer" onclick="window.location='https://www.magicstore.it/areaclienti/wishlist.php?id_prod=62914&return=%2Fricerca.php%3Fq%3Dlightning%2Bbolt%26id_cat%3D9&n=FULMINE'">clicca qui</strong></span>
+                                        
+                                        
+                                        &nbsp; &nbsp; &nbsp; 
+                    <span class="prezzo_vendita">Valutazione: &euro; 1.50 &gt;</span>&nbsp;
+                    <a class="s_button_add_to_cart sell" rel="62914" href="https://www.magicstore.it/ritiro/update.php?id=62914">Vendi</a>
+                                      </div>
+                </div>
+                                <div class="s_item clearfix">
+                  <div class="grid_2 alpha">
+                    <a class="s_thumb" href="https://www.magicstore.it/-/lightning-bolt-judge-foil"><img src="https://www.magicstore.it/images/ms_img_default_w60.gif" title="LIGHTNING BOLT (JUDGE FOIL)" alt="LIGHTNING BOLT (JUDGE FOIL)" /></a>
+                  </div>
+
+                  <div class="grid_10 omega">
+                    <h3><a href="https://www.magicstore.it/-/lightning-bolt-judge-foil">LIGHTNING BOLT (JUDGE FOIL)</a></h3>
+
+                                        
+                    <p class="subcat-rel"><span><a href="https://www.magicstore.it/__/carte_singole_magic/">Magic</a> &gt; <a href="https://www.magicstore.it/_/promo/">Promo</a></span><br /></p><p>R&nbsp; &nbsp;<img src="https://www.magicstore.it/images/colori_magic/color_-.gif" alt="-" /></p>                    <p class="s_price  s_no_price">
+                                            <span class="s_currency s_before">&euro;</span>75.00                      
+                                        <div style="text-align:center;float:right;padding-right:7px">
+                      <img src="https://www.magicstore.it/images/semaforo_0.gif" alt="Esaurito" /> 
+
+                                              <a href="https://www.magicstore.it/areaclienti/wishlist.php?id_prod=27193&amp;return=%2Fricerca.php%3Fq%3Dlightning%2Bbolt%26id_cat%3D9&amp;n=LIGHTNING BOLT (JUDGE FOIL)">
+                        <img src="https://www.magicstore.it/images/i_avvisami_40.gif" alt="avvisami quando la carta torna disponibile" />
+                        </a>
+                                          </div>
+                                        </p>
+
+                    
+                                        Qta: <input type="text" class="box-qta" id="product_buy_quantity_27193" value="1" size="3" />&nbsp;&nbsp;
+                                        
+                                        <span class="s_button_add_to_cart"><span class="s_icon"></span>Non disponibile. Per essere avvisato quando la carta tornerà disponibile <strong style="cursor:pointer" onclick="window.location='https://www.magicstore.it/areaclienti/wishlist.php?id_prod=27193&return=%2Fricerca.php%3Fq%3Dlightning%2Bbolt%26id_cat%3D9&n=LIGHTNING BOLT (JUDGE FOIL)'">clicca qui</strong></span>
+                                        
+                                        
+                                        &nbsp; &nbsp; &nbsp; 
+                    <span class="prezzo_vendita">Valutazione: &euro; 37.50 &gt;</span>&nbsp;
+                    <a class="s_button_add_to_cart sell" rel="27193" href="https://www.magicstore.it/ritiro/update.php?id=27193">Vendi</a>
+                                      </div>
+                </div>
+                                <div class="s_item clearfix">
+                  <div class="grid_2 alpha">
+                    <a class="s_thumb" href="https://www.magicstore.it/-/lightning-bolt-textless-player-rewards"><img src="https://www.magicstore.it/data/prodotti/th_w60/l/lightning-bolt-textless-player-rewards.jpg" title="LIGHTNING BOLT (TEXTLESS PLAYER REWARDS)" alt="LIGHTNING BOLT (TEXTLESS PLAYER REWARDS)" /></a>
+                  </div>
+
+                  <div class="grid_10 omega">
+                    <h3><a href="https://www.magicstore.it/-/lightning-bolt-textless-player-rewards">LIGHTNING BOLT (TEXTLESS PLAYER REWARDS)</a></h3>
+
+                                        
+                    <p class="subcat-rel"><span><a href="https://www.magicstore.it/__/carte_singole_magic/">Magic</a> &gt; <a href="https://www.magicstore.it/_/promo/">Promo</a></span><br /></p><p>R&nbsp; &nbsp;<img src="https://www.magicstore.it/images/colori_magic/color_-.gif" alt="-" /></p>                    <p class="s_price  s_no_price">
+                                            <span class="s_currency s_before">&euro;</span>25.00                      
+                                        <div style="text-align:center;float:right;padding-right:7px">
+                      <img src="https://www.magicstore.it/images/semaforo_0.gif" alt="Esaurito" /> 
+
+                                              <a href="https://www.magicstore.it/areaclienti/wishlist.php?id_prod=27194&amp;return=%2Fricerca.php%3Fq%3Dlightning%2Bbolt%26id_cat%3D9&amp;n=LIGHTNING BOLT (TEXTLESS PLAYER REWARDS)">
+                        <img src="https://www.magicstore.it/images/i_avvisami_40.gif" alt="avvisami quando la carta torna disponibile" />
+                        </a>
+                                          </div>
+                                        </p>
+
+                    
+                                        Qta: <input type="text" class="box-qta" id="product_buy_quantity_27194" value="1" size="3" />&nbsp;&nbsp;
+                                        
+                                        <span class="s_button_add_to_cart"><span class="s_icon"></span>Non disponibile. Per essere avvisato quando la carta tornerà disponibile <strong style="cursor:pointer" onclick="window.location='https://www.magicstore.it/areaclienti/wishlist.php?id_prod=27194&return=%2Fricerca.php%3Fq%3Dlightning%2Bbolt%26id_cat%3D9&n=LIGHTNING BOLT (TEXTLESS PLAYER REWARDS)'">clicca qui</strong></span>
+                                        
+                                        
+                                        &nbsp; &nbsp; &nbsp; 
+                    <span class="prezzo_vendita">Valutazione: &euro; 12.50 &gt;</span>&nbsp;
+                    <a class="s_button_add_to_cart sell" rel="27194" href="https://www.magicstore.it/ritiro/update.php?id=27194">Vendi</a>
+                                      </div>
+                </div>
+                                <div class="s_item clearfix">
+                  <div class="grid_2 alpha">
+                    <a class="s_thumb" href="https://www.magicstore.it/-/fulmine_14752"><img src="https://www.magicstore.it/data/prodotti/th_w60/L/LightningBolt.161_4275.jpg" title="FULMINE" alt="FULMINE" /></a>
+                  </div>
+
+                  <div class="grid_10 omega">
+                    <h3><a href="https://www.magicstore.it/-/fulmine_14752">FULMINE</a></h3>
+
+                                        
+                    <p class="subcat-rel"><span><a href="https://www.magicstore.it/__/carte_singole_magic/">Magic</a> &gt; <a href="https://www.magicstore.it/_/revised-edition/">Revised Edition</a></span><br /></p><p>C&nbsp; &nbsp;<img src="https://www.magicstore.it/images/colori_magic/color_R.gif" alt="R" /></p>
+                                        <div style="text-align:center;float:right;padding-right:7px">
+                      <img src="https://www.magicstore.it/images/semaforo_0.gif" alt="Esaurito" /> 
+
+                                              <a href="https://www.magicstore.it/areaclienti/wishlist.php?id_prod=14752&amp;return=%2Fricerca.php%3Fq%3Dlightning%2Bbolt%26id_cat%3D9&amp;n=FULMINE">
+                        <img src="https://www.magicstore.it/images/i_avvisami_40.gif" alt="avvisami quando la carta torna disponibile" />
+                        </a>
+                                          </div>
+                                        </p>
+
+                    
+                                        Qta: <input type="text" class="box-qta" id="product_buy_quantity_14752" value="1" size="3" />&nbsp;&nbsp;
+                                        
+                                        <a href="https://www.magicstore.it/-/fulmine_14752?richiesta=1">Carta disponibile, chiedi info prezzo e condizioni</a>
+                                        
+                                        
+                                        &nbsp; &nbsp; &nbsp; 
+                    <span class="prezzo_vendita">Valutazione: &euro; 2.00 &gt;</span>&nbsp;
+                    <a class="s_button_add_to_cart sell" rel="14752" href="https://www.magicstore.it/ritiro/update.php?id=14752">Vendi</a>
+                                      </div>
+                </div>
+                                <div class="s_item clearfix">
+                  <div class="grid_2 alpha">
+                    <a class="s_thumb" href="https://www.magicstore.it/-/fulmine_21469"><img src="https://www.magicstore.it/data/prodotti/th_w60/L/LightningBolt_12926.jpg" title="FULMINE" alt="FULMINE" /></a>
+                  </div>
+
+                  <div class="grid_10 omega">
+                    <h3><a href="https://www.magicstore.it/-/fulmine_21469">FULMINE</a></h3>
+
+                                        
+                    <p class="subcat-rel"><span><a href="https://www.magicstore.it/__/carte_singole_magic/">Magic</a> &gt; <a href="https://www.magicstore.it/_/bordo-nero-italiano/">Bordo Nero Italiano - FBB</a></span><br /></p><p>C&nbsp; &nbsp;<img src="https://www.magicstore.it/images/colori_magic/color_R.gif" alt="R" /></p>
+                                        <div style="text-align:center;float:right;padding-right:7px">
+                      <img src="https://www.magicstore.it/images/semaforo_0.gif" alt="Esaurito" /> 
+
+                                              <a href="https://www.magicstore.it/areaclienti/wishlist.php?id_prod=21469&amp;return=%2Fricerca.php%3Fq%3Dlightning%2Bbolt%26id_cat%3D9&amp;n=FULMINE">
+                        <img src="https://www.magicstore.it/images/i_avvisami_40.gif" alt="avvisami quando la carta torna disponibile" />
+                        </a>
+                                          </div>
+                                        </p>
+
+                    
+                                        Qta: <input type="text" class="box-qta" id="product_buy_quantity_21469" value="1" size="3" />&nbsp;&nbsp;
+                                        
+                                        <a href="https://www.magicstore.it/-/fulmine_21469?richiesta=1">Carta disponibile, chiedi info prezzo e condizioni</a>
+                                        
+                                        
+                                        &nbsp; &nbsp; &nbsp; 
+                    <span class="prezzo_vendita">Valutazione: &euro; 12.00 &gt;</span>&nbsp;
+                    <a class="s_button_add_to_cart sell" rel="21469" href="https://www.magicstore.it/ritiro/update.php?id=21469">Vendi</a>
+                                      </div>
+                </div>
+                                <div class="s_item clearfix">
+                  <div class="grid_2 alpha">
+                    <a class="s_thumb" href="https://www.magicstore.it/-/fulmine"><img src="https://www.magicstore.it/data/prodotti/th_w60/f/fulmine.jpg" title="FULMINE" alt="FULMINE" /></a>
+                  </div>
+
+                  <div class="grid_10 omega">
+                    <h3><a href="https://www.magicstore.it/-/fulmine">FULMINE</a></h3>
+
+                                        
+                    <p class="subcat-rel"><span><a href="https://www.magicstore.it/__/carte_singole_magic/">Magic</a> &gt; <a href="https://www.magicstore.it/_/terza-quarta-edizione/">Terza - Quarta Edizione</a></span><br /></p><p>C&nbsp; &nbsp;<img src="https://www.magicstore.it/images/colori_magic/color_R.gif" alt="R" /></p>
+                                        <div style="text-align:center;float:right;padding-right:7px">
+                      <img src="https://www.magicstore.it/images/semaforo_1.gif" alt="Disponibilità limitata" /> 
+
+                                              (2)
+                                          </div>
+                                        </p>
+
+                    
+                                        
+                                        <a href="https://www.magicstore.it/-/fulmine?richiesta=1">Carta disponibile, chiedi info prezzo e condizioni</a>
+                                        
+                                        
+                                      </div>
+                </div>
+                                <div class="s_item clearfix">
+                  <div class="grid_2 alpha">
+                    <a class="s_thumb" href="https://www.magicstore.it/-/fulmine67362"><img src="https://www.magicstore.it/data/prodotti/th_w60/f/fulmine_25138.jpg" title="FULMINE" alt="FULMINE" /></a>
+                  </div>
+
+                  <div class="grid_10 omega">
+                    <h3><a href="https://www.magicstore.it/-/fulmine67362">FULMINE</a></h3>
+
+                                        
+                    <p class="subcat-rel"><span><a href="https://www.magicstore.it/__/carte_singole_magic/">Magic</a> &gt; <a href="https://www.magicstore.it/_/set-base-2010/">Set Base 2010</a></span><br /></p><p>C - nr 146&nbsp; &nbsp;<img src="https://www.magicstore.it/images/colori_magic/color_R.gif" alt="R" /></p>                    <p class="s_price s_price">
+                                            <span class="s_currency s_before">&euro;</span>4.00                      
+                                        <div style="text-align:center;float:right;padding-right:7px">
+                      <img src="https://www.magicstore.it/images/semaforo_2.gif" alt="Disponibile" /> 
+
+                                              (4)
+                                          </div>
+                                        </p>
+
+                    
+                                        Qta: <input type="text" class="box-qta" id="product_buy_quantity_25138" value="1" size="3" />&nbsp;&nbsp;
+                                        
+                                        <a class="s_button_add_to_cart" href="https://www.magicstore.it/carrello/update.php?id=25138" rel="25138"><span class="s_icon_16"><span class="s_icon"></span>Compra</span></a>
+                                        
+                                        
+                                      </div>
+                </div>
+                                <div class="s_item clearfix">
+                  <div class="grid_2 alpha">
+                    <a class="s_thumb" href="https://www.magicstore.it/-/fulmine38539"><img src="https://www.magicstore.it/data/prodotti/th_w60/f/fulmine_25972.jpg" title="FULMINE" alt="FULMINE" /></a>
+                  </div>
+
+                  <div class="grid_10 omega">
+                    <h3><a href="https://www.magicstore.it/-/fulmine38539">FULMINE</a></h3>
+
+                                        
+                    <p class="subcat-rel"><span><a href="https://www.magicstore.it/__/carte_singole_magic/">Magic</a> &gt; <a href="https://www.magicstore.it/_/set-base-2011/">Set Base 2011</a></span><br /></p><p>C - nr 149&nbsp; &nbsp;<img src="https://www.magicstore.it/images/colori_magic/color_R.gif" alt="R" /></p>                    <p class="s_price s_price">
+                                            <span class="s_currency s_before">&euro;</span>4.00                      
+                                        <div style="text-align:center;float:right;padding-right:7px">
+                      <img src="https://www.magicstore.it/images/semaforo_1.gif" alt="Disponibilità limitata" /> 
+
+                                              (1)
+                                          </div>
+                                        </p>
+
+                    
+                                        Qta: <input type="text" class="box-qta" id="product_buy_quantity_25972" value="1" size="3" />&nbsp;&nbsp;
+                                        
+                                        <a class="s_button_add_to_cart" href="https://www.magicstore.it/carrello/update.php?id=25972" rel="25972"><span class="s_icon_16"><span class="s_icon"></span>Compra</span></a>
+                                        
+                                        
+                                      </div>
+                </div>
+                                <div class="s_item clearfix">
+                  <div class="grid_2 alpha">
+                    <a class="s_thumb" href="https://www.magicstore.it/-/fulmine-beta"><img src="https://www.magicstore.it/images/ms_img_default_w60.gif" title="FULMINE (BETA)" alt="FULMINE (BETA)" /></a>
+                  </div>
+
+                  <div class="grid_10 omega">
+                    <h3><a href="https://www.magicstore.it/-/fulmine-beta">FULMINE (BETA)</a></h3>
+
+                                        
+                    <p class="subcat-rel"><span><a href="https://www.magicstore.it/__/carte_singole_magic/">Magic</a> &gt; <a href="https://www.magicstore.it/_/alpha-beta-unlimited/">Alpha Beta Unlimited</a></span><br /></p><p>C - nr 217&nbsp; &nbsp;<img src="https://www.magicstore.it/images/colori_magic/color_R.gif" alt="R" /></p>
+                                        <div style="text-align:center;float:right;padding-right:7px">
+                      <img src="https://www.magicstore.it/images/semaforo_0.gif" alt="Esaurito" /> 
+
+                                              <a href="https://www.magicstore.it/areaclienti/wishlist.php?id_prod=26661&amp;return=%2Fricerca.php%3Fq%3Dlightning%2Bbolt%26id_cat%3D9&amp;n=FULMINE (BETA)">
+                        <img src="https://www.magicstore.it/images/i_avvisami_40.gif" alt="avvisami quando la carta torna disponibile" />
+                        </a>
+                                          </div>
+                                        </p>
+
+                    
+                                        Qta: <input type="text" class="box-qta" id="product_buy_quantity_26661" value="1" size="3" />&nbsp;&nbsp;
+                                        
+                                        <a href="https://www.magicstore.it/-/fulmine-beta?richiesta=1">Carta disponibile, chiedi info prezzo e condizioni</a>
+                                        
+                                        
+                                        &nbsp; &nbsp; &nbsp; 
+                    <span class="prezzo_vendita">Valutazione: &euro; 4.80 &gt;</span>&nbsp;
+                    <a class="s_button_add_to_cart sell" rel="26661" href="https://www.magicstore.it/ritiro/update.php?id=26661">Vendi</a>
+                                      </div>
+                </div>
+                                <div class="s_item clearfix">
+                  <div class="grid_2 alpha">
+                    <a class="s_thumb" href="https://www.magicstore.it/-/fulmine-alpha"><img src="https://www.magicstore.it/images/ms_img_default_w60.gif" title="FULMINE (ALPHA)" alt="FULMINE (ALPHA)" /></a>
+                  </div>
+
+                  <div class="grid_10 omega">
+                    <h3><a href="https://www.magicstore.it/-/fulmine-alpha">FULMINE (ALPHA)</a></h3>
+
+                                        
+                    <p class="subcat-rel"><span><a href="https://www.magicstore.it/__/carte_singole_magic/">Magic</a> &gt; <a href="https://www.magicstore.it/_/alpha-beta-unlimited/">Alpha Beta Unlimited</a></span><br /></p><p>C - nr 218&nbsp; &nbsp;<img src="https://www.magicstore.it/images/colori_magic/color_R.gif" alt="R" /></p>
+                                        <div style="text-align:center;float:right;padding-right:7px">
+                      <img src="https://www.magicstore.it/images/semaforo_0.gif" alt="Esaurito" /> 
+
+                                              <a href="https://www.magicstore.it/areaclienti/wishlist.php?id_prod=26662&amp;return=%2Fricerca.php%3Fq%3Dlightning%2Bbolt%26id_cat%3D9&amp;n=FULMINE (ALPHA)">
+                        <img src="https://www.magicstore.it/images/i_avvisami_40.gif" alt="avvisami quando la carta torna disponibile" />
+                        </a>
+                                          </div>
+                                        </p>
+
+                    
+                                        Qta: <input type="text" class="box-qta" id="product_buy_quantity_26662" value="1" size="3" />&nbsp;&nbsp;
+                                        
+                                        <a href="https://www.magicstore.it/-/fulmine-alpha?richiesta=1">Carta disponibile, chiedi info prezzo e condizioni</a>
+                                        
+                                        
+                                        &nbsp; &nbsp; &nbsp; 
+                    <span class="prezzo_vendita">Valutazione: &euro; 6.00 &gt;</span>&nbsp;
+                    <a class="s_button_add_to_cart sell" rel="26662" href="https://www.magicstore.it/ritiro/update.php?id=26662">Vendi</a>
+                                      </div>
+                </div>
+                                <div class="s_item clearfix">
+                  <div class="grid_2 alpha">
+                    <a class="s_thumb" href="https://www.magicstore.it/-/fulmine-foil"><img src="https://www.magicstore.it/data/prodotti/th_w60/f/fulmine-foil.jpg" title="FULMINE (FOIL)" alt="FULMINE (FOIL)" /></a>
+                  </div>
+
+                  <div class="grid_10 omega">
+                    <h3><a href="https://www.magicstore.it/-/fulmine-foil">FULMINE (FOIL)</a></h3>
+
+                                        
+                    <p class="subcat-rel"><span><a href="https://www.magicstore.it/__/carte_singole_magic/">Magic</a> &gt; <a href="https://www.magicstore.it/_/fire-lightning/">Fire & Lightning</a></span><br /></p><p>C - nr 17&nbsp; &nbsp;<img src="https://www.magicstore.it/images/colori_magic/color_R.gif" alt="R" /></p>                    <p class="s_price  s_no_price">
+                                            <span class="s_currency s_before">&euro;</span>5.00                      
+                                        <div style="text-align:center;float:right;padding-right:7px">
+                      <img src="https://www.magicstore.it/images/semaforo_0.gif" alt="Esaurito" /> 
+
+                                              <a href="https://www.magicstore.it/areaclienti/wishlist.php?id_prod=26899&amp;return=%2Fricerca.php%3Fq%3Dlightning%2Bbolt%26id_cat%3D9&amp;n=FULMINE (FOIL)">
+                        <img src="https://www.magicstore.it/images/i_avvisami_40.gif" alt="avvisami quando la carta torna disponibile" />
+                        </a>
+                                          </div>
+                                        </p>
+
+                    
+                                        Qta: <input type="text" class="box-qta" id="product_buy_quantity_26899" value="1" size="3" />&nbsp;&nbsp;
+                                        
+                                        <span class="s_button_add_to_cart"><span class="s_icon"></span>Non disponibile. Per essere avvisato quando la carta tornerà disponibile <strong style="cursor:pointer" onclick="window.location='https://www.magicstore.it/areaclienti/wishlist.php?id_prod=26899&return=%2Fricerca.php%3Fq%3Dlightning%2Bbolt%26id_cat%3D9&n=FULMINE (FOIL)'">clicca qui</strong></span>
+                                        
+                                        
+                                        &nbsp; &nbsp; &nbsp; 
+                    <span class="prezzo_vendita">Valutazione: &euro; 2.00 &gt;</span>&nbsp;
+                    <a class="s_button_add_to_cart sell" rel="26899" href="https://www.magicstore.it/ritiro/update.php?id=26899">Vendi</a>
+                                      </div>
+                </div>
+                                <div class="s_item clearfix">
+                  <div class="grid_2 alpha">
+                    <a class="s_thumb" href="https://www.magicstore.it/-/lightning-bolt_30539"><img src="https://www.magicstore.it/images/ms_img_default_w60.gif" title="FULMINE" alt="FULMINE" /></a>
+                  </div>
+
+                  <div class="grid_10 omega">
+                    <h3><a href="https://www.magicstore.it/-/lightning-bolt_30539">FULMINE</a></h3>
+
+                                        
+                    <p class="subcat-rel"><span><a href="https://www.magicstore.it/__/carte_singole_magic/">Magic</a> &gt; <a href="https://www.magicstore.it/_/beatdown/">Beatdown</a></span><br /></p><p>C - nr 32&nbsp; &nbsp;<img src="https://www.magicstore.it/images/colori_magic/color_R.gif" alt="R" /></p>                    <p class="s_price  s_no_price">
+                                            <span class="s_currency s_before">&euro;</span>5.00                      
+                                        <div style="text-align:center;float:right;padding-right:7px">
+                      <img src="https://www.magicstore.it/images/semaforo_0.gif" alt="Esaurito" /> 
+
+                                              <a href="https://www.magicstore.it/areaclienti/wishlist.php?id_prod=30539&amp;return=%2Fricerca.php%3Fq%3Dlightning%2Bbolt%26id_cat%3D9&amp;n=FULMINE">
+                        <img src="https://www.magicstore.it/images/i_avvisami_40.gif" alt="avvisami quando la carta torna disponibile" />
+                        </a>
+                                          </div>
+                                        </p>
+
+                    
+                                        Qta: <input type="text" class="box-qta" id="product_buy_quantity_30539" value="1" size="3" />&nbsp;&nbsp;
+                                        
+                                        <span class="s_button_add_to_cart"><span class="s_icon"></span>Non disponibile. Per essere avvisato quando la carta tornerà disponibile <strong style="cursor:pointer" onclick="window.location='https://www.magicstore.it/areaclienti/wishlist.php?id_prod=30539&return=%2Fricerca.php%3Fq%3Dlightning%2Bbolt%26id_cat%3D9&n=FULMINE'">clicca qui</strong></span>
+                                        
+                                        
+                                        &nbsp; &nbsp; &nbsp; 
+                    <span class="prezzo_vendita">Valutazione: &euro; 2.00 &gt;</span>&nbsp;
+                    <a class="s_button_add_to_cart sell" rel="30539" href="https://www.magicstore.it/ritiro/update.php?id=30539">Vendi</a>
+                                      </div>
+                </div>
+                                <div class="s_item clearfix">
+                  <div class="grid_2 alpha">
+                    <a class="s_thumb" href="https://www.magicstore.it/-/lightning-bolt_30859"><img src="https://www.magicstore.it/images/ms_img_default_w60.gif" title="FULMINE" alt="FULMINE" /></a>
+                  </div>
+
+                  <div class="grid_10 omega">
+                    <h3><a href="https://www.magicstore.it/-/lightning-bolt_30859">FULMINE</a></h3>
+
+                                        
+                    <p class="subcat-rel"><span><a href="https://www.magicstore.it/__/carte_singole_magic/">Magic</a> &gt; <a href="https://www.magicstore.it/_/anthologies/">Anthologies</a></span><br /></p><p>C - nr 75&nbsp; &nbsp;<img src="https://www.magicstore.it/images/colori_magic/color_R.gif" alt="R" /></p>                    <p class="s_price  s_no_price">
+                                            <span class="s_currency s_before">&euro;</span>1.00                      
+                                        <div style="text-align:center;float:right;padding-right:7px">
+                      <img src="https://www.magicstore.it/images/semaforo_0.gif" alt="Esaurito" /> 
+
+                                              <a href="https://www.magicstore.it/areaclienti/wishlist.php?id_prod=30859&amp;return=%2Fricerca.php%3Fq%3Dlightning%2Bbolt%26id_cat%3D9&amp;n=FULMINE">
+                        <img src="https://www.magicstore.it/images/i_avvisami_40.gif" alt="avvisami quando la carta torna disponibile" />
+                        </a>
+                                          </div>
+                                        </p>
+
+                    
+                                        Qta: <input type="text" class="box-qta" id="product_buy_quantity_30859" value="1" size="3" />&nbsp;&nbsp;
+                                        
+                                        <span class="s_button_add_to_cart"><span class="s_icon"></span>Non disponibile. Per essere avvisato quando la carta tornerà disponibile <strong style="cursor:pointer" onclick="window.location='https://www.magicstore.it/areaclienti/wishlist.php?id_prod=30859&return=%2Fricerca.php%3Fq%3Dlightning%2Bbolt%26id_cat%3D9&n=FULMINE'">clicca qui</strong></span>
+                                        
+                                        
+                                        &nbsp; &nbsp; &nbsp; 
+                    <span class="prezzo_vendita">Valutazione: &euro; 0.40 &gt;</span>&nbsp;
+                    <a class="s_button_add_to_cart sell" rel="30859" href="https://www.magicstore.it/ritiro/update.php?id=30859">Vendi</a>
+                                      </div>
+                </div>
+                                <div class="s_item clearfix">
+                  <div class="grid_2 alpha">
+                    <a class="s_thumb" href="https://www.magicstore.it/-/fulmine-mint-foil-ita"><img src="https://www.magicstore.it/images/ms_img_default_w60.gif" title="FULMINE - MINT FOIL ITA" alt="FULMINE - MINT FOIL ITA" /></a>
+                  </div>
+
+                  <div class="grid_10 omega">
+                    <h3><a href="https://www.magicstore.it/-/fulmine-mint-foil-ita">FULMINE - MINT FOIL ITA</a></h3>
+
+                                        
+                    <p class="subcat-rel"><span><a href="https://www.magicstore.it/__/carte_singole_magic/">Magic</a> &gt; <a href="https://www.magicstore.it/_/foil/">MTG Foil</a></span><br /></p><p>C - nr 146&nbsp; &nbsp;<img src="https://www.magicstore.it/images/colori_magic/color_R.gif" alt="R" /></p>                    <p class="s_price  s_no_price">
+                                            <span class="s_currency s_before">&euro;</span>10.00                      
+                                        <div style="text-align:center;float:right;padding-right:7px">
+                      <img src="https://www.magicstore.it/images/semaforo_0.gif" alt="Esaurito" /> 
+
+                                              <a href="https://www.magicstore.it/areaclienti/wishlist.php?id_prod=54894&amp;return=%2Fricerca.php%3Fq%3Dlightning%2Bbolt%26id_cat%3D9&amp;n=FULMINE - MINT FOIL ITA">
+                        <img src="https://www.magicstore.it/images/i_avvisami_40.gif" alt="avvisami quando la carta torna disponibile" />
+                        </a>
+                                          </div>
+                                        </p>
+
+                    
+                                        
+                                        <span class="s_button_add_to_cart"><span class="s_icon"></span>Non disponibile. Per essere avvisato quando la carta tornerà disponibile <strong style="cursor:pointer" onclick="window.location='https://www.magicstore.it/areaclienti/wishlist.php?id_prod=54894&return=%2Fricerca.php%3Fq%3Dlightning%2Bbolt%26id_cat%3D9&n=FULMINE - MINT FOIL ITA'">clicca qui</strong></span>
+                                        
+                                        
+                                      </div>
+                </div>
+                            <div class="clear"></div>
+          </div>
+          <div class="pagination" ><div class="results">Prodotti da 1 a 30 su 30  (1 Pagina)</div></div>      </div>
+    </div>
+
+    <div id="right_col" class="grid_4">
+      <h2>Affina la ricerca</h2>
+
+      <form id="frm-affina">
+        <input id="order-hidden" type="hidden" name="order" value="" />
+
+        <p><strong>TERMINE DI RICERCA</strong>:</p>
+        <p>
+          <input type="text" name="q" value="lightning bolt" style="width:65%" />
+          <input type="submit" value="CERCA" />
+        </p>
+
+              
+        <div id="categories_module" class="s_box s-filters">
+          <div class="s_list_1">
+            <p><strong>CATEGORIA</strong>:</p><input  id="fidcat0" value="" name="id_cat" type="radio" /> <label for="fidcat0">Tutte</label> <span class="n">(40)</span><br /><input  id="fidcat4" value="4" name="id_cat" type="radio" /> <label for="fidcat4">Accessori</label> <span class="n">(1)</span><br /><input checked="checked" id="fidcat9" value="9" name="id_cat" type="radio" /> <label for="fidcat9">Magic</label> <span class="n">(30)</span><br /><input  id="fidcat10" value="10" name="id_cat" type="radio" /> <label for="fidcat10">Yu-Gi-Oh!</label> <span class="n">(8)</span><br /><input  id="fidcat12" value="12" name="id_cat" type="radio" /> <label for="fidcat12">Lorcana</label> <span class="n">(1)</span><br /><br /><p><strong>SOTTOCATEGORIA / SET</strong>:</p><input checked="checked" id="fidsubcat0" value="" name="id_subcat" type="radio" /> <label for="fidsubcat0">Tutte</label> <span class="n">(32)</span><br /><input  id="fidsubcat137" value="137" name="id_subcat" type="radio" /> <label for="fidsubcat137">Promo</label> <span class="n">(4)</span><br /><input  id="fidsubcat147" value="147" name="id_subcat" type="radio" /> <label for="fidsubcat147">Revised Edition</label> <span class="n">(1)</span><br /><input  id="fidsubcat148" value="148" name="id_subcat" type="radio" /> <label for="fidsubcat148">Bordo Nero Italiano - FBB</label> <span class="n">(1)</span><br /><input  id="fidsubcat154" value="154" name="id_subcat" type="radio" /> <label for="fidsubcat154">Terza - Quarta Edizione</label> <span class="n">(1)</span><br /><input  id="fidsubcat213" value="213" name="id_subcat" type="radio" /> <label for="fidsubcat213">Set Base 2010</label> <span class="n">(1)</span><br /><input  id="fidsubcat217" value="217" name="id_subcat" type="radio" /> <label for="fidsubcat217">Set Base 2011</label> <span class="n">(1)</span><br /><input  id="fidsubcat221" value="221" name="id_subcat" type="radio" /> <label for="fidsubcat221">Alpha Beta Unlimited</label> <span class="n">(2)</span><br /><input  id="fidsubcat225" value="225" name="id_subcat" type="radio" /> <label for="fidsubcat225">Fire & Lightning</label> <span class="n">(1)</span><br /><input  id="fidsubcat245" value="245" name="id_subcat" type="radio" /> <label for="fidsubcat245">Beatdown</label> <span class="n">(1)</span><br /><input  id="fidsubcat249" value="249" name="id_subcat" type="radio" /> <label for="fidsubcat249">Anthologies</label> <span class="n">(1)</span><br /><input  id="fidsubcat414" value="414" name="id_subcat" type="radio" /> <label for="fidsubcat414">MTG Foil</label> <span class="n">(3)</span><br /><input  id="fidsubcat543" value="543" name="id_subcat" type="radio" /> <label for="fidsubcat543">Modern Masters 2015</label> <span class="n">(1)</span><br /><input  id="fidsubcat665" value="665" name="id_subcat" type="radio" /> <label for="fidsubcat665">Archenemy: Nicol Bolas</label> <span class="n">(1)</span><br /><input  id="fidsubcat706" value="706" name="id_subcat" type="radio" /> <label for="fidsubcat706">Masters 25</label> <span class="n">(2)</span><br /><input  id="fidsubcat974" value="974" name="id_subcat" type="radio" /> <label for="fidsubcat974">Strixhaven - Archivio Mistico</label> <span class="n">(1)</span><br /><input  id="fidsubcat1049" value="1049" name="id_subcat" type="radio" /> <label for="fidsubcat1049">Secret Lair</label> <span class="n">(2)</span><br /><input  id="fidsubcat1064" value="1064" name="id_subcat" type="radio" /> <label for="fidsubcat1064">Leggende di Commander: Battaglia per Baldur’s Gate</label> <span class="n">(2)</span><br /><input  id="fidsubcat1065" value="1065" name="id_subcat" type="radio" /> <label for="fidsubcat1065">Leggende di Commander: Battaglia per Baldur’s Gate EXTRA</label> <span class="n">(1)</span><br /><input  id="fidsubcat1068" value="1068" name="id_subcat" type="radio" /> <label for="fidsubcat1068">Double Masters 2022</label> <span class="n">(1)</span><br /><input  id="fidsubcat1069" value="1069" name="id_subcat" type="radio" /> <label for="fidsubcat1069">Double Masters 2022 EXTRA</label> <span class="n">(1)</span><br /><input  id="fidsubcat1243" value="1243" name="id_subcat" type="radio" /> <label for="fidsubcat1243">Magic: The Gathering - FINAL FANTASY Through the Ages</label> <span class="n">(1)</span><br /><input  id="fidsubcat1269" value="1269" name="id_subcat" type="radio" /> <label for="fidsubcat1269">Magic: The Gathering | Avatar: The Last Airbender: Eternal</label> <span class="n">(1)</span><br /><input  id="fidsubcat1284" value="1284" name="id_subcat" type="radio" /> <label for="fidsubcat1284">I Segreti di Strixhaven</label> <span class="n">(1)</span><br /><br /><p><strong>RARITA</strong>:</p><input checked="checked" id="frarita0" value="" name="carta_rarita" type="radio" /> <label for="frarita0">Tutte</label> <span class="n">(30)</span><br /><input  id="fraritaC" value="C"  name="carta_rarita" type="radio" /> <label for="fraritaC">C</label> <span class="n">(14)</span><br /><input  id="fraritaM" value="M"  name="carta_rarita" type="radio" /> <label for="fraritaM">M</label> <span class="n">(2)</span><br /><input  id="fraritaN" value="N"  name="carta_rarita" type="radio" /> <label for="fraritaN">N</label> <span class="n">(1)</span><br /><input  id="fraritaNC" value="NC"  name="carta_rarita" type="radio" /> <label for="fraritaNC">NC</label> <span class="n">(6)</span><br /><input  id="fraritaR" value="R"  name="carta_rarita" type="radio" /> <label for="fraritaR">R</label> <span class="n">(7)</span><br /><br /><p><strong>COLORE</strong>:</p><input checked="checked" id="fcolore0" value="" name="carta_colore" type="radio" /> <label for="fcolore0">Tutti</label> <span class="n">(30)</span><br /><input  id="fcolore-" value="-" name="carta_colore" type="radio" /> <label for="fcolore-"><img src="https://www.magicstore.it/images/colori_magic/color_-.gif" alt="-" /></label> <span class="n">(2)</span><br /><input  id="fcoloreR" value="R" name="carta_colore" type="radio" /> <label for="fcoloreR"><img src="https://www.magicstore.it/images/colori_magic/color_R.gif" alt="R" /></label> <span class="n">(28)</span><br />          </div>
+          
+        </div>
+        
+      </form>
+      
+      <div id="cart_side_content">
+            </div>
+    </div>
+  </div>
+  <!-- end of content -->
+  
+      <div id="overlay" style="display:none;"></div>
+    
+        <div id="login-dialog" style="display:none">
+      <form method="post" action="https://www.magicstore.it/areaclienti/">
+        <input type="hidden" name="np" value="https://www.magicstore.it/ricerca.php" />
+        <p class="overlay-chiudi">X</p>
+
+        <h2>Accedi Clienti</h2>
+
+        <label><strong>Indirizzo E-Mail:</strong></label>
+        <input type="text" name="email-login" size="35" class="required email" />
+        <br />
+        <label><strong>Password:</strong></label>
+        <input type="password" name="password-login" size="35" class="required" />
+
+        <a class="s_button_1 s_main_color_bgr" onclick="$(this).parent('form').submit()"><span class="s_text">Accedi</span></a>
+
+        <div class="clear"></div>
+
+        <br />
+        <div class="s_list_1">
+        <ul>
+          <li><a href="https://www.magicstore.it/areaclienti/registrati.php?s=1">Registrati</a></li>
+          <li><a href="https://www.magicstore.it/areaclienti/password.php">Password dimenticata</a></li>
+        </ul>
+        </div>
+      </form>
+    </div>
+    
+    <div id="login-b2b-dialog" style="display:none">
+      <form method="post" action="https://www.magicstore.it/areaclienti/?b2b">
+        <input type="hidden" name="np" value="https://www.magicstore.it/ricerca.php" />
+        <input type="hidden" name="b2b" value="1" />
+        <p class="overlay-chiudi">X</p>
+
+        <h2>Area Distributori e Rivenditori</h2>
+
+        <label><strong>Indirizzo E-Mail:</strong></label>
+        <input type="text" name="email-login" size="35" class="required email" />
+        <br />
+        <label><strong>Password:</strong></label>
+        <input type="password" name="password-login" size="35" class="required" />
+
+        <a class="s_button_1 s_main_color_bgr" onclick="$(this).parent('form').submit()"><span class="s_text">Accedi</span></a>
+
+        <div class="clear"></div>
+
+        <br />
+        <div class="s_list_1">
+        <ul>
+          <li><a href="https://www.magicstore.it/areaclienti/registrati.php?s=2">Registrati</a></li>
+          <li><a href="https://www.magicstore.it/areaclienti/password.php?b2b">Password dimenticata</a></li>
+        </ul>
+        </div>
+      </form>
+    </div>
+    
+  <div id="shop_info">
+    <div id="shop_info_wrap">
+      <div class="container_12">
+        <div id="shop_description" class="grid_6" style="width: 460px;">
+          <h2>Magic Store</h2>
+          <p>Magic Store nasce nel 1999 come negozio specializzato nell'Hobby Game. L'attività 
+            si sviluppa nel 2001 con l'apertura dello store online e l'inizio dell'attività di 
+            distribuzione. Oggi Magic Store distribuisce tutti i principali giochi di carte 
+            collezionabili e relativi accessori, miniature, giochi da tavolo, giocattoli e 
+            collezionabili in genere. Assortimento, servizio, cura del cliente e supporto alle 
+          attività di Gioco Organizzato sono la nostra missione. Mettici alla prova.<br /><img src="https://www.magicstore.it//images/dummy/banner_m4.jpg" alt="Negozio" /></p>
+        </div>
+        <div id="shop_contacts" class="grid_3">
+          <h2>Contatti</h2>
+          <table width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr>
+              <td valign="middle"><span class="s_icon_32"><span class="s_icon s_phone_32"></span>Privati 0543.400207<br /> Rivenditori 0543.405103</span></td>
+            </tr>
+            <tr>
+                <td valign="middle"><img style="float:left" height="32" width="32"src="https://www.magicstore.it//images/MS-sitoweb.png" alt="Negozio" />&nbsp MS Edizioni 0543.404797<br />&nbsp MS Eventi 0543.1993267</td>
+
+            </tr>
+            <tr>
+              <td valign="middle"><span class="s_icon_32"><span class="s_icon s_mail_32"></span>Privati<br /><a href="mailto:privati@magicstore.it">privati@magicstore.it</a></span></td>
+            </tr>
+<!--            <tr>
+              <td valign="middle"><span class="s_icon_32"><span class="s_icon s_home_32"></span><a href="<?/*=site_url('areaclienti/?b2b'); */?>">Rivenditori</a></span></td>
+            </tr>
+-->
+            <tr>
+              <td valign="middle"><span class="s_icon_32"><span class="s_icon s_home_32"></span><a href="https://www.msdistribuzione.it/areaclienti/?b2b">Rivenditori</a></span></td>
+            </tr>
+          </table>
+        </div>
+        <div id="facebook" class="grid_3">
+          <h2>Facebook</h2>
+          <div class="s_widget_holder">
+              
+          
+          <div class="fb-page" style="margin-top:45px;"
+               data-href="https://www.facebook.com/magicstore.it"
+               data-tabs=""
+               data-small-header="false"
+               data-adapt-container-width="true"
+               data-height="450"
+               data-hide-cover="false"
+               data-show-facepile="true">
+                <blockquote cite="https://www.facebook.com/magicstore.it" class="fb-xfbml-parse-ignore">
+                    <a href="https://www.facebook.com/magicstore.it">Magic Store</a>
+                </blockquote>
+          </div>
+              
+          </div>
+        </div>
+        <div class="clear"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="footer" class="container_16">
+      <div id="footer_categories" class="clearfix">
+    <div class="grid_2">
+      <h2>Carte Singole</h2>
+      <ul class="s_list_1">
+                <li><a href="https://www.magicstore.it/__/altered/">Altered</a></li>
+                <li><a href="https://www.magicstore.it/__/carte_singole_magic/">Magic</a></li>
+                <li><a href="https://www.magicstore.it/__/carte_singole_yugioh/">Yu-Gi-Oh!</a></li>
+                <li><a href="https://www.magicstore.it/__/pkm-swu/">PKM + SWU</a></li>
+                <li><a href="https://www.magicstore.it/__/lorcana/">Lorcana</a></li>
+              </ul>
+    </div>
+            <div class="grid_2">
+      <h2>Giochi di Carte</h2>
+      <ul class="s_list_1">
+                <li> <a href="https://www.magicstore.it/_/magic_the_gathering/">Magic the Gathering</a></li>
+                <li> <a href="https://www.magicstore.it/_/lorcana/">Lorcana</a></li>
+                <li> <a href="https://www.magicstore.it/_/star-wars-unlimited/">Star Wars Unlimited</a></li>
+                <li> <a href="https://www.magicstore.it/_/yugioh/">Yu-Gi-Oh!</a></li>
+                <li> <a href="https://www.magicstore.it/_/pokemon/">Pokémon</a></li>
+                <li> <a href="https://www.magicstore.it/_/altered/">Altered</a></li>
+                <li> <a href="https://www.magicstore.it/_/riftbound-league-of-legends-tcg/">Riftbound: League of Legends TCG</a></li>
+                <li> <a href="https://www.magicstore.it/_/one-piece-card-game/">One Piece Card Game</a></li>
+                <li> <a href="https://www.magicstore.it/_/altri-tcg/">Altri TCG</a></li>
+                <li> <a href="https://www.magicstore.it/_/tomodachi-press/">TOMODACHI PRESS</a></li>
+                <li> <a href="https://www.magicstore.it/_/skifidol-italian-brainrot-tcg/">SKIFIDOL - ITALIAN BRAINROT TCG</a></li>
+                <li> <a href="https://www.magicstore.it/_/dragon-ball-super-card-game/">Dragon Ball Super Card Game</a></li>
+                <li> <a href="https://www.magicstore.it/_/solforge-fusion/">SolForge Fusion</a></li>
+                <li> <a href="https://www.magicstore.it/_/cardfight-vanguard/">Cardfight!! Vanguard</a></li>
+                <li> <a href="https://www.magicstore.it/_/flesh-and-blood/">Flesh & Blood</a></li>
+                <li> <a href="https://www.magicstore.it/_/palworld-official-card-game/">Palworld Official Card Game</a></li>
+                <li> <a href="https://www.magicstore.it/_/harry-potter-tcg/">Harry Potter TCG</a></li>
+                <li> <a href="https://www.magicstore.it/_/shaman-king/">Shaman King</a></li>
+              </ul>
+    </div>
+            <div class="grid_2">
+      <h2>Accessori</h2>
+      <ul class="s_list_1">
+                <li> <a href="https://www.magicstore.it/_/koplow-games/">Koplow Games</a></li>
+                <li> <a href="https://www.magicstore.it/_/gamegenic/">Gamegenic</a></li>
+                <li> <a href="https://www.magicstore.it/_/tcg-lab/">TCG lab</a></li>
+                <li> <a href="https://www.magicstore.it/_/nigredo-dadi/">Dadi Nigredo</a></li>
+                <li> <a href="https://www.magicstore.it/_/chessex/">Chessex</a></li>
+                <li> <a href="https://www.magicstore.it/_/ultra-pro/">Ultra-PRO</a></li>
+                <li> <a href="https://www.magicstore.it/_/dragon-shield_accessori/">Dragon Shield</a></li>
+                <li> <a href="https://www.magicstore.it/_/teche-porta-box-buste/">Teche Porta Box & Buste</a></li>
+                <li> <a href="https://www.magicstore.it/_/ultimate-guard/">Ultimate Guard</a></li>
+                <li> <a href="https://www.magicstore.it/_/altri_accessori/">Altri Accessori</a></li>
+              </ul>
+    </div>
+            <div class="grid_2">
+      <h2>Giochi da Tavolo</h2>
+      <ul class="s_list_1">
+                <li> <a href="https://www.magicstore.it/_/ms_edizioni/">MS Edizioni</a></li>
+                <li> <a href="https://www.magicstore.it/_/root/">Root</a></li>
+                <li> <a href="https://www.magicstore.it/_/djama-games/">Djama Games</a></li>
+                <li> <a href="https://www.magicstore.it/_/giochix/">Giochix</a></li>
+                <li> <a href="https://www.magicstore.it/_/nsv/">NSV</a></li>
+                <li> <a href="https://www.magicstore.it/_/winning-moves/">Winning Moves</a></li>
+                <li> <a href="https://www.magicstore.it/_/accessori_giochi_da_tavolo/">Accessori per Giochi da Tavolo</a></li>
+                <li> <a href="https://www.magicstore.it/_/catalogo-giochi-in-scatola/">Catalogo Completo Giochi da Tavolo</a></li>
+                <li> <a href="https://www.magicstore.it/_/3-emme-games-28447/">3 Emme Games</a></li>
+                <li> <a href="https://www.magicstore.it/_/asmodee/">Asmodee</a></li>
+                <li> <a href="https://www.magicstore.it/_/cranio/">Cranio Creations</a></li>
+                <li> <a href="https://www.magicstore.it/_/deadzone/">Deadzone</a></li>
+                <li> <a href="https://www.magicstore.it/_/dvgiochi/">dVGiochi</a></li>
+                <li> <a href="https://www.magicstore.it/_/fever-games/">Fever Games</a></li>
+                <li> <a href="https://www.magicstore.it/_/gateongames/">GateOnGames</a></li>
+                <li> <a href="https://www.magicstore.it/_/ghenos-games/">Ghenos Games</a></li>
+                <li> <a href="https://www.magicstore.it/_/giochi-da-tavolo-in-inglese/">Giochi in Inglese</a></li>
+                <li> <a href="https://www.magicstore.it/_/giochi-uniti/">Giochi Uniti</a></li>
+                <li> <a href="https://www.magicstore.it/_/hasbro/">Hasbro</a></li>
+                <li> <a href="https://www.magicstore.it/_/living-card-game-lcg/">Living Card Game - LCG</a></li>
+                <li> <a href="https://www.magicstore.it/_/little-rocket-games/">Little Rocket Games</a></li>
+                <li> <a href="https://www.magicstore.it/_/mancalamaro/">Mancalamaro</a></li>
+                <li> <a href="https://www.magicstore.it/_/mantic-games/">Mantic Games</a></li>
+                <li> <a href="https://www.magicstore.it/_/munchkin/">Munchkin</a></li>
+                <li> <a href="https://www.magicstore.it/_/oliphante/">Oliphante</a></li>
+                <li> <a href="https://www.magicstore.it/_/party-games-20120405180441/">Party Games</a></li>
+                <li> <a href="https://www.magicstore.it/_/pendragon-game-studio/">Pendragon Game Studio</a></li>
+                <li> <a href="https://www.magicstore.it/_/playagame-edizioni/">Playagame Edizioni</a></li>
+                <li> <a href="https://www.magicstore.it/_/ravensburger/">Ravensburger</a></li>
+                <li> <a href="https://www.magicstore.it/_/raven/">Raven Distribution</a></li>
+                <li> <a href="https://www.magicstore.it/_/red-glove/">Red Glove</a></li>
+                <li> <a href="https://www.magicstore.it/_/eg/">Spin Master/EG</a></li>
+                <li> <a href="https://www.magicstore.it/_/star-saga/">Star Saga</a></li>
+                <li> <a href="https://www.magicstore.it/_/the-walking-dead/">The Walking Dead</a></li>
+                <li> <a href="https://www.magicstore.it/_/studio-supernova/">Studio Supernova</a></li>
+                <li> <a href="https://www.magicstore.it/_/tin-hat-games/">Tin Hat games</a></li>
+                <li> <a href="https://www.magicstore.it/_/uplay/">Uplay</a></li>
+                <li> <a href="https://www.magicstore.it/_/wyrd-edizioni-10713/">Wyrd Edizioni</a></li>
+                <li> <a href="https://www.magicstore.it/_/yas-games/">Yas! Games</a></li>
+              </ul>
+    </div>
+            <div class="grid_2">
+      <h2>Giochi di Ruolo</h2>
+      <ul class="s_list_1">
+                <li> <a href="https://www.magicstore.it/_/alone-against-fear/">Alone Against Fear</a></li>
+                <li> <a href="https://www.magicstore.it/_/catalogo-completo-giochi-di-ruolo/">Catalogo completo giochi di ruolo</a></li>
+                <li> <a href="https://www.magicstore.it/_/dungeons_and_dragons/">Dungeons & Dragons</a></li>
+                <li> <a href="https://www.magicstore.it/_/root-97632/">Root</a></li>
+                <li> <a href="https://www.magicstore.it/_/four-against-the-great-old-ones/">Four Against the Great Old Ones</a></li>
+                <li> <a href="https://www.magicstore.it/_/grumpy-bear/">Grumpy Bear</a></li>
+                <li> <a href="https://www.magicstore.it/_/four-against-darkness/">Four Against Darkness</a></li>
+                <li> <a href="https://www.magicstore.it/_/the-cthulhu-hack/">The Cthulhu Hack</a></li>
+                <li> <a href="https://www.magicstore.it/_/dread-il-gioco-di-ruolo/">Dread: Il Gioco di Ruolo</a></li>
+                <li> <a href="https://www.magicstore.it/_/prima-vennero/">Prima Vennero</a></li>
+                <li> <a href="https://www.magicstore.it/_/legacy-vita-tra-le-rovine/">Legacy: Vita tra le Rovine</a></li>
+                <li> <a href="https://www.magicstore.it/_/panini-gdr/">Panini GDR</a></li>
+                <li> <a href="https://www.magicstore.it/_/panini-gdr-20202/">Panini GDR</a></li>
+                <li> <a href="https://www.magicstore.it/_/nigredo-press-88401/">Nigredo Press</a></li>
+                <li> <a href="https://www.magicstore.it/_/fumble-gdr/">Fumble GDR</a></li>
+                <li> <a href="https://www.magicstore.it/_/unglorious/">Unglorious</a></li>
+                <li> <a href="https://www.magicstore.it/_/nameless-land/">Nameless Land</a></li>
+                <li> <a href="https://www.magicstore.it/_/urban-heroes/">Urban Heroes</a></li>
+                <li> <a href="https://www.magicstore.it/_/the-world-of-anvil/">The World Anvil</a></li>
+                <li> <a href="https://www.magicstore.it/_/lightfish-games/">Lightfish Games</a></li>
+                <li> <a href="https://www.magicstore.it/_/vhs-very-horror-stories/">VHS - Very Horror Stories</a></li>
+                <li> <a href="https://www.magicstore.it/_/45/">Shintiara</a></li>
+                <li> <a href="https://www.magicstore.it/_/13th-age/">13th Age</a></li>
+                <li> <a href="https://www.magicstore.it/_/7th-sea/">7th Sea</a></li>
+                <li> <a href="https://www.magicstore.it/_/acthung-cthulhu/">Achtung! Cthulhu</a></li>
+                <li> <a href="https://www.magicstore.it/_/nm5cc32028009247-42056159/"></a></li>
+                <li> <a href="https://www.magicstore.it/_/alice-e-scomparsa-63554/">Alice è Scomparsa</a></li>
+                <li> <a href="https://www.magicstore.it/_/alien-il-gioco-di-ruolo/">Alien - Il Gioco di Ruolo</a></li>
+                <li> <a href="https://www.magicstore.it/_/avventure-nella-terra-di-mezzo/">Avventure nella Terra di Mezzo</a></li>
+                <li> <a href="https://www.magicstore.it/_/broken-compass/">Broken Compass</a></li>
+                <li> <a href="https://www.magicstore.it/_/blue-rose/">Blue Rose</a></li>
+                <li> <a href="https://www.magicstore.it/_/conan/">Conan</a></li>
+                <li> <a href="https://www.magicstore.it/_/63/">Coriolis</a></li>
+                <li> <a href="https://www.magicstore.it/_/cyberpunk-red/">Cyberpunk Red</a></li>
+                <li> <a href="https://www.magicstore.it/_/forbidden-lands/">Forbidden Lands</a></li>
+                <li> <a href="https://www.magicstore.it/_/66/">Cypher System</a></li>
+                <li> <a href="https://www.magicstore.it/_/degenesis/">Degenesis</a></li>
+                <li> <a href="https://www.magicstore.it/_/dreamlord-games/">Dreamlord Games</a></li>
+                <li> <a href="https://www.magicstore.it/_/dune/">DUNE</a></li>
+                <li> <a href="https://www.magicstore.it/_/fabula-ultima/">Fabula Ultima</a></li>
+                <li> <a href="https://www.magicstore.it/_/historia/">Historia</a></li>
+                <li> <a href="https://www.magicstore.it/_/household/">Household</a></li>
+                <li> <a href="https://www.magicstore.it/_/il-richiamo-di-cthulhu/">Il Richiamo di Cthulhu</a></li>
+                <li> <a href="https://www.magicstore.it/_/kids-on-bikes/">Kids on Bikes</a></li>
+                <li> <a href="https://www.magicstore.it/_/kult-divinita-perduta/">Kult: Divinità Perduta</a></li>
+                <li> <a href="https://www.magicstore.it/_/l-ultima-bomba/">L'Ultima Bomba</a></li>
+                <li> <a href="https://www.magicstore.it/_/l-ultima-torcia/">L'Ultima Torcia</a></li>
+                <li> <a href="https://www.magicstore.it/_/l-unico-anello/">L'Unico Anello</a></li>
+                <li> <a href="https://www.magicstore.it/_/lex-arcana/">Lex Arcana</a></li>
+                <li> <a href="https://www.magicstore.it/_/lex-occultum/">LexOccultum</a></li>
+                <li> <a href="https://www.magicstore.it/_/lupo-solitario-il-gioco-di-ruolo/">Lupo Solitario - Il Gioco di Ruolo</a></li>
+                <li> <a href="https://www.magicstore.it/_/memento-mori/">Memento Mori</a></li>
+                <li> <a href="https://www.magicstore.it/_/mouse-guard-la-guardia-dei-topi/">Mouse Guard: La Guardia dei Topi</a></li>
+                <li> <a href="https://www.magicstore.it/_/narrattiva/">Narrattiva</a></li>
+                <li> <a href="https://www.magicstore.it/_/numenera/">Numenera</a></li>
+                <li> <a href="https://www.magicstore.it/_/old-school-essential/">Old School Essential</a></li>
+                <li> <a href="https://www.magicstore.it/_/pathfinder_chronicles/">Pathfinder Gioco di Ruolo</a></li>
+                <li> <a href="https://www.magicstore.it/_/shadow-of-the-demon-lord/">Shadow of the Demon Lord</a></li>
+                <li> <a href="https://www.magicstore.it/_/ms-edizioni-89027/">MS Edizioni</a></li>
+                <li> <a href="https://www.magicstore.it/_/sine-requie-15021/">Sine Requie</a></li>
+                <li> <a href="https://www.magicstore.it/_/space-orange-42/">Space Orange 42</a></li>
+                <li> <a href="https://www.magicstore.it/_/spire-la-citta-deve-cadere/">Spire - La Città deve Cadere</a></li>
+                <li> <a href="https://www.magicstore.it/_/starfinder/">Starfinder</a></li>
+                <li> <a href="https://www.magicstore.it/_/tales-from-the-loop/">Tales from the Loop</a></li>
+                <li> <a href="https://www.magicstore.it/_/the-strange-l-anomalia/">The Strange: L'Anomalia</a></li>
+                <li> <a href="https://www.magicstore.it/_/troika/">Troika!</a></li>
+                <li> <a href="https://www.magicstore.it/_/trudvang-chronicles/">Trudvang Chronicles</a></li>
+                <li> <a href="https://www.magicstore.it/_/vampiri_masquerade/">Vampiri la Masquerade</a></li>
+                <li> <a href="https://www.magicstore.it/_/66-13166/">True20</a></li>
+                <li> <a href="https://www.magicstore.it/_/vampiri-i-secoli-bui/">Vampiri: I Secoli Bui</a></li>
+                <li> <a href="https://www.magicstore.it/_/w-h-40-000-roleplay/">W40K</a></li>
+                <li> <a href="https://www.magicstore.it/_/warhammer_fantasy_roleplay/">Warhammer Fantasy Roleplay</a></li>
+                <li> <a href="https://www.magicstore.it/_/warhammer-age-of-sigmar-soulbound/">Warhammer: Age of Sigmar - Soulbound</a></li>
+                <li> <a href="https://www.magicstore.it/_/altri-giochi-di-ruolo/">Altri Giochi di Ruolo</a></li>
+                <li> <a href="https://www.magicstore.it/_/wyrd-edizioni/">Wyrd Edizioni</a></li>
+                <li> <a href="https://www.magicstore.it/_/zombicide-chronicles/">Zombicide: Chronicles</a></li>
+              </ul>
+    </div>
+            <div class="grid_2">
+      <h2>Libri</h2>
+      <ul class="s_list_1">
+                <li> <a href="https://www.magicstore.it/_/ms-edizioni-10814/">MS Edizioni - Fumetto Gioco</a></li>
+                <li> <a href="https://www.magicstore.it/_/misteri-d-oriente/">Misteri d'Oriente</a></li>
+                <li> <a href="https://www.magicstore.it/_/horror-business/">Horror Business</a></li>
+                <li> <a href="https://www.magicstore.it/_/romanzi-warhammer/">Romanzi Warhammer</a></li>
+                <li> <a href="https://www.magicstore.it/_/lupo-solitario/">Lupo Solitario</a></li>
+                <li> <a href="https://www.magicstore.it/_/libri-game-asmodee/">Asmodee Entertainment</a></li>
+                <li> <a href="https://www.magicstore.it/_/oberon-il-mago/">Oberon il Mago</a></li>
+                <li> <a href="https://www.magicstore.it/_/freeway-warrior/">Freeway Warrior</a></li>
+                <li> <a href="https://www.magicstore.it/_/choose-cthulhu/">Choose Cthulhu</a></li>
+                <li> <a href="https://www.magicstore.it/_/il-cavaliere-del-sole-nero/">Il Cavaliere del Sole Nero</a></li>
+                <li> <a href="https://www.magicstore.it/_/l-ultima-torcia-librogame/">L'Ultima Torcia Librogame</a></li>
+                <li> <a href="https://www.magicstore.it/_/natale-ad-innsmouth/">Natale Ad Innsmouth</a></li>
+                <li> <a href="https://www.magicstore.it/_/ace-gamebooks/">Ace Gamebooks</a></li>
+                <li> <a href="https://www.magicstore.it/_/le-honeste-avventure-di-gigi/">Le Honeste Avventure di Gigi</a></li>
+                <li> <a href="https://www.magicstore.it/_/destiny-quest/">Destiny Quest</a></li>
+                <li> <a href="https://www.magicstore.it/_/blood-sword/">Blood Sword</a></li>
+                <li> <a href="https://www.magicstore.it/_/terre-leggendarie/">Terre Leggendarie</a></li>
+                <li> <a href="https://www.magicstore.it/_/dangerous-world/">Dangerous World</a></li>
+                <li> <a href="https://www.magicstore.it/_/critical-if/">Critical IF</a></li>
+                <li> <a href="https://www.magicstore.it/_/hella-heroes/">Hellas Heroes</a></li>
+                <li> <a href="https://www.magicstore.it/_/age-of-vapor/">Age of Vapor</a></li>
+                <li> <a href="https://www.magicstore.it/_/storia-a-bivi/">Storia a Bivi</a></li>
+                <li> <a href="https://www.magicstore.it/_/fra-tenebra-e-abisso/">Fra Tenebra e Abisso</a></li>
+                <li> <a href="https://www.magicstore.it/_/nuovi-mondi/">Nuovi Mondi</a></li>
+                <li> <a href="https://www.magicstore.it/_/dedalo/">Dedalo</a></li>
+                <li> <a href="https://www.magicstore.it/_/sangue-inchiostro/">Sangue Inchiostro</a></li>
+                <li> <a href="https://www.magicstore.it/_/libri-game/">Libri Game</a></li>
+              </ul>
+    </div>
+            <div class="grid_2">
+      <h2>Miniature</h2>
+      <ul class="s_list_1">
+                <li> <a href="https://www.magicstore.it/_/warhammer-old-world/">Warhammer Old World</a></li>
+                <li> <a href="https://www.magicstore.it/_/d-d-nolzur-s-marvelous-miniatures/">D&D Nolzur's Marvelous Miniatures</a></li>
+                <li> <a href="https://www.magicstore.it/_/wizkids-miniature/">D&D Icons of the Realms</a></li>
+                <li> <a href="https://www.magicstore.it/_/warhammer_fantasy/">Warhammer Age of Sigmar</a></li>
+                <li> <a href="https://www.magicstore.it/_/warhammer_40k_miniature/">Warhammer 40.000</a></li>
+                <li> <a href="https://www.magicstore.it/_/tamiya/">Tamiya</a></li>
+                <li> <a href="https://www.magicstore.it/_/games_workshop_miniature/">Games Workshop</a></li>
+                <li> <a href="https://www.magicstore.it/_/blood-bowl/">Blood Bowl</a></li>
+                <li> <a href="https://www.magicstore.it/_/vallejo/">Vallejo</a></li>
+                <li> <a href="https://www.magicstore.it/_/necromunda/">Necromunda</a></li>
+                <li> <a href="https://www.magicstore.it/_/terraincrate/">Terrain Crate</a></li>
+                <li> <a href="https://www.magicstore.it/_/heroclix_miniature/">Heroclix</a></li>
+                <li> <a href="https://www.magicstore.it/_/nuove_collezioni/">Lego Minifigures</a></li>
+              </ul>
+    </div>
+            <div class="grid_2">
+      <h2>Outlet</h2>
+      <ul class="s_list_1">
+                <li> <a href="https://www.magicstore.it/_/giochi-di-carte/">Giochi di Carte</a></li>
+                <li> <a href="https://www.magicstore.it/_/giochi-da-tavolo/">Giochi da Tavolo e di Ruolo</a></li>
+              </ul>
+    </div>
+    
+    <div class="clear"></div>
+    <div class="grid_12 border_eee"></div>
+  </div>
+
+      
+    <p id="copy"><span class="s_main_color">&copy; Magic Store Srl P. IVA 03550320406</span><br/>Sviluppato da <a href="http://www.nimaia.it">nimaia.it</a>, <a href="http://www.ektor.net">ektor.net</a>.</p>
+  </div>
+    <div id="fb-root"></div>
+    <script>(function(d, s, id) {
+      var js, fjs = d.getElementsByTagName(s)[0];
+      if (d.getElementById(id)) return;
+      js = d.createElement(s); js.id = id;
+      js.src = "//connect.facebook.net/it_IT/sdk.js#xfbml=1&version=v2.10";
+      fjs.parentNode.insertBefore(js, fjs);
+    }(document, 'script', 'facebook-jssdk'));
+    </script>
+    <script type="text/javascript" src="https://www.magicstore.it/js/jquery/jquery.notify.js?1775550317"></script>
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+      ga("create","UA-1125857-1","auto");
+ga('send', 'pageview');
+    </script>
+    </div>
+</body>
+</html>
