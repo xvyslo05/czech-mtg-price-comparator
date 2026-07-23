@@ -2,10 +2,20 @@ from __future__ import annotations
 
 import pytest
 
+from cz_mtg_compare.adapters import build_default_adapters
 from cz_mtg_compare.aggregator import Aggregator
 from cz_mtg_compare.models import SearchQuery
 
 from ._factories import StubAdapter, make_offer
+
+NEW_SHOPS = {
+    "axionnow",
+    "mtgspot",
+    "magiccorporation",
+    "jkentertainment",
+    "bazaarofmagic",
+    "spellenwinkel",
+}
 
 
 def _offer(shop, price):
@@ -52,3 +62,8 @@ async def test_shop_filter():
     )
     offers = await agg.search(SearchQuery(name="Lightning Bolt"), shops=["tolarie"])
     assert [o.shop for o in offers] == ["tolarie"]
+
+
+def test_all_new_shops_are_registered_by_default():
+    aggregator = Aggregator(build_default_adapters())
+    assert all(aggregator.get_adapter(shop) is not None for shop in NEW_SHOPS)

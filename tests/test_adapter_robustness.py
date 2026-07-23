@@ -6,32 +6,55 @@ import json
 import pytest
 
 from cz_mtg_compare.adapters.blacklotus import BlackLotusAdapter
+from cz_mtg_compare.adapters.axionnow import AxionNowAdapter
+from cz_mtg_compare.adapters.bazaargames import BazaarGamesAdapter
 from cz_mtg_compare.adapters.cernyrytir import CernyRytirAdapter
+from cz_mtg_compare.adapters.jkentertainment import JkEntertainmentAdapter
+from cz_mtg_compare.adapters.magiccorporation import MagicCorporationAdapter
+from cz_mtg_compare.adapters.mtgspot import MtgspotAdapter
 from cz_mtg_compare.adapters.najada import NajadaAdapter
 from cz_mtg_compare.adapters.rishada import RishadaAdapter
 from cz_mtg_compare.adapters.tolarie import TolarieAdapter
 from cz_mtg_compare.adapters.untap import UntapAdapter
 from cz_mtg_compare.models import SearchQuery
 
+HTML_ADAPTER_FACTORIES = [
+    TolarieAdapter,
+    BlackLotusAdapter,
+    CernyRytirAdapter,
+    RishadaAdapter,
+    UntapAdapter,
+    MagicCorporationAdapter,
+    JkEntertainmentAdapter,
+    lambda: BazaarGamesAdapter(
+        shop_id="bazaarofmagic",
+        base_url="https://www.bazaarofmagic.eu",
+    ),
+    lambda: BazaarGamesAdapter(
+        shop_id="spellenwinkel",
+        base_url="https://www.spellenwinkel.nl",
+    ),
+]
+
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "adapter_cls",
-    [TolarieAdapter, BlackLotusAdapter, CernyRytirAdapter, RishadaAdapter, UntapAdapter],
+    "adapter_factory",
+    HTML_ADAPTER_FACTORIES,
 )
-async def test_html_adapter_returns_empty_for_empty_html(adapter_cls):
-    adapter = adapter_cls()
+async def test_html_adapter_returns_empty_for_empty_html(adapter_factory):
+    adapter = adapter_factory()
     offers = await adapter.parse("", SearchQuery(name="Lightning Bolt"))
     assert offers == []
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "adapter_cls",
-    [TolarieAdapter, BlackLotusAdapter, CernyRytirAdapter, RishadaAdapter, UntapAdapter],
+    "adapter_factory",
+    HTML_ADAPTER_FACTORIES,
 )
-async def test_html_adapter_handles_garbage_input(adapter_cls):
-    adapter = adapter_cls()
+async def test_html_adapter_handles_garbage_input(adapter_factory):
+    adapter = adapter_factory()
     offers = await adapter.parse("<html><body>nothing useful</body></html>",
                                  SearchQuery(name="Lightning Bolt"))
     assert offers == []
@@ -51,6 +74,44 @@ async def test_najada_adapter_handles_missing_results_key():
     offers = await adapter.parse(json.dumps({}),
                                  SearchQuery(name="Lightning Bolt"))
     assert offers == []
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "adapter",
+    [AxionNowAdapter(), MtgspotAdapter()],
+    ids=["axionnow", "mtgspot"],
+)
+@pytest.mark.parametrize("body", ["", "   ", "not json {{{", '"not a dict"', "[]", "null"])
+async def test_new_json_adapters_handle_empty_or_malformed_body(adapter, body):
+    offers = await adapter.parse(body, SearchQuery(name="Lightning Bolt"))
+    assert offers == []
+
+
+def test_axionnow_suggest_handles_wrong_product_field_types():
+    adapter = AxionNowAdapter()
+    payload = json.dumps(
+        {
+            "resources": {
+                "results": {
+                    "products": [
+                        {
+                            "type": 1,
+                            "tags": ["Magic"],
+                            "title": "Lightning Bolt (401) - CLB",
+                            "handle": "mtg-singles-clb-lightningbolt-401",
+                        }
+                    ]
+                }
+            }
+        }
+    )
+
+    products = adapter._parse_suggest(  # noqa: SLF001
+        payload,
+        SearchQuery(name="Lightning Bolt"),
+    )
+    assert products == []
 
 
 @pytest.mark.asyncio

@@ -14,6 +14,12 @@ ShopId = Literal[
     "rishada",
     "untap",
     "cardmarket",
+    "axionnow",
+    "mtgspot",
+    "magiccorporation",
+    "jkentertainment",
+    "bazaarofmagic",
+    "spellenwinkel",
 ]
 ALL_SHOPS: tuple[ShopId, ...] = (
     "cernyrytir",
@@ -23,6 +29,12 @@ ALL_SHOPS: tuple[ShopId, ...] = (
     "rishada",
     "untap",
     "cardmarket",
+    "axionnow",
+    "mtgspot",
+    "magiccorporation",
+    "jkentertainment",
+    "bazaarofmagic",
+    "spellenwinkel",
 )
 
 

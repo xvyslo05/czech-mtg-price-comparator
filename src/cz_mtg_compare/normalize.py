@@ -9,6 +9,8 @@ _CONDITION_MAP: dict[str, Condition] = {
     "nm": Condition.NM,
     "mint": Condition.NM,
     "m": Condition.NM,
+    "mt": Condition.NM,
+    "nn": Condition.NM,
     "excellent": Condition.EX,
     "ex": Condition.EX,
     "ex+": Condition.EX,
@@ -26,6 +28,7 @@ _CONDITION_MAP: dict[str, Condition] = {
     "heavily played": Condition.HP,
     "hp": Condition.HP,
     "poor": Condition.HP,
+    "po": Condition.HP,
 }
 
 _PRICE_RE = re.compile(r"(\d[\d\s   .,]*)\s*(?:Kč|CZK)", re.IGNORECASE)
