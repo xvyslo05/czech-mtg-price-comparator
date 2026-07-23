@@ -24,6 +24,9 @@ UNCONDITIONAL_SHOPS = {
     "jkentertainment",
     "bazaarofmagic",
     "spellenwinkel",
+    "traderonline",
+    "magicmadhouse",
+    "magicstore",
 }
 
 

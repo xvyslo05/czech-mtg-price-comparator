@@ -1,6 +1,6 @@
 # cz-mtg-compare-mcp
 
-A **Model Context Protocol** server that lets Claude (or any other MCP client) compare **Magic: The Gathering** single-card prices across six Czech shops and six additional European shop storefronts, optionally falling back to Cardmarket. Ask Claude what something costs — it queries every enabled shop in parallel and returns one normalized, CZK-converted, price-sorted list.
+A **Model Context Protocol** server that lets Claude (or any other MCP client) compare **Magic: The Gathering** single-card prices across six Czech shops and nine additional European shop ids, optionally falling back to Cardmarket (16 shop ids total). Ask Claude what something costs — it queries every enabled shop in parallel and returns one normalized, CZK-converted, price-sorted list.
 
 ```
 You:    Find me the cheapest in-stock Lightning Bolt across the Czech shops.
@@ -39,7 +39,7 @@ Claude: (calls search_card)
 
 This is an MCP server. MCP is the protocol Claude Desktop (and other clients) use to call external tools. Once configured, Claude can:
 
-- **Search a single card** across six Czech shops plus shops in the UK, Poland, France, Germany, and the Netherlands.
+- **Search a single card** across six Czech shops plus shops in the UK, Poland, France, Germany, the Netherlands, and Italy.
 - **Optimize a Commander/Standard/Modern decklist** — paste the list in chat, get back either the cheapest cross-shop split (default) or a plan that consolidates into the fewest distinct shops (`strategy="fewest_shops"`, within a 10% price tolerance), plus each shop's solo total.
 - **Resolve card names** through Scryfall (canonical name, set/collector#, oracle text, multilingual printed names).
 - **Fall back to Cardmarket** for European pricing when CZ shops don't carry a card (optional, requires API credentials).
@@ -65,6 +65,9 @@ It does **not** place orders or send notifications — cart contents must still 
 | `jk-entertainment.de` | HTML scrape (Shopware GA4 dataLayer + aligned product DOM) | name, edition, condition, language, foil, stock count, price (EUR→CZK); default variant per listing |
 | `bazaarofmagic.eu`   | HTML scrape (Bazaar Games singles tiles) + optional JSON-LD detail | name, edition, NM condition, foil, binary stock, price (EUR→CZK) |
 | `spellenwinkel.nl`   | Shared Bazaar Games HTML adapter       | singles fields as above; currently no MTG singles catalog, so searches legitimately return no offers |
+| `trader-online.de`   | HTML scrape (OXID single-card tiles)    | name, edition, set code, NM-default condition, language, foil, binary stock, price (EUR→CZK); buylist rows excluded |
+| `magicmadhouse.co.uk` | BigCommerce BODL JSON island + optional variant enrichment | name, edition, set code, condition when enriched, language, foil, stock, price (GBP→CZK) |
+| `magicstore.it`      | HTML scrape (custom-PHP result rows)    | Italian name and edition, NM-default condition, foil, stock count, price (EUR→CZK) |
 | `cardmarket.com`     | OAuth1 API (opt-in, **untested live**) | aggregate priceGuide (TREND/AVG/LOW + foil), EUR→CZK — see [Cardmarket section](#optional-enable-cardmarket) |
 
 ---
@@ -383,6 +386,9 @@ This is **opt-in per shop**. The server has no credentials by default and never 
 | `jkentertainment` | ❌ | ❌                       | ❌        |
 | `bazaarofmagic` | ❌  | ❌                        | ❌        |
 | `spellenwinkel` | ❌  | ❌                        | ❌        |
+| `traderonline` | ❌   | ❌                        | ❌        |
+| `magicmadhouse` | ❌  | ❌                        | ❌        |
+| `magicstore` | ❌     | ❌                        | ❌        |
 | `cardmarket`  | ❌    | ❌                        | ❌        |
 
 Each shop's account flow has to be reverse-engineered separately, so the supported set grows shop-by-shop. The `shop_account_capabilities` MCP tool reports this matrix at runtime including whether credentials are currently configured — ask Claude *"which shops can I log into?"*.
@@ -485,8 +491,8 @@ Sessions live in-process for the lifetime of the MCP server. If the cached token
 | `MKM_ACCESS_TOKEN_SECRET`     | Cardmarket OAuth1 access token secret              | unset |
 | `MKM_API_BASE`                | Override Cardmarket API base URL                   | `https://api.cardmarket.com/ws/v2.0/output.json` |
 | `MKM_EUR_TO_CZK`              | EUR → CZK conversion rate for Cardmarket prices    | `24.5` |
-| `CZ_MTG_EUR_TO_CZK`           | EUR → CZK conversion rate shared by MagicCorporation, JK Entertainment, Bazaar of Magic, and Spellenwinkel | `24.5` |
-| `CZ_MTG_GBP_TO_CZK`           | GBP → CZK conversion rate for Axion Now prices     | `28.5` |
+| `CZ_MTG_EUR_TO_CZK`           | EUR → CZK conversion rate shared by MagicCorporation, JK Entertainment, Bazaar of Magic, Spellenwinkel, Trader-Online, and Magic Store | `24.5` |
+| `CZ_MTG_GBP_TO_CZK`           | GBP → CZK conversion rate shared by Axion Now and Magic Madhouse | `28.5` |
 | `CZ_MTG_PLN_TO_CZK`           | PLN → CZK conversion rate for MTGSpot prices       | `5.8` |
 | `CZ_MTG_SCRYFALL_CACHE`       | Override Scryfall on-disk cache directory          | `~/.cache/cz-mtg-compare/scryfall/` |
 | `CZ_MTG_DISABLED_SHOPS`       | Comma-separated, case-insensitive list of shop IDs to drop at startup (e.g. `blacklotus,untap`) | unset |
@@ -597,6 +603,7 @@ Three ways, in increasing scope:
    tolarie · najada · blacklotus                     axionnow · mtgspot
    cernyrytir · rishada · untap                      magiccorporation · jkentertainment
                                                      bazaarofmagic · spellenwinkel
+                                                     traderonline · magicmadhouse · magicstore
            │                                                 │
            └────────────────────────┬────────────────────────┘
                                     │
@@ -608,6 +615,7 @@ Three ways, in increasing scope:
 
 - A single `search_card` call dispatches to every adapter concurrently, with per-host concurrency capped at 3 and a 20-second timeout per shop.
 - Axion Now uses a bounded two-stage Shopify lookup: predictive search finds at most 10 product handles, then the adapter fetches each handle's `.js` variants under the same per-host concurrency cap.
+- Magic Madhouse defaults to one BigCommerce BODL search-page request. `MagicMadhouseAdapter(enrich_variants=True)` additionally follows at most five matching products and resolves their condition variants through the BigCommerce product-attributes endpoint.
 - Each adapter returns a list of normalized `Offer` objects with the same fields regardless of source.
 - Per-shop results are cached in-memory for 10 minutes (LRU eviction not yet, just TTL).
 - One shop failing or timing out **never** kills the query — partial results come back, and the failed shop's error is surfaced through `list_shops`.
@@ -751,7 +759,7 @@ The `state` parameter is single-use: the server clears it the moment the callbac
 4. Copy the **Client ID** and **Client secret** into your deployment's env (`CZ_MTG_OAUTH_GOOGLE_CLIENT_ID`, `CZ_MTG_OAUTH_GOOGLE_CLIENT_SECRET`). Set `CZ_MTG_PUBLIC_BASE_URL` to the matching origin.
 
 Caveats:
-- `/v1/decklists/optimize` runs inline in the handler today. A 100-card list can fan out to roughly 1,200 top-level requests across the 12 default shop ids, plus Axion Now's bounded product-variant lookups, and take several seconds. Moving to a background job queue is tracked as A4 in issue #9.
+- `/v1/decklists/optimize` runs inline in the handler today. A 100-card list can fan out to roughly 1,500 top-level requests across the 15 default shop ids, plus Axion Now's bounded product-variant lookups, and take several seconds. Moving to a background job queue is tracked as A4 in issue #9.
 - No rate limiting on the auth endpoints yet — that lands with G2.
 - GitHub OAuth is **not** wired yet — that's B1 PR6, and most of the schema (`oauth_identities` keyed by `(provider, provider_user_id)`) is reused verbatim.
 - No "unlink Google" endpoint yet — that needs the settings page (B2). Workaround for now: delete the row from `oauth_identities` directly.
@@ -772,7 +780,10 @@ Caveats:
 - **JK Entertainment exposes only the default variant per listing.** Other conditions/languages can exist behind its JavaScript-only sibling-variant selector, but the server-rendered GA4 dataLayer and aligned product box carry one purchasable variant and its current stock count.
 - **Spellenwinkel currently has no MTG singles catalog.** Its shared Bazaar Games adapter deliberately ignores sealed/accessory `div.products` tiles and therefore returns zero offers for the checked catalog; it will begin parsing automatically if `div.singles` listings appear later.
 - **MTGSpot uses a reverse-engineered public gateway contract.** The anonymous SPA key and `filter[...]` request shape can change, and the API exposes edition names but no set codes.
-- **Account features cover six of thirteen shop ids, with five of them fully cartable.** Full login + cart: `najada` (Djoser/DRF API), `blacklotus` (Shoptet), `tolarie` (Django + jQuery `getJSON` per-product URLs), `rishada` (custom-PHP form POST — `act=20005` against `/`), `cernyrytir` (custom-PHP form POST — `nakupzbozi=Pridat` + `carovy_kod`). Login only: `untap` — cart works against Prestashop but doesn't persist between logins (see Known limitations). The six new European shop ids and Cardmarket are read-only.
+- **Trader-Online is results-page-only.** Condition is absent from tiles and defaults to NM; stock is binary. The mixed search also contains `/card-purchase/` buylist prices, which the adapter explicitly rejects before parsing offers.
+- **Magic Madhouse defaults to BODL “from” prices.** The one-request default reports `condition=?` and usually binary-like stock derived from the listing/dispatch text. Construct the adapter with `enrich_variants=True` to resolve exact per-condition price and stock for at most five name-matched option products; failures gracefully retain the BODL offer. Cross-game search crowding can still make ambiguous names incomplete.
+- **Magic Store returns Italian-localized names and fuzzy server matches.** The adapter intentionally skips the English client-side name filter, so raw comparison can include fuzzy results and English decklist matching remains weak. Edition filters match the Italian storefront label, all offers default to NM, and only the single server-returned page is parsed (the captured single-card pages contained 30–78 rows).
+- **Account features cover six of sixteen shop ids, with five of them fully cartable.** Full login + cart: `najada` (Djoser/DRF API), `blacklotus` (Shoptet), `tolarie` (Django + jQuery `getJSON` per-product URLs), `rishada` (custom-PHP form POST — `act=20005` against `/`), `cernyrytir` (custom-PHP form POST — `nakupzbozi=Pridat` + `carovy_kod`). Login only: `untap` — cart works against Prestashop but doesn't persist between logins (see Known limitations). The nine additional European shop ids and Cardmarket are read-only.
 - **No automated checkout.** The cart tools stop at "items are in the cart" — finalizing the order, shipping, and payment still happen manually on the shop's website. This is intentional.
 
 ---

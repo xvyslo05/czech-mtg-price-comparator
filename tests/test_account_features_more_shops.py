@@ -30,7 +30,10 @@ from cz_mtg_compare.adapters.cernyrytir import (
 from cz_mtg_compare.adapters.rishada import LOGIN_URL as RI_LOGIN_URL, RishadaAdapter
 from cz_mtg_compare.adapters.jkentertainment import JkEntertainmentAdapter
 from cz_mtg_compare.adapters.magiccorporation import MagicCorporationAdapter
+from cz_mtg_compare.adapters.magicmadhouse import MagicMadhouseAdapter
+from cz_mtg_compare.adapters.magicstore import MagicStoreAdapter
 from cz_mtg_compare.adapters.mtgspot import MtgspotAdapter
+from cz_mtg_compare.adapters.traderonline import TraderOnlineAdapter
 from cz_mtg_compare.adapters.untap import (
     ACCOUNT_URL,
     CART_URL,
@@ -78,6 +81,9 @@ def test_capability_flags_per_shop() -> None:
         MtgspotAdapter(),
         MagicCorporationAdapter(),
         JkEntertainmentAdapter(),
+        TraderOnlineAdapter(),
+        MagicMadhouseAdapter(),
+        MagicStoreAdapter(),
         BazaarGamesAdapter(
             shop_id="bazaarofmagic",
             base_url="https://www.bazaarofmagic.eu",

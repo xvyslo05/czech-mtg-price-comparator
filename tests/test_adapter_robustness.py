@@ -11,10 +11,13 @@ from cz_mtg_compare.adapters.bazaargames import BazaarGamesAdapter
 from cz_mtg_compare.adapters.cernyrytir import CernyRytirAdapter
 from cz_mtg_compare.adapters.jkentertainment import JkEntertainmentAdapter
 from cz_mtg_compare.adapters.magiccorporation import MagicCorporationAdapter
+from cz_mtg_compare.adapters.magicmadhouse import MagicMadhouseAdapter
+from cz_mtg_compare.adapters.magicstore import MagicStoreAdapter
 from cz_mtg_compare.adapters.mtgspot import MtgspotAdapter
 from cz_mtg_compare.adapters.najada import NajadaAdapter
 from cz_mtg_compare.adapters.rishada import RishadaAdapter
 from cz_mtg_compare.adapters.tolarie import TolarieAdapter
+from cz_mtg_compare.adapters.traderonline import TraderOnlineAdapter
 from cz_mtg_compare.adapters.untap import UntapAdapter
 from cz_mtg_compare.models import SearchQuery
 
@@ -26,6 +29,9 @@ HTML_ADAPTER_FACTORIES = [
     UntapAdapter,
     MagicCorporationAdapter,
     JkEntertainmentAdapter,
+    TraderOnlineAdapter,
+    MagicMadhouseAdapter,
+    MagicStoreAdapter,
     lambda: BazaarGamesAdapter(
         shop_id="bazaarofmagic",
         base_url="https://www.bazaarofmagic.eu",
