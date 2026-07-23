@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "cz-mtg-compare-mcp"
-version = "0.6.0"
+version = "0.7.0"
 description = "MCP server that compares Magic: The Gathering single-card prices across Czech online shops."
 readme = "README.md"
 requires-python = ">=3.11"
