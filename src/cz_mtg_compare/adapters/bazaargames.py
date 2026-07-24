@@ -3,7 +3,6 @@ from __future__ import annotations
 import asyncio
 import json
 import math
-import os
 import re
 import urllib.parse
 from html import unescape
@@ -11,12 +10,13 @@ from typing import Any
 
 from selectolax.parser import HTMLParser, Node
 
+from .. import fx
 from ..filters import filter_playable
 from ..http_client import get_client, host_slot
 from ..models import Condition, Offer, SearchQuery, ShopId
 from .base import ShopAdapter
 
-DEFAULT_EUR_TO_CZK = 24.5
+DEFAULT_EUR_TO_CZK = fx.STATIC_DEFAULTS["EUR"]
 BROWSER_USER_AGENT = (
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
     "AppleWebKit/537.36 (KHTML, like Gecko) "
@@ -26,17 +26,6 @@ BROWSER_USER_AGENT = (
 _TITLE_PREFIX = "More information about "
 _FOIL_RE = re.compile(r"\s*\(foil\)\s*$", re.IGNORECASE)
 _COLLECTOR_RE = re.compile(r"\s*\(#\d+\)\s*$", re.IGNORECASE)
-
-
-def _env_rate(name: str, default: float) -> float:
-    raw = os.environ.get(name)
-    if raw is None:
-        return default
-    try:
-        value = float(raw)
-    except (TypeError, ValueError):
-        return default
-    return value if math.isfinite(value) and value > 0 else default
 
 
 class BazaarGamesAdapter(ShopAdapter):
@@ -55,10 +44,10 @@ class BazaarGamesAdapter(ShopAdapter):
         self.shop_id = shop_id
         self.base_url = base_url.rstrip("/")
         self._host = urllib.parse.urlsplit(self.base_url).hostname or ""
-        self._eur_to_czk = (
-            eur_to_czk
-            if eur_to_czk is not None
-            else _env_rate("CZ_MTG_EUR_TO_CZK", DEFAULT_EUR_TO_CZK)
+        self._eur_to_czk_override = eur_to_czk
+        self._eur_to_czk = fx.rate_to_czk_nolive(
+            "EUR",
+            override=eur_to_czk,
         )
         self._enrich_detail = enrich_detail
 
@@ -69,6 +58,11 @@ class BazaarGamesAdapter(ShopAdapter):
         )
 
     async def search(self, query: SearchQuery) -> list[Offer]:
+        eur_to_czk = (
+            self._eur_to_czk
+            if self._eur_to_czk_override is not None
+            else await fx.rate_to_czk("EUR")
+        )
         client = await get_client()
         async with host_slot(self._host):
             response = await client.get(
@@ -76,24 +70,29 @@ class BazaarGamesAdapter(ShopAdapter):
                 headers={"User-Agent": BROWSER_USER_AGENT},
             )
         response.raise_for_status()
-        offers = self._parse(response.text, query)
+        offers = self._parse(response.text, query, eur_to_czk)
         if self._enrich_detail:
-            await self._enrich_offers(offers)
+            await self._enrich_offers(offers, eur_to_czk)
             if query.in_stock_only:
                 offers = [offer for offer in offers if offer.stock_qty > 0]
         return offers
 
     async def parse(self, html: str, query: SearchQuery) -> list[Offer]:
-        return self._parse(html, query)
+        return self._parse(html, query, self._eur_to_czk)
 
-    def _parse(self, html: str, query: SearchQuery) -> list[Offer]:
+    def _parse(
+        self,
+        html: str,
+        query: SearchQuery,
+        eur_to_czk: float,
+    ) -> list[Offer]:
         tree = HTMLParser(html)
         wanted = query.name.casefold()
         edition_filter = (query.edition or "").strip().casefold() or None
         offers: list[Offer] = []
 
         for tile in tree.css("div.singles"):
-            offer = self._parse_tile(tile)
+            offer = self._parse_tile(tile, eur_to_czk)
             if offer is None:
                 continue
             if wanted not in offer.card_name.casefold():
@@ -109,7 +108,11 @@ class BazaarGamesAdapter(ShopAdapter):
 
         return offers if query.include_non_playable else filter_playable(offers)
 
-    def _parse_tile(self, tile: Node) -> Offer | None:
+    def _parse_tile(
+        self,
+        tile: Node,
+        eur_to_czk: float,
+    ) -> Offer | None:
         link = tile.css_first("div.thumb a[href]")
         if link is None:
             return None
@@ -152,13 +155,19 @@ class BazaarGamesAdapter(ShopAdapter):
             condition=Condition.NM,
             language=None,
             foil=foil,
-            price_czk=int(round(price_eur * self._eur_to_czk)),
+            price_czk=int(round(price_eur * eur_to_czk)),
+            price_native=price_eur,
+            currency="EUR",
             stock_qty=stock_qty,
             url=url,
             shop_ref=shop_ref,
         )
 
-    async def _enrich_offers(self, offers: list[Offer]) -> None:
+    async def _enrich_offers(
+        self,
+        offers: list[Offer],
+        eur_to_czk: float,
+    ) -> None:
         if not offers:
             return
         client = await get_client()
@@ -171,7 +180,7 @@ class BazaarGamesAdapter(ShopAdapter):
                         headers={"User-Agent": BROWSER_USER_AGENT},
                     )
                 response.raise_for_status()
-                self._apply_detail(offer, response.text)
+                self._apply_detail(offer, response.text, eur_to_czk)
             except Exception:  # noqa: BLE001 - detail enrichment is best-effort
                 return
 
@@ -182,7 +191,9 @@ class BazaarGamesAdapter(ShopAdapter):
         html: str,
         url: str | None = None,
         listing_stock_qty: int = 0,
+        eur_to_czk: float | None = None,
     ) -> Offer | None:
+        rate = self._eur_to_czk if eur_to_czk is None else eur_to_czk
         tree = HTMLParser(html)
         product: dict[str, Any] | None = None
         for node in tree.css('script[type="application/ld+json"]'):
@@ -233,14 +244,26 @@ class BazaarGamesAdapter(ShopAdapter):
             condition=Condition.NM,
             language=None,
             foil=foil,
-            price_czk=int(round(price_eur * self._eur_to_czk)),
+            price_czk=int(round(price_eur * rate)),
+            price_native=price_eur,
+            currency="EUR",
             stock_qty=stock_qty,
             url=detail_url,
             shop_ref=str(sku) if sku is not None else None,
         )
 
-    def _apply_detail(self, offer: Offer, html: str) -> None:
-        detail = self._parse_detail(html, offer.url, offer.stock_qty)
+    def _apply_detail(
+        self,
+        offer: Offer,
+        html: str,
+        eur_to_czk: float,
+    ) -> None:
+        detail = self._parse_detail(
+            html,
+            offer.url,
+            offer.stock_qty,
+            eur_to_czk,
+        )
         if detail is None:
             return
         offer.card_name = detail.card_name
@@ -248,6 +271,8 @@ class BazaarGamesAdapter(ShopAdapter):
         offer.condition = detail.condition
         offer.foil = detail.foil
         offer.price_czk = detail.price_czk
+        offer.price_native = detail.price_native
+        offer.currency = detail.currency
         offer.stock_qty = detail.stock_qty
         offer.shop_ref = detail.shop_ref
 

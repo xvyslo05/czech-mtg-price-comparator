@@ -28,6 +28,8 @@ async def test_parses_italian_lightning_bolt_results(load_fixture, adapter):
         assert offer.url.startswith("https://www.magicstore.it/")
         assert offer.condition is Condition.NM
         assert offer.price_czk > 0
+        assert offer.price_native is not None
+        assert offer.currency == "EUR"
 
 
 @pytest.mark.asyncio

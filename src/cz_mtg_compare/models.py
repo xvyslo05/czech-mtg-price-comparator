@@ -73,6 +73,8 @@ class Offer(BaseModel):
     language: str | None = None
     foil: bool = False
     price_czk: int
+    price_native: float | None = None
+    currency: str = "CZK"
     stock_qty: int = 0
     url: str
     # Opaque per-shop identifier used by account features (add_to_cart, watchlist).

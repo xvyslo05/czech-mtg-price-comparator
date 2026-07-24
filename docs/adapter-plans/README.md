@@ -78,9 +78,11 @@ default NM). Extend `normalize.py`'s condition map per shop; where no condition 
 exists, document the NM default rather than guessing.
 
 ## Not planned (from the survey)
-- **Tier 3 (anti-bot-walled, otherwise good):** Distrito Zero 🇪🇸 & Fantasia Store 🇮🇹
-  (both PrestaShop — ideal if the Cloudflare/IP block is solved), Chaos Cards 🇬🇧,
-  Games Island 🇩🇪, Outpost 🇧🇪, Parkage 🇫🇷.
+- **Tier 3 (anti-bot-walled, otherwise good) — DROPPED (decision 2026-07-23):**
+  Distrito Zero 🇪🇸 & Fantasia Store 🇮🇹 (both PrestaShop — ideal if the Cloudflare/IP
+  block is solved), Chaos Cards 🇬🇧, Games Island 🇩🇪, Outpost 🇧🇪, Parkage 🇫🇷.
+  Out of scope for the httpx+selectolax stack; revisit only if a shop's protection
+  changes (neither headless-browser nor proxy paths were approved).
 - **Tier 4 (no singles / wrong catalog):** Red Goblin, Gameology, Geek Hub, Cardhunter,
   Mazvigo, Kaissa, Efantasy, Warlock, Game Mania, Fox & Co, World's End.
 - **Unidentified:** Temple of Deceit 🇪🇸, Planszówki i Karcianki 🇵🇱, Sklep Goblin 🇵🇱.

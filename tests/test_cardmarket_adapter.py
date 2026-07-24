@@ -68,6 +68,18 @@ def test_adapter_skipped_silently_when_no_credentials():
     assert adapter.configured is False
 
 
+def test_cardmarket_rate_precedence_keeps_mkm_compatibility(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    monkeypatch.setenv("CZ_MTG_EUR_TO_CZK", "26.0")
+    monkeypatch.setenv("MKM_EUR_TO_CZK", "27.0")
+
+    assert CardmarketAdapter()._eur_to_czk == 27.0  # noqa: SLF001
+    assert CardmarketAdapter(eur_to_czk=28.0)._eur_to_czk == 28.0  # noqa: SLF001
+    monkeypatch.setenv("MKM_EUR_TO_CZK", "invalid")
+    assert CardmarketAdapter()._eur_to_czk == 26.0  # noqa: SLF001
+
+
 @pytest.mark.asyncio
 async def test_adapter_returns_empty_when_unconfigured():
     adapter = CardmarketAdapter(credentials=None)
@@ -117,10 +129,14 @@ def test_parse_find_payload_emits_offers(adapter: CardmarketAdapter):
     foil = next(o for o in offers if o.foil)
     # 0.25 EUR * 25.0 CZK/EUR = 6.25, rounded to 6
     assert non_foil.price_czk == 6
+    assert non_foil.price_native == 0.25
+    assert non_foil.currency == "EUR"
     assert non_foil.set_code == "M10"
     assert non_foil.edition == "Magic 2010"
     # 4.50 EUR * 25.0 = 112.5 -> 113 (round half-to-even rounds 112)
     assert foil.price_czk in (112, 113)
+    assert foil.price_native == 4.5
+    assert foil.currency == "EUR"
     assert all(o.shop == "cardmarket" for o in offers)
 
 

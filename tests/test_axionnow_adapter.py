@@ -34,6 +34,8 @@ async def test_parses_lightning_bolt_variants(
         assert offer.shop == "axionnow"
         assert "lightning bolt" in offer.card_name.lower()
         assert offer.price_czk > 0
+        assert offer.price_native is not None
+        assert offer.currency == "GBP"
         assert offer.condition in Condition
         assert offer.url.startswith("https://axionnow.com/products/")
 

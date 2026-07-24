@@ -28,6 +28,8 @@ async def test_parses_lightning_bolt_fixture(
         assert offer.shop == "jkentertainment"
         assert "lightning bolt" in offer.card_name.lower()
         assert offer.price_czk > 0
+        assert offer.price_native is not None
+        assert offer.currency == "EUR"
         assert offer.url.startswith("https://www.jk-entertainment.de/")
 
 

@@ -32,6 +32,8 @@ async def test_parses_ragavan_bodl(load_fixture, adapter):
         assert offer.shop == "magicmadhouse"
         assert offer.card_name == "Ragavan, Nimble Pilferer"
         assert offer.price_czk > 0
+        assert offer.price_native is not None
+        assert offer.currency == "GBP"
         assert offer.condition in Condition
         assert offer.url.startswith("https://magicmadhouse.co.uk/")
 
