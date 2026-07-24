@@ -81,6 +81,8 @@ def test_search_card_returns_offers_sorted_by_price(client_factory):
     assert [o["shop"] for o in payload] == ["najada", "tolarie"]
     assert payload[0]["price_czk"] == 35
     assert payload[1]["price_czk"] == 80
+    assert payload[0]["price_native"] is None
+    assert payload[0]["currency"] == "CZK"
 
 
 def test_search_card_shop_filter_via_repeated_query(client_factory):

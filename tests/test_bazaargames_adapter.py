@@ -43,6 +43,8 @@ async def test_bazaar_parses_lightning_bolt_tiles(load_fixture):
     for offer in offers:
         assert offer.shop == "bazaarofmagic"
         assert offer.price_czk > 0
+        assert offer.price_native is not None
+        assert offer.currency == "EUR"
         assert offer.condition is Condition.NM
         assert offer.url.startswith("https://www.bazaarofmagic.eu")
         assert (offer.shop_ref or "").isdigit()
@@ -148,7 +150,8 @@ async def test_bazaar_reapplies_stock_filter_after_enrichment(
     adapter = _adapter(enrich_detail=True)
     query = SearchQuery(name="Lightning Bolt", in_stock_only=True)
 
-    async def mark_out_of_stock(offers):
+    async def mark_out_of_stock(offers, eur_to_czk):
+        assert eur_to_czk == 25.0
         for offer in offers:
             offer.stock_qty = 0
 

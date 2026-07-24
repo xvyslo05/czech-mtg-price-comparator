@@ -3,12 +3,12 @@ from __future__ import annotations
 import asyncio
 import json
 import math
-import os
 import re
 from typing import Any
 
 from selectolax.parser import HTMLParser
 
+from .. import fx
 from ..filters import filter_playable
 from ..http_client import get_client, host_slot
 from ..models import Offer, SearchQuery
@@ -17,21 +17,10 @@ from .base import ShopAdapter
 
 SHOP_BASE = "https://axionnow.com"
 SUGGEST_ENDPOINT = f"{SHOP_BASE}/search/suggest.json"
-DEFAULT_GBP_TO_CZK = 28.5
+DEFAULT_GBP_TO_CZK = fx.STATIC_DEFAULTS["GBP"]
 MAX_HANDLES = 10
 
 _TITLE_RE = re.compile(r"^(.*?)\s*\(\d+\)\s*-\s*([A-Z0-9]+)\s*$")
-
-
-def _env_rate(name: str, default: float) -> float:
-    raw = os.environ.get(name)
-    if raw is None:
-        return default
-    try:
-        value = float(raw)
-    except (TypeError, ValueError):
-        return default
-    return value if math.isfinite(value) and value > 0 else default
 
 
 class AxionNowAdapter(ShopAdapter):
@@ -42,13 +31,18 @@ class AxionNowAdapter(ShopAdapter):
     supports_watchlist = False
 
     def __init__(self, *, gbp_to_czk: float | None = None) -> None:
-        self._gbp_to_czk = (
-            gbp_to_czk
-            if gbp_to_czk is not None
-            else _env_rate("CZ_MTG_GBP_TO_CZK", DEFAULT_GBP_TO_CZK)
+        self._gbp_to_czk_override = gbp_to_czk
+        self._gbp_to_czk = fx.rate_to_czk_nolive(
+            "GBP",
+            override=gbp_to_czk,
         )
 
     async def search(self, query: SearchQuery) -> list[Offer]:
+        gbp_to_czk = (
+            self._gbp_to_czk
+            if self._gbp_to_czk_override is not None
+            else await fx.rate_to_czk("GBP")
+        )
         client = await get_client()
         async with host_slot("axionnow.com"):
             response = await client.get(
@@ -79,6 +73,7 @@ class AxionNowAdapter(ShopAdapter):
                 product.get("edition"),
                 product.get("set_code"),
                 query,
+                gbp_to_czk,
             )
 
         results = await asyncio.gather(
@@ -93,7 +88,14 @@ class AxionNowAdapter(ShopAdapter):
         ]
 
     async def parse(self, html: str, query: SearchQuery) -> list[Offer]:
-        return self._parse_product(html, None, None, None, query)
+        return self._parse_product(
+            html,
+            None,
+            None,
+            None,
+            query,
+            self._gbp_to_czk,
+        )
 
     def _parse_suggest(
         self,
@@ -174,6 +176,7 @@ class AxionNowAdapter(ShopAdapter):
         edition: str | None,
         set_code: str | None,
         query: SearchQuery,
+        gbp_to_czk: float,
     ) -> list[Offer]:
         if not js_payload_str or not js_payload_str.strip():
             return []
@@ -244,7 +247,9 @@ class AxionNowAdapter(ShopAdapter):
                     condition=normalize_condition(condition_raw),
                     language=None,
                     foil=finish.casefold() == "foil",
-                    price_czk=int(round((price_pence / 100) * self._gbp_to_czk)),
+                    price_czk=int(round((price_pence / 100) * gbp_to_czk)),
+                    price_native=price_pence / 100,
+                    currency="GBP",
                     stock_qty=stock_qty,
                     url=f"{SHOP_BASE}/products/{handle}",
                     shop_ref=str(variant_id) if variant_id is not None else None,

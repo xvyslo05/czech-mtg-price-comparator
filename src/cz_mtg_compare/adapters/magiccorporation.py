@@ -1,20 +1,20 @@
 from __future__ import annotations
 
 import math
-import os
 import re
 import urllib.parse
 from html import unescape
 
 from selectolax.parser import HTMLParser, Node
 
+from .. import fx
 from ..filters import filter_playable
 from ..http_client import get_client, host_slot
 from ..models import Condition, Offer, SearchQuery
 from .base import ShopAdapter
 
 BASE = "https://boutique.magiccorporation.com"
-DEFAULT_EUR_TO_CZK = 24.5
+DEFAULT_EUR_TO_CZK = fx.STATIC_DEFAULTS["EUR"]
 
 _EUR_RE = re.compile(r"(\d[\d\s\u00a0.]*,\d{2})\s*€")
 _SET_CODE_RE = re.compile(
@@ -22,17 +22,6 @@ _SET_CODE_RE = re.compile(
     re.IGNORECASE,
 )
 _VARIANTS = {"vo", "vf", "vo_foil", "vf_foil"}
-
-
-def _env_rate(name: str, default: float) -> float:
-    raw = os.environ.get(name)
-    if raw is None:
-        return default
-    try:
-        value = float(raw)
-    except (TypeError, ValueError):
-        return default
-    return value if math.isfinite(value) and value > 0 else default
 
 
 class MagicCorporationAdapter(ShopAdapter):
@@ -43,26 +32,36 @@ class MagicCorporationAdapter(ShopAdapter):
     supports_watchlist = False
 
     def __init__(self, *, eur_to_czk: float | None = None) -> None:
-        self._eur_to_czk = (
-            eur_to_czk
-            if eur_to_czk is not None
-            else _env_rate("CZ_MTG_EUR_TO_CZK", DEFAULT_EUR_TO_CZK)
+        self._eur_to_czk_override = eur_to_czk
+        self._eur_to_czk = fx.rate_to_czk_nolive(
+            "EUR",
+            override=eur_to_czk,
         )
 
     def _search_url(self, query: SearchQuery) -> str:
         return f"{BASE}/recherche?{urllib.parse.urlencode({'q': query.name})}"
 
     async def search(self, query: SearchQuery) -> list[Offer]:
+        eur_to_czk = (
+            self._eur_to_czk
+            if self._eur_to_czk_override is not None
+            else await fx.rate_to_czk("EUR")
+        )
         client = await get_client()
         async with host_slot("boutique.magiccorporation.com"):
             response = await client.get(self._search_url(query))
         response.raise_for_status()
-        return self._parse(response.text, query)
+        return self._parse(response.text, query, eur_to_czk)
 
     async def parse(self, html: str, query: SearchQuery) -> list[Offer]:
-        return self._parse(html, query)
+        return self._parse(html, query, self._eur_to_czk)
 
-    def _parse(self, html: str, query: SearchQuery) -> list[Offer]:
+    def _parse(
+        self,
+        html: str,
+        query: SearchQuery,
+        eur_to_czk: float,
+    ) -> list[Offer]:
         tree = HTMLParser(html)
         wanted = query.name.casefold()
         edition_filter = (query.edition or "").strip().casefold() or None
@@ -159,7 +158,9 @@ class MagicCorporationAdapter(ShopAdapter):
                         condition=Condition.NM,
                         language="EN" if variant.startswith("vo") else "FR",
                         foil=variant.endswith("_foil"),
-                        price_czk=int(round(price_eur * self._eur_to_czk)),
+                        price_czk=int(round(price_eur * eur_to_czk)),
+                        price_native=price_eur,
+                        currency="EUR",
                         stock_qty=stock_qty,
                         url=detail_url,
                         shop_ref=f"{product_id}:{variant}",

@@ -30,6 +30,8 @@ async def test_parses_lightning_bolt_json(
         assert offer.shop == "mtgspot"
         assert "lightning bolt" in offer.card_name.lower()
         assert offer.price_czk > 0
+        assert offer.price_native is not None
+        assert offer.currency == "PLN"
         assert offer.condition in Condition
         assert offer.url.startswith("https://mtgspot.pl/single")
 

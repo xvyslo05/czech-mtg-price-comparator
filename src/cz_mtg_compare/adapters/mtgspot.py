@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import json
 import math
-import os
 import urllib.parse
 from typing import Any
 
+from .. import fx
 from ..filters import filter_playable
 from ..http_client import get_client, host_slot
 from ..models import Condition, Offer, SearchQuery
@@ -19,7 +19,7 @@ API_KEY = "b3d39321-5dc4-4298-98c6-0399432a948b"
 GAME_ID = "1"
 SINGLES_CATEGORY = 1
 PAGE_LIMIT = 100
-DEFAULT_PLN_TO_CZK = 5.8
+DEFAULT_PLN_TO_CZK = fx.STATIC_DEFAULTS["PLN"]
 
 _LANGUAGES = {
     "english": "EN",
@@ -36,17 +36,6 @@ _LANGUAGES = {
 }
 
 
-def _env_rate(name: str, default: float) -> float:
-    raw = os.environ.get(name)
-    if raw is None:
-        return default
-    try:
-        value = float(raw)
-    except (TypeError, ValueError):
-        return default
-    return value if math.isfinite(value) and value > 0 else default
-
-
 class MtgspotAdapter(ShopAdapter):
     shop_id = "mtgspot"
     base_url = SHOP_BASE
@@ -55,13 +44,18 @@ class MtgspotAdapter(ShopAdapter):
     supports_watchlist = False
 
     def __init__(self, *, pln_to_czk: float | None = None) -> None:
-        self._pln_to_czk = (
-            pln_to_czk
-            if pln_to_czk is not None
-            else _env_rate("CZ_MTG_PLN_TO_CZK", DEFAULT_PLN_TO_CZK)
+        self._pln_to_czk_override = pln_to_czk
+        self._pln_to_czk = fx.rate_to_czk_nolive(
+            "PLN",
+            override=pln_to_czk,
         )
 
     async def search(self, query: SearchQuery) -> list[Offer]:
+        pln_to_czk = (
+            self._pln_to_czk
+            if self._pln_to_czk_override is not None
+            else await fx.rate_to_czk("PLN")
+        )
         params: dict[str, str | int] = {
             "filter[name]": query.name,
             "filter[id_category]": SINGLES_CATEGORY,
@@ -85,18 +79,31 @@ class MtgspotAdapter(ShopAdapter):
                 },
             )
         response.raise_for_status()
-        return await self.parse(response.text, query)
+        return self._parse(response.text, query, pln_to_czk)
 
     async def parse(self, html: str, query: SearchQuery) -> list[Offer]:
+        return self._parse(html, query, self._pln_to_czk)
+
+    def _parse(
+        self,
+        html: str,
+        query: SearchQuery,
+        pln_to_czk: float,
+    ) -> list[Offer]:
         if not html or not html.strip():
             return []
         try:
             payload = json.loads(html)
         except (json.JSONDecodeError, TypeError):
             return []
-        return self._parse_payload(payload, query)
+        return self._parse_payload(payload, query, pln_to_czk)
 
-    def _parse_payload(self, payload: Any, query: SearchQuery) -> list[Offer]:
+    def _parse_payload(
+        self,
+        payload: Any,
+        query: SearchQuery,
+        pln_to_czk: float,
+    ) -> list[Offer]:
         if not isinstance(payload, dict):
             return []
         response = payload.get("response")
@@ -127,7 +134,12 @@ class MtgspotAdapter(ShopAdapter):
             ):
                 continue
 
-            offer = self._article_to_offer(item, card_name, edition)
+            offer = self._article_to_offer(
+                item,
+                card_name,
+                edition,
+                pln_to_czk,
+            )
             if offer is None:
                 continue
             if query.in_stock_only and offer.stock_qty <= 0:
@@ -141,6 +153,7 @@ class MtgspotAdapter(ShopAdapter):
         item: dict[str, Any],
         card_name: str,
         edition: str | None,
+        pln_to_czk: float,
     ) -> Offer | None:
         attributes = item.get("attributes")
         if not isinstance(attributes, dict):
@@ -182,7 +195,9 @@ class MtgspotAdapter(ShopAdapter):
             condition=condition,
             language=language,
             foil=attributes.get("is_foil") is True,
-            price_czk=int(round(price_pln * self._pln_to_czk)),
+            price_czk=int(round(price_pln * pln_to_czk)),
+            price_native=price_pln,
+            currency="PLN",
             stock_qty=stock_qty,
             url=result_url,
             shop_ref=str(article_id) if article_id is not None else None,

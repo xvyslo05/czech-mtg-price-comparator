@@ -34,6 +34,8 @@ async def test_parses_sol_ring_fixture(
             "https://boutique.magiccorporation.com/carte/"
         )
         assert offer.price_czk > 0
+        assert offer.price_native is not None
+        assert offer.currency == "EUR"
 
 
 @pytest.mark.asyncio

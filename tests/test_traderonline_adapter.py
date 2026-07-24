@@ -29,6 +29,8 @@ async def test_parses_sol_ring_fixture(load_fixture, adapter):
         assert offer.shop == "traderonline"
         assert "sol ring" in offer.card_name.casefold()
         assert offer.price_czk > 0
+        assert offer.price_native is not None
+        assert offer.currency == "EUR"
         assert offer.condition in Condition
         assert offer.url.startswith("https://trader-online.de")
 

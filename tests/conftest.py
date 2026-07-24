@@ -4,9 +4,22 @@ from pathlib import Path
 
 import pytest
 
+from cz_mtg_compare import fx as _fx
 from cz_mtg_compare import http_client as _http_client
 
 FIXTURES = Path(__file__).parent / "fixtures"
+
+
+@pytest.fixture(autouse=True)
+def _isolate_fx_cache(tmp_path, monkeypatch):
+    """Keep the FX layer hermetic: tests must never read the developer's real
+    ~/.cache/cz-mtg-compare/fx/rates.json (a populated cache shadows the static
+    defaults some tests assert) nor write to it. Point the cache dir at a per-test
+    tmp dir and clear the module-level memory cache on both sides."""
+    monkeypatch.setenv("CZ_MTG_FX_CACHE", str(tmp_path / "fx-cache"))
+    _fx._reset_cache()  # noqa: SLF001 — test-only hook provided by fx
+    yield
+    _fx._reset_cache()  # noqa: SLF001
 
 
 @pytest.fixture

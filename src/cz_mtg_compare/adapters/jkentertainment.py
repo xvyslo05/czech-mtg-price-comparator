@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import math
-import os
 import re
 import urllib.parse
 from html import unescape
@@ -10,6 +9,7 @@ from typing import Any
 
 from selectolax.parser import HTMLParser, Node
 
+from .. import fx
 from ..filters import filter_playable
 from ..http_client import get_client, host_slot
 from ..models import Offer, SearchQuery
@@ -17,7 +17,7 @@ from ..normalize import normalize_condition
 from .base import ShopAdapter
 
 BASE = "https://www.jk-entertainment.de"
-DEFAULT_EUR_TO_CZK = 24.5
+DEFAULT_EUR_TO_CZK = fx.STATIC_DEFAULTS["EUR"]
 
 _DATA_LAYER_RE = re.compile(
     r"var\s+onEventDataLayer\s*=\s*JSON\.parse\('(.*?)'\);",
@@ -43,17 +43,6 @@ _LANGUAGES = {
 }
 
 
-def _env_rate(name: str, default: float) -> float:
-    raw = os.environ.get(name)
-    if raw is None:
-        return default
-    try:
-        value = float(raw)
-    except (TypeError, ValueError):
-        return default
-    return value if math.isfinite(value) and value > 0 else default
-
-
 class JkEntertainmentAdapter(ShopAdapter):
     shop_id = "jkentertainment"
     base_url = BASE
@@ -62,23 +51,36 @@ class JkEntertainmentAdapter(ShopAdapter):
     supports_watchlist = False
 
     def __init__(self, *, eur_to_czk: float | None = None) -> None:
-        self._eur_to_czk = (
-            eur_to_czk
-            if eur_to_czk is not None
-            else _env_rate("CZ_MTG_EUR_TO_CZK", DEFAULT_EUR_TO_CZK)
+        self._eur_to_czk_override = eur_to_czk
+        self._eur_to_czk = fx.rate_to_czk_nolive(
+            "EUR",
+            override=eur_to_czk,
         )
 
     def _search_url(self, query: SearchQuery) -> str:
         return f"{BASE}/search?{urllib.parse.urlencode({'search': query.name})}"
 
     async def search(self, query: SearchQuery) -> list[Offer]:
+        eur_to_czk = (
+            self._eur_to_czk
+            if self._eur_to_czk_override is not None
+            else await fx.rate_to_czk("EUR")
+        )
         client = await get_client()
         async with host_slot("jk-entertainment.de"):
             response = await client.get(self._search_url(query))
         response.raise_for_status()
-        return await self.parse(response.text, query)
+        return self._parse(response.text, query, eur_to_czk)
 
     async def parse(self, html: str, query: SearchQuery) -> list[Offer]:
+        return self._parse(html, query, self._eur_to_czk)
+
+    def _parse(
+        self,
+        html: str,
+        query: SearchQuery,
+        eur_to_czk: float,
+    ) -> list[Offer]:
         if not html:
             return []
         match = _DATA_LAYER_RE.search(html)
@@ -163,7 +165,9 @@ class JkEntertainmentAdapter(ShopAdapter):
                     condition=normalize_condition(id_parts[1]),
                     language=_LANGUAGES.get(language_code, language_code or None),
                     foil=id_parts[3].upper() == "FO",
-                    price_czk=int(round(price_eur * self._eur_to_czk)),
+                    price_czk=int(round(price_eur * eur_to_czk)),
+                    price_native=price_eur,
+                    currency="EUR",
                     stock_qty=stock_qty,
                     url=url,
                     shop_ref=shop_ref,

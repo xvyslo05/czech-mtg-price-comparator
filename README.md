@@ -352,7 +352,7 @@ Add an `"env"` block alongside `"command"` and `"args"` in your existing entry. 
 }
 ```
 
-`MKM_EUR_TO_CZK` is optional (default `24.5`). Restart Claude Desktop and Cardmarket offers should start showing up alongside the Czech shops; verify with `list_shops`.
+`MKM_EUR_TO_CZK` is an optional manual override. When omitted, Cardmarket uses the same cached daily CNB EUR rate as the other European adapters (with the static `24.5` fallback). Restart Claude Desktop and Cardmarket offers should start showing up alongside the Czech shops; verify with `list_shops`.
 
 ### What the adapter does and doesn't cover
 
@@ -490,10 +490,11 @@ Sessions live in-process for the lifetime of the MCP server. If the cached token
 | `MKM_ACCESS_TOKEN`            | Cardmarket OAuth1 access token                     | unset |
 | `MKM_ACCESS_TOKEN_SECRET`     | Cardmarket OAuth1 access token secret              | unset |
 | `MKM_API_BASE`                | Override Cardmarket API base URL                   | `https://api.cardmarket.com/ws/v2.0/output.json` |
-| `MKM_EUR_TO_CZK`              | EUR → CZK conversion rate for Cardmarket prices    | `24.5` |
-| `CZ_MTG_EUR_TO_CZK`           | EUR → CZK conversion rate shared by MagicCorporation, JK Entertainment, Bazaar of Magic, Spellenwinkel, Trader-Online, and Magic Store | `24.5` |
-| `CZ_MTG_GBP_TO_CZK`           | GBP → CZK conversion rate shared by Axion Now and Magic Madhouse | `28.5` |
-| `CZ_MTG_PLN_TO_CZK`           | PLN → CZK conversion rate for MTGSpot prices       | `5.8` |
+| `MKM_EUR_TO_CZK`              | Cardmarket-only manual EUR → CZK override — when set, disables the live CNB rate for Cardmarket | unset (CNB; static fallback `24.5`) |
+| `CZ_MTG_EUR_TO_CZK`           | Manual EUR → CZK override — when set, disables the live CNB rate for that currency | unset (CNB; static fallback `24.5`) |
+| `CZ_MTG_GBP_TO_CZK`           | Manual GBP → CZK override — when set, disables the live CNB rate for that currency | unset (CNB; static fallback `28.5`) |
+| `CZ_MTG_PLN_TO_CZK`           | Manual PLN → CZK override — when set, disables the live CNB rate for that currency | unset (CNB; static fallback `5.8`) |
+| `CZ_MTG_FX_CACHE`             | Override daily CNB-rate on-disk cache directory    | `~/.cache/cz-mtg-compare/fx/` |
 | `CZ_MTG_SCRYFALL_CACHE`       | Override Scryfall on-disk cache directory          | `~/.cache/cz-mtg-compare/scryfall/` |
 | `CZ_MTG_DISABLED_SHOPS`       | Comma-separated, case-insensitive list of shop IDs to drop at startup (e.g. `blacklotus,untap`) | unset |
 | `CZ_MTG_MAX_UNIQUE_CARDS`     | Hard cap on unique cards per `optimize_decklist` call (one HTTP request per unique card per shop). Invalid / non-positive values are ignored | `100` |
@@ -616,7 +617,8 @@ Three ways, in increasing scope:
 - A single `search_card` call dispatches to every adapter concurrently, with per-host concurrency capped at 3 and a 20-second timeout per shop.
 - Axion Now uses a bounded two-stage Shopify lookup: predictive search finds at most 10 product handles, then the adapter fetches each handle's `.js` variants under the same per-host concurrency cap.
 - Magic Madhouse defaults to one BigCommerce BODL search-page request. `MagicMadhouseAdapter(enrich_variants=True)` additionally follows at most five matching products and resolves their condition variants through the BigCommerce product-attributes endpoint.
-- Each adapter returns a list of normalized `Offer` objects with the same fields regardless of source.
+- Foreign-currency adapters resolve EUR, GBP, and PLN through a 24-hour cached CNB daily rate. Constructor overrides win first, followed by the matching environment override and a fresh in-memory/on-disk CNB rate. When a stale disk rate cannot be refreshed it still beats the static offline fallback. Cardmarket's `MKM_EUR_TO_CZK` remains its highest-priority environment override.
+- Each adapter returns normalized `Offer` objects. `price_czk` remains the sortable comparison price; foreign offers additionally expose their original amount and ISO currency in `price_native` and `currency`.
 - Per-shop results are cached in-memory for 10 minutes (LRU eviction not yet, just TTL).
 - One shop failing or timing out **never** kills the query — partial results come back, and the failed shop's error is surfaced through `list_shops`.
 
@@ -773,7 +775,7 @@ Caveats:
 - **Cardmarket per-seller offers** require a paid Trader-tier API key, not yet wired up. Free tier surfaces priceGuide aggregates only.
 - **Decklist size capped at 100 cards total AND 100 unique cards.** Commander format is the largest legal format. The unique-cards limit is what actually drives the request count (one top-level search per unique card per enabled shop, plus Axion Now's bounded per-product variant lookups) and exists to keep a single tool call from spawning runaway traffic. Override via `CZ_MTG_MAX_UNIQUE_CARDS` if you genuinely need a bigger list.
 - **No price history.** Each query is a fresh snapshot. Track prices yourself if you need it (or open an issue requesting it).
-- **Foreign-currency prices use configurable static conversion rates.** EUR, GBP, and PLN prices are converted at adapter initialization using `CZ_MTG_EUR_TO_CZK`, `CZ_MTG_GBP_TO_CZK`, and `CZ_MTG_PLN_TO_CZK`. They are indicative snapshots rather than live FX quotes. Cardmarket intentionally keeps its existing separate `MKM_EUR_TO_CZK` setting.
+- **Foreign-currency prices use daily CNB rates, with environment overrides and an offline fallback.** EUR, GBP, and PLN rates are cached for 24 hours in memory and on disk. A stale real CNB rate is reused when refresh fails; only installations with no usable cache fall back to the static defaults. Setting `CZ_MTG_EUR_TO_CZK`, `CZ_MTG_GBP_TO_CZK`, or `CZ_MTG_PLN_TO_CZK` disables live resolution for that currency; Cardmarket's `MKM_EUR_TO_CZK` takes precedence for Cardmarket only.
 - **Axion Now stock is binary.** Shopify exposes each variant only as available/unavailable, so `stock_qty` is `1` or `0`; no exact quantity or language field is available.
 - **MagicCorporation and Bazaar of Magic expose a single NM/default-new grade.** MagicCorporation search results surface only in-stock new VO/VF variants; used “exemplaires uniques” and their per-copy grades would require detail-page fan-out and are not included. Bazaar of Magic's Bazaar Games catalog likewise exposes one new/NM grade and binary stock.
 - **Bazaar of Magic searches only the first page of singles results (24 tiles).** Pagination is deliberately not crawled so the shared Bazaar Games host request budget remains bounded.

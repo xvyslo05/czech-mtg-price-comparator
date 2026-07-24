@@ -3,7 +3,6 @@ from __future__ import annotations
 import asyncio
 import json
 import math
-import os
 import re
 import urllib.parse
 from html import unescape
@@ -11,6 +10,7 @@ from typing import Any
 
 from selectolax.parser import HTMLParser
 
+from .. import fx
 from ..filters import filter_playable
 from ..http_client import get_client, host_slot
 from ..models import Condition, Offer, SearchQuery
@@ -20,7 +20,7 @@ from .base import ShopAdapter
 BASE = "https://magicmadhouse.co.uk"
 SEARCH_URL = f"{BASE}/search.php"
 PRODUCT_ATTRIBUTES_URL = f"{BASE}/remote/v1/product-attributes/{{product_id}}"
-DEFAULT_GBP_TO_CZK = 28.5
+DEFAULT_GBP_TO_CZK = fx.STATIC_DEFAULTS["GBP"]
 DEFAULT_MAX_PAGES = 1
 MAX_SEARCH_PAGES = 4
 MAX_ENRICH_PRODUCTS = 5
@@ -43,17 +43,6 @@ _NAME_TOKEN_RE = re.compile(r"[^a-z0-9]+")
 ConditionOption = tuple[str, str, str, str]
 
 
-def _env_rate(name: str, default: float) -> float:
-    raw = os.environ.get(name)
-    if raw is None:
-        return default
-    try:
-        value = float(raw)
-    except (TypeError, ValueError):
-        return default
-    return value if math.isfinite(value) and value > 0 else default
-
-
 class MagicMadhouseAdapter(ShopAdapter):
     shop_id = "magicmadhouse"
     base_url = BASE
@@ -70,10 +59,10 @@ class MagicMadhouseAdapter(ShopAdapter):
     ) -> None:
         self._enrich_variants = enrich_variants
         self._max_pages = max(1, min(max_pages, MAX_SEARCH_PAGES))
-        self._gbp_to_czk = (
-            gbp_to_czk
-            if gbp_to_czk is not None
-            else _env_rate("CZ_MTG_GBP_TO_CZK", DEFAULT_GBP_TO_CZK)
+        self._gbp_to_czk_override = gbp_to_czk
+        self._gbp_to_czk = fx.rate_to_czk_nolive(
+            "GBP",
+            override=gbp_to_czk,
         )
 
     def _search_url(self, query: SearchQuery, page: int = 1) -> str:
@@ -83,6 +72,11 @@ class MagicMadhouseAdapter(ShopAdapter):
         return f"{SEARCH_URL}?{urllib.parse.urlencode(params)}"
 
     async def search(self, query: SearchQuery) -> list[Offer]:
+        gbp_to_czk = (
+            self._gbp_to_czk
+            if self._gbp_to_czk_override is not None
+            else await fx.rate_to_czk("GBP")
+        )
         client = await get_client()
         pairs: list[tuple[Offer, dict[str, Any]]] = []
 
@@ -94,18 +88,22 @@ class MagicMadhouseAdapter(ShopAdapter):
                 )
             response.raise_for_status()
             products = self._decode_bodl(response.text)
-            pairs.extend(self._parse_products(products, query))
+            pairs.extend(self._parse_products(products, query, gbp_to_czk))
             if len(products) < 16:
                 break
 
         offers = [offer for offer, _ in pairs]
         if self._enrich_variants:
-            offers = await self._enrich_offers(pairs)
+            offers = await self._enrich_offers(pairs, gbp_to_czk)
         offers = self._apply_filters(offers, query)
         return offers if query.include_non_playable else filter_playable(offers)
 
     async def parse(self, html: str, query: SearchQuery) -> list[Offer]:
-        pairs = self._parse_products(self._decode_bodl(html), query)
+        pairs = self._parse_products(
+            self._decode_bodl(html),
+            query,
+            self._gbp_to_czk,
+        )
         offers = self._apply_filters([offer for offer, _ in pairs], query)
         return offers if query.include_non_playable else filter_playable(offers)
 
@@ -132,7 +130,9 @@ class MagicMadhouseAdapter(ShopAdapter):
         self,
         products: list[dict[str, Any]],
         query: SearchQuery,
+        gbp_to_czk: float | None = None,
     ) -> list[tuple[Offer, dict[str, Any]]]:
+        rate = self._gbp_to_czk if gbp_to_czk is None else gbp_to_czk
         pairs: list[tuple[Offer, dict[str, Any]]] = []
         for product in products:
             brand = product.get("brand")
@@ -141,7 +141,7 @@ class MagicMadhouseAdapter(ShopAdapter):
                 != "Magic: The Gathering"
             ):
                 continue
-            offer = self._product_to_offer(product)
+            offer = self._product_to_offer(product, rate)
             if offer is None or not self._name_matches(
                 query.name, offer.card_name
             ):
@@ -149,7 +149,12 @@ class MagicMadhouseAdapter(ShopAdapter):
             pairs.append((offer, product))
         return pairs
 
-    def _product_to_offer(self, product: dict[str, Any]) -> Offer | None:
+    def _product_to_offer(
+        self,
+        product: dict[str, Any],
+        gbp_to_czk: float | None = None,
+    ) -> Offer | None:
+        rate = self._gbp_to_czk if gbp_to_czk is None else gbp_to_czk
         raw_name = self._clean_text(product.get("name"))
         card_name, suffix_edition = self._split_name(raw_name)
         if not card_name:
@@ -178,7 +183,9 @@ class MagicMadhouseAdapter(ShopAdapter):
             condition=Condition.UNKNOWN,
             language=language,
             foil=self._foil_from(sku, raw_name, single_cards),
-            price_czk=int(round(price_gbp * self._gbp_to_czk)),
+            price_czk=int(round(price_gbp * rate)),
+            price_native=price_gbp,
+            currency="GBP",
             stock_qty=self._listing_stock(product),
             url=url,
             shop_ref=str(product_id),
@@ -206,6 +213,7 @@ class MagicMadhouseAdapter(ShopAdapter):
     async def _enrich_offers(
         self,
         pairs: list[tuple[Offer, dict[str, Any]]],
+        gbp_to_czk: float,
     ) -> list[Offer]:
         targets = [
             (offer, product)
@@ -216,7 +224,10 @@ class MagicMadhouseAdapter(ShopAdapter):
             return [offer for offer, _ in pairs]
 
         results = await asyncio.gather(
-            *(self._enrich_product(offer) for offer, _ in targets)
+            *(
+                self._enrich_product(offer, gbp_to_czk)
+                for offer, _ in targets
+            )
         )
         enriched = {
             id(offer): variants
@@ -227,7 +238,12 @@ class MagicMadhouseAdapter(ShopAdapter):
             output.extend(enriched.get(id(offer), [offer]))
         return output
 
-    async def _enrich_product(self, fallback: Offer) -> list[Offer]:
+    async def _enrich_product(
+        self,
+        fallback: Offer,
+        gbp_to_czk: float | None = None,
+    ) -> list[Offer]:
+        rate = self._gbp_to_czk if gbp_to_czk is None else gbp_to_czk
         client = await get_client()
         try:
             async with host_slot("magicmadhouse.co.uk"):
@@ -268,6 +284,7 @@ class MagicMadhouseAdapter(ShopAdapter):
                         fallback,
                         sid=sid,
                         title=title,
+                        gbp_to_czk=rate,
                     )
                 except Exception:  # noqa: BLE001 - per-variant best effort
                     variant = None
@@ -322,7 +339,9 @@ class MagicMadhouseAdapter(ShopAdapter):
         *,
         sid: str,
         title: str,
+        gbp_to_czk: float | None = None,
     ) -> Offer | None:
+        rate = self._gbp_to_czk if gbp_to_czk is None else gbp_to_czk
         if isinstance(payload, str):
             try:
                 parsed = json.loads(payload)
@@ -351,7 +370,9 @@ class MagicMadhouseAdapter(ShopAdapter):
             condition = normalize_condition(title)
         return fallback.model_copy(
             update={
-                "price_czk": int(round(price_gbp * self._gbp_to_czk)),
+                "price_czk": int(round(price_gbp * rate)),
+                "price_native": price_gbp,
+                "currency": "GBP",
                 "stock_qty": stock_qty,
                 "condition": condition,
             }

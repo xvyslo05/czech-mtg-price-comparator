@@ -11,6 +11,7 @@ import urllib.parse
 from dataclasses import dataclass
 from typing import Any
 
+from .. import fx
 from ..http_client import get_client, host_slot
 from ..models import Condition, Offer, SearchQuery
 from .base import ShopAdapter
@@ -18,7 +19,7 @@ from .base import ShopAdapter
 log = logging.getLogger(__name__)
 
 DEFAULT_API_BASE = "https://api.cardmarket.com/ws/v2.0/output.json"
-DEFAULT_EUR_TO_CZK = 24.5
+DEFAULT_EUR_TO_CZK = fx.STATIC_DEFAULTS["EUR"]
 MTG_GAME_ID = 1
 
 
@@ -109,10 +110,15 @@ class CardmarketAdapter(ShopAdapter):
         max_results: int = 5,
     ) -> None:
         self._creds = credentials
-        self._eur_to_czk = (
+        self._eur_to_czk_constructor_override = eur_to_czk
+        self._eur_to_czk_override = (
             eur_to_czk
             if eur_to_czk is not None
-            else float(os.environ.get("MKM_EUR_TO_CZK", DEFAULT_EUR_TO_CZK))
+            else fx.rate_from_env("MKM_EUR_TO_CZK")
+        )
+        self._eur_to_czk = fx.rate_to_czk_nolive(
+            "EUR",
+            override=self._eur_to_czk_override,
         )
         self._max_results = max_results
 
@@ -123,13 +129,28 @@ class CardmarketAdapter(ShopAdapter):
     async def search(self, query: SearchQuery) -> list[Offer]:
         if self._creds is None:
             return []
-        return await self._search_with_creds(query, self._creds)
+        if self._eur_to_czk_constructor_override is not None:
+            eur_to_czk = self._eur_to_czk
+        elif (mkm_rate := fx.rate_from_env("MKM_EUR_TO_CZK")) is not None:
+            eur_to_czk = mkm_rate
+        else:
+            eur_to_czk = await fx.rate_to_czk("EUR")
+        return await self._search_with_creds(
+            query,
+            self._creds,
+            eur_to_czk,
+        )
 
     async def parse(self, html: str, query: SearchQuery) -> list[Offer]:
         # Cardmarket doesn't have an HTML fixture path; this slot is unused.
         raise NotImplementedError
 
-    async def _search_with_creds(self, query: SearchQuery, creds: MkmCredentials) -> list[Offer]:
+    async def _search_with_creds(
+        self,
+        query: SearchQuery,
+        creds: MkmCredentials,
+        eur_to_czk: float,
+    ) -> list[Offer]:
         client = await get_client()
         find_url = f"{creds.api_base}/products/find"
         find_url_full = f"{find_url}?{urllib.parse.urlencode({'search': query.name, 'idGame': MTG_GAME_ID, 'exact': 'false'})}"
@@ -140,9 +161,15 @@ class CardmarketAdapter(ShopAdapter):
             log.warning("cardmarket auth failed: %s", resp.text[:200])
             return []
         resp.raise_for_status()
-        return self._parse_find_payload(resp.json(), query)
+        return self._parse_find_payload(resp.json(), query, eur_to_czk)
 
-    def _parse_find_payload(self, payload: dict[str, Any], query: SearchQuery) -> list[Offer]:
+    def _parse_find_payload(
+        self,
+        payload: dict[str, Any],
+        query: SearchQuery,
+        eur_to_czk: float | None = None,
+    ) -> list[Offer]:
+        rate = self._eur_to_czk if eur_to_czk is None else eur_to_czk
         products = payload.get("product") or []
         offers: list[Offer] = []
         wanted = query.name.lower()
@@ -171,7 +198,7 @@ class CardmarketAdapter(ShopAdapter):
             price_eur = self._extract_price_eur(product)
             if price_eur is None:
                 continue
-            price_czk = int(round(price_eur * self._eur_to_czk))
+            price_czk = int(round(price_eur * rate))
 
             url = (
                 product.get("website")
@@ -189,6 +216,8 @@ class CardmarketAdapter(ShopAdapter):
                     language=None,
                     foil=False,
                     price_czk=price_czk,
+                    price_native=price_eur,
+                    currency="EUR",
                     stock_qty=1,  # priceGuide implies sellers exist; specific stock not exposed
                     url=url,
                 )
@@ -206,7 +235,9 @@ class CardmarketAdapter(ShopAdapter):
                         condition=Condition.UNKNOWN,
                         language=None,
                         foil=True,
-                        price_czk=int(round(foil_price * self._eur_to_czk)),
+                        price_czk=int(round(foil_price * rate)),
+                        price_native=foil_price,
+                        currency="EUR",
                         stock_qty=1,
                         url=url,
                     )

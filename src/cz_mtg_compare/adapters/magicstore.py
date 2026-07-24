@@ -1,20 +1,20 @@
 from __future__ import annotations
 
 import math
-import os
 import re
 import urllib.parse
 from html import unescape
 
 from selectolax.parser import HTMLParser, Node
 
+from .. import fx
 from ..filters import filter_playable
 from ..http_client import get_client, host_slot
 from ..models import Condition, Offer, SearchQuery
 from .base import ShopAdapter
 
 BASE = "https://www.magicstore.it"
-DEFAULT_EUR_TO_CZK = 24.5
+DEFAULT_EUR_TO_CZK = fx.STATIC_DEFAULTS["EUR"]
 BROWSER_USER_AGENT = (
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
     "AppleWebKit/537.36 (KHTML, like Gecko) "
@@ -25,17 +25,6 @@ _PRICE_RE = re.compile(r"(\d[\d.,]*)")
 _STOCK_RE = re.compile(r"\((\d+)\)")
 
 
-def _env_rate(name: str, default: float) -> float:
-    raw = os.environ.get(name)
-    if raw is None:
-        return default
-    try:
-        value = float(raw)
-    except (TypeError, ValueError):
-        return default
-    return value if math.isfinite(value) and value > 0 else default
-
-
 class MagicStoreAdapter(ShopAdapter):
     shop_id = "magicstore"
     base_url = BASE
@@ -44,10 +33,10 @@ class MagicStoreAdapter(ShopAdapter):
     supports_watchlist = False
 
     def __init__(self, *, eur_to_czk: float | None = None) -> None:
-        self._eur_to_czk = (
-            eur_to_czk
-            if eur_to_czk is not None
-            else _env_rate("CZ_MTG_EUR_TO_CZK", DEFAULT_EUR_TO_CZK)
+        self._eur_to_czk_override = eur_to_czk
+        self._eur_to_czk = fx.rate_to_czk_nolive(
+            "EUR",
+            override=eur_to_czk,
         )
 
     def _search_url(self, query: SearchQuery) -> str:
@@ -55,6 +44,11 @@ class MagicStoreAdapter(ShopAdapter):
         return f"{BASE}/ricerca.php?{urllib.parse.urlencode(params)}"
 
     async def search(self, query: SearchQuery) -> list[Offer]:
+        eur_to_czk = (
+            self._eur_to_czk
+            if self._eur_to_czk_override is not None
+            else await fx.rate_to_czk("EUR")
+        )
         client = await get_client()
         async with host_slot("www.magicstore.it"):
             response = await client.get(
@@ -62,18 +56,23 @@ class MagicStoreAdapter(ShopAdapter):
                 headers={"User-Agent": BROWSER_USER_AGENT},
             )
         response.raise_for_status()
-        return self._parse(response.text, query)
+        return self._parse(response.text, query, eur_to_czk)
 
     async def parse(self, html: str, query: SearchQuery) -> list[Offer]:
-        return self._parse(html, query)
+        return self._parse(html, query, self._eur_to_czk)
 
-    def _parse(self, html: str, query: SearchQuery) -> list[Offer]:
+    def _parse(
+        self,
+        html: str,
+        query: SearchQuery,
+        eur_to_czk: float,
+    ) -> list[Offer]:
         tree = HTMLParser(html)
         edition_filter = (query.edition or "").strip().casefold() or None
         offers: list[Offer] = []
 
         for row in tree.css("div.s_item.clearfix"):
-            offer = self._parse_row(row)
+            offer = self._parse_row(row, eur_to_czk)
             if offer is None:
                 continue
             # Deliberately no query-name substring filter: the server maps
@@ -89,7 +88,11 @@ class MagicStoreAdapter(ShopAdapter):
 
         return offers if query.include_non_playable else filter_playable(offers)
 
-    def _parse_row(self, row: Node) -> Offer | None:
+    def _parse_row(
+        self,
+        row: Node,
+        eur_to_czk: float,
+    ) -> Offer | None:
         name_node = row.css_first("h3 a[href]")
         if name_node is None:
             return None
@@ -177,7 +180,9 @@ class MagicStoreAdapter(ShopAdapter):
             condition=Condition.NM,
             language=None,
             foil="foil" in raw_name.casefold(),
-            price_czk=int(round(price_eur * self._eur_to_czk)),
+            price_czk=int(round(price_eur * eur_to_czk)),
+            price_native=price_eur,
+            currency="EUR",
             stock_qty=stock_qty,
             url=urllib.parse.urljoin(BASE, href),
             shop_ref=shop_ref,
