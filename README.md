@@ -887,6 +887,8 @@ src/cz_mtg_compare/
   http_client.py       shared httpx.AsyncClient
   cache.py             TTL cache
   normalize.py         price / stock / condition / foil helpers
+  fx.py                CZK conversion: override → env var → live CNB daily
+                       rate (24h memory+disk cache) → static default
   adapters/
     base.py            ShopAdapter ABC + account capability flags
     tolarie.py         (Django; login implemented, cart pending)
@@ -900,15 +902,22 @@ src/cz_mtg_compare/
     magiccorporation.py (Laravel HTML; per-row language/foil variants)
     jkentertainment.py (Shopware GA4 dataLayer + DOM detail links)
     bazaargames.py     (shared Bazaar of Magic / Spellenwinkel HTML adapter)
+    traderonline.py    (OXID HTML tiles; buylist rows excluded)
+    magicmadhouse.py   (BigCommerce BODL JSON + optional variant enrichment)
+    magicstore.py      (custom-PHP rows; Italian-localized names)
     cardmarket.py      (OAuth1 API; opt-in)
 tests/
   fixtures/            saved real-world responses
   test_*_adapter.py    deterministic adapter tests
+  test_fx.py           FX resolution chain, CNB parsing, cache hermeticity
   test_aggregator.py
   test_optimizer.py
   test_decklist_parser.py
   test_scryfall.py
   test_live_smoke.py   opt-in live tests
+docs/
+  adapter-plans/       per-shop integration plans from the EU-shop survey
+                       (implemented + candidate + dropped shops, with recon notes)
 ```
 
 ---
